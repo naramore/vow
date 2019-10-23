@@ -1,0 +1,38 @@
+name: Elixir CI
+
+on: push
+
+jobs:
+  build:
+    env:
+      MIX_ENV: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04]
+        elixir: [1.9.2]
+    container:
+      image: elixir:${{ matrix.elixir }}-slim
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Dependencies
+      run: |
+        mix local.rebar --force
+        mix local.hex --force
+        mix deps.get
+    - name: Compile
+      run: mix compile --warnings-as-errors
+    - name: Check Formatting
+      run: mix format --check-formatted
+    - name: Check for Unreachability
+      run: mix xref unreachable --abort-if-any
+    - name: Check for Deprecated
+      run: mix xref deprecated --abort-if-any
+    - name: Check Code Consistency
+      run: mix credo --strict
+    - name: Run Tests
+      run: mix test
+    - name: Test Coverage
+      run: mix test --cover
+    - name: Check for Discrepancies
+      run: mix dialyzer
