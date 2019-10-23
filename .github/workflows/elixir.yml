@@ -1,9 +1,7 @@
 name: Elixir CI
-
 on: push
-
 jobs:
-  build:
+  build_and_check:
     env:
       MIX_ENV: test
     runs-on: ${{ matrix.os }}
@@ -23,16 +21,23 @@ jobs:
     - name: Compile
       run: mix compile --warnings-as-errors
     - name: Check Formatting
+      if: always()
       run: mix format --check-formatted
     - name: Check for Unreachability
+      if: always()
       run: mix xref unreachable --abort-if-any
     - name: Check for Deprecated
+      if: always()
       run: mix xref deprecated --abort-if-any
     - name: Check Code Consistency
+      if: always()
       run: mix credo --strict
     - name: Run Tests
+      if: always()
       run: mix test
     - name: Test Coverage
+      if: always()
       run: mix test --cover
     - name: Check for Discrepancies
+      if: always()
       run: mix dialyzer
