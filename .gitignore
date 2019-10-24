@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-ex_spec-*.tar
+vow-*.tar
 
 # Ignore VSCode related files
 /.vscode/

@@ -1,10 +1,13 @@
-defmodule ExSpec.MixProject do
+defmodule Vow.MixProject do
   use Mix.Project
 
-  @app :ex_spec
+  @app :vow
   @in_production Mix.env() == :prod
   @version "0.0.1"
-  @source_url "https://github.com/mnaramore/ex_spec"
+  @source_url "https://github.com/mnaramore/vow"
+  @description """
+  Data specification (i.e. [clojure.spec](https://clojure.org/guides/spec)) for Elixir
+  """
 
   def project do
     [
@@ -16,6 +19,7 @@ defmodule ExSpec.MixProject do
       start_permanent: @in_production,
       package: package(),
       source_url: @source_url,
+      description: @description,
       docs: [
         source_ref: "v#{@version}",
         formatters: ["html", "epub"]
@@ -33,8 +37,7 @@ defmodule ExSpec.MixProject do
 
   defp package do
     [
-      description: "clojure.spec for Elixir",
-      files: ~w(lib mix.exs README.md CHANGELOG.md .formatter.exs),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE.md .formatter.exs),
       maintainers: ["Michael Naramore"],
       licenses: ["MIT"],
       links: %{
