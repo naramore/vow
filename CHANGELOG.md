@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2019-10-23
+### Added
+- release documentation so I don't forget
+
+### Fixed
+- changelog, mix.exs, and readme links
+- `Vow.ConformError` is `@moduledoc false` now
+
+### Removed
+- replaced my `use` macros per Elixir's [Library Guidelines - Anit-Patterns] with imports
+
 ## [0.0.1] - 2019-10-23
 ### Added
 - `Vow.Conformable` protocol (a.k.a. the core of this library's ability to validate data)
@@ -15,5 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed name from `ExSpec` to `Vow` (as the former was already taken)
 
 
-[Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v0.0.1
+[Library Guidelines - Anti-Patterns]: https://hexdocs.pm/elixir/library-guidelines.html#avoid-use-when-an-import-is-enough
+[Unreleased]: https://github.com/naramore/vow/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/naramore/vow/releases/tag/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/naramore/vow/releases/tag/v0.0.1

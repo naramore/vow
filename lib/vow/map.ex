@@ -39,7 +39,7 @@ defmodule Vow.Map do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    use Vow.Func
+    import Vow.Func, only: [f: 1]
     import Vow.Conformable.Vow.List, only: [distinct_problems: 5]
     alias Vow.ConformError
 

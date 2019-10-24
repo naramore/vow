@@ -3,7 +3,7 @@ defmodule Vow.Ref do
   TODO
   """
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
 
   defstruct [:mod, :fun]
 
@@ -40,13 +40,6 @@ defmodule Vow.Ref do
       mod: module,
       fun: function
     }
-  end
-
-  @doc false
-  def __using__(_opts) do
-    quote do
-      import Vow.Ref
-    end
   end
 
   defimpl Vow.RegexOperator do

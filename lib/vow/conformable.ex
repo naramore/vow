@@ -48,7 +48,7 @@ end
 defimpl Vow.Conformable, for: List do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value)
@@ -178,7 +178,7 @@ end
 defimpl Vow.Conformable, for: Map do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value)
@@ -263,7 +263,7 @@ end
 defimpl Vow.Conformable, for: MapSet do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, %MapSet{} = value) do
@@ -288,7 +288,7 @@ end
 defimpl Vow.Conformable, for: Regex do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value) when is_bitstring(value) do
@@ -308,7 +308,7 @@ end
 defimpl Vow.Conformable, for: Range do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(range, spec_path, via, value_path, _.._ = value) do
@@ -382,7 +382,7 @@ end
 defimpl Vow.Conformable, for: Date.Range do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(date_range, spec_path, via, value_path, %Date.Range{} = value) do
@@ -465,7 +465,7 @@ end
 defimpl Vow.Conformable, for: Any do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias Vow.ConformError
 
   def conform(%{__struct__: mod} = struct, spec_path, via, value_path, %{__struct__: mod} = value) do

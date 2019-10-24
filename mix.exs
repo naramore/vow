@@ -3,10 +3,10 @@ defmodule Vow.MixProject do
 
   @app :vow
   @in_production Mix.env() == :prod
-  @version "0.0.1"
-  @source_url "https://github.com/mnaramore/vow"
+  @version "0.0.2"
+  @source_url "https://github.com/naramore/vow"
   @description """
-  Data specification (i.e. [clojure.spec](https://clojure.org/guides/spec)) for Elixir
+  Data specification library inspired by clojure.spec
   """
 
   def project do

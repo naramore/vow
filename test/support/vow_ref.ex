@@ -1,7 +1,7 @@
 defmodule VowRef do
   @moduledoc false
 
-  use Vow.Func
+  import Vow.Func, only: [f: 1]
   alias StreamData, as: SD
 
   def one_arity(_), do: nil

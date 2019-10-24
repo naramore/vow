@@ -1,7 +1,5 @@
 defmodule Vow.ConformError do
-  @moduledoc """
-  TODO
-  """
+  @moduledoc false
 
   alias Vow.Conformable
 
@@ -23,7 +21,6 @@ defmodule Vow.ConformError do
     |> Enum.join("\n")
   end
 
-  @doc false
   @spec new([__MODULE__.Problem.t()], Conformable.t(), term) :: t
   def new(problems, spec, value) do
     %__MODULE__{
@@ -33,7 +30,6 @@ defmodule Vow.ConformError do
     }
   end
 
-  @doc false
   defdelegate new_problem(predicate, spec_path, via, value_path, value, reason \\ nil),
     to: __MODULE__.Problem,
     as: :new
@@ -76,8 +72,7 @@ defmodule Vow.ConformError do
   end
 
   defmodule Problem do
-    @moduledoc """
-    """
+    @moduledoc false
 
     defstruct predicate: nil,
               spec_path: [],
@@ -95,7 +90,6 @@ defmodule Vow.ConformError do
             reason: String.t() | nil
           }
 
-    @doc false
     @spec new(Vow.t(), [atom], [module], [term], term, String.t() | nil) :: t
     def new(predicate, spec_path, via, value_path, value, reason \\ nil) do
       %__MODULE__{
@@ -108,7 +102,6 @@ defmodule Vow.ConformError do
       }
     end
 
-    @doc false
     @spec message(t) :: String.t()
     def message(p) do
       if p.value_path == [],

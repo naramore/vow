@@ -15,7 +15,7 @@ defmodule Vow.OneOrMore do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    use Vow.Func
+    import Vow.Func, only: [f: 1]
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
     alias Vow.{Conformable, ConformError, RegexOp}
 

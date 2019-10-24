@@ -59,15 +59,6 @@ defmodule Vow do
     end
   end
 
-  @doc false
-  defmacro __using__(_opts) do
-    quote do
-      import Vow
-      use Vow.Func
-      use Vow.Ref
-    end
-  end
-
   @doc """
   """
   @spec set(Enum.t()) :: MapSet.t()

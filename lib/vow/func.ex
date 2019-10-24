@@ -40,13 +40,6 @@ defmodule Vow.Func do
     end
   end
 
-  @doc false
-  defmacro __using__(_opts) do
-    quote do
-      import Vow.Func, only: :macros
-    end
-  end
-
   defimpl Inspect do
     @moduledoc false
 

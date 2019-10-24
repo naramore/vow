@@ -26,7 +26,7 @@ defmodule Vow.List do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    use Vow.Func
+    import Vow.Func, only: [f: 1]
     alias Vow.ConformError
 
     def conform(spec, spec_path, via, value_path, value)
