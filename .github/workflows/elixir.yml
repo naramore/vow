@@ -1,4 +1,4 @@
-name: Elixir CI
+name: ElixirCI
 on: push
 jobs:
   build_and_check:
@@ -13,31 +13,54 @@ jobs:
       image: elixir:${{ matrix.elixir }}-slim
     steps:
     - uses: actions/checkout@v1
+
     - name: Install Dependencies
       run: |
         mix local.rebar --force
         mix local.hex --force
         mix deps.get
+
     - name: Compile
       run: mix compile --warnings-as-errors
+
+    - name: Report to coveralls.io
+      if: always()
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      run: mix coveralls.post
+
+    - name: Documentation Improvements
+      if: always()
+      env:
+        MIX_ENV: docs
+      run: mix inch
+
+    - name: Documentation Coverage
+      if: always()
+      env:
+        MIX_ENV: docs
+      run: mix doctor
+
     - name: Check Formatting
       if: always()
       run: mix format --check-formatted
+
     - name: Check for Unreachability
       if: always()
       run: mix xref unreachable --abort-if-any
+
     - name: Check for Deprecated
       if: always()
       run: mix xref deprecated --abort-if-any
+
     - name: Check Code Consistency
       if: always()
       run: mix credo --strict
+
     - name: Run Tests
       if: always()
       run: mix test
-    - name: Test Coverage
-      if: always()
-      run: mix test --cover
+
     - name: Check for Discrepancies
       if: always()
       run: mix dialyzer

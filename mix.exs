@@ -25,7 +25,11 @@ defmodule Vow.MixProject do
         formatters: ["html", "epub"]
       ],
       deps: deps(),
-      test_coverage: [threshold: 90],
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test],
+      test_coverage: [
+        tool: ExCoveralls,
+        threshold: 90
+      ],
       dialyzer: [
         flags: [:unmatched_returns, :error_handling, :race_conditions, :no_opaque],
         paths: ["_build/#{Mix.env()}/lib/#{@app}/ebin"],
@@ -63,9 +67,12 @@ defmodule Vow.MixProject do
   defp deps do
     [
       {:stream_data, "~> 0.4", optional: true},
+      {:excoveralls, "~> 0.12", only: [:dev, :test]},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
+      {:doctor, "~> 0.8", only: :docs},
+      {:inch_ex, ">= 0.0.0", only: :docs},
     ]
   end
 end
