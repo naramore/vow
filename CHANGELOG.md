@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- [coveralls.io] support via [excoveralls] to CI
+- [codecov.io] support to CI
 - documentation coverage analysis via [doctor] to CI
 - documentation improvement analytics via [inch_ex] to CI
-- readme badges for hex version, github actions status, and coveralls
+- readme badges for hex version, github actions status, and codecov
 - credo default config file
 
 ## [0.0.2] - 2019-10-23
@@ -34,8 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [doctor]: https://github.com/akoutmos/doctor
 [inch_ex]: https://hex.pm/packages/inch_ex
-[coveralls.io]: https://coveralls.io/
-[excoveralls]: https://github.com/parroty/excoveralls
+[codecov.io]: https://codecov.io/
 [Library Guidelines - Anti-Patterns]: https://hexdocs.pm/elixir/library-guidelines.html#avoid-use-when-an-import-is-enough
 [Unreleased]: https://github.com/naramore/vow/compare/v0.0.2...HEAD
 [0.0.2]: https://github.com/naramore/vow/releases/tag/v0.0.1...v0.0.2

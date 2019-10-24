@@ -23,11 +23,13 @@ jobs:
     - name: Compile
       run: mix compile --warnings-as-errors
 
-    - name: Report to coveralls.io
+    - name: Report to codecov.io
       if: always()
       env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: mix coveralls.post
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+      mix test --cover
+      bash <(curl -s https://codecov.io/bash)
 
     - name: Documentation Improvements
       if: always()
