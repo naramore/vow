@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Vow.RegexOperator` protocol (used for enumerable/list-based specs)
 - tests for 'non-compound' specs (i.e. specs that don't contain specs)
 - CI automation via GitHub Actions
+- changed name from `ExSpec` to `Vow` (as the former was already taken)
 
 
 [Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.0.1...HEAD

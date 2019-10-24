@@ -28,5 +28,5 @@ be found at [https://hexdocs.pm/spec](https://hexdocs.pm/spec).
 - [ ] implement `Spec.Keys`
 - [ ] add `unform` to the `Spec.Conformable` (and `Spec.RegexOp.Conformable`?) protocol(s)
 - [ ] implement `Spec.Generatable` for all `Spec.Conformable`'s
-- [ ] publish to `hex.pm` & `hexdocs.pm`
 - [ ] publish to hex.pm github action, triggered on tag
+- [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
