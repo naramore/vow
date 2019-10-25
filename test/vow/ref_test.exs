@@ -2,6 +2,7 @@ defmodule Vow.RefTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
   import Vow.Ref, only: [sref: 2]
+  import VowTestUtils, only: [strip_via_and_spec: 1]
   doctest Vow.Ref
 
   describe "Vow.Ref.resolve/1" do
@@ -44,8 +45,8 @@ defmodule Vow.RefTest do
     property "#SRef<*spec*> == *spec*" do
       check all data <- VowRef.clj_spec_gen() do
         ref = sref(VowRef, :clj_spec)
-        yay_ref = Vow.conform(ref, data) |> strip_conformed()
-        nay_ref = Vow.conform(VowRef.clj_spec(), data) |> strip_conformed()
+        yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
+        nay_ref = Vow.conform(VowRef.clj_spec(), data) |> strip_via_and_spec()
         assert yay_ref == nay_ref
       end
     end
@@ -56,17 +57,10 @@ defmodule Vow.RefTest do
     property "#SRef<*regex-op*> == *regex-op* when called from a regex-op" do
       check all data <- VowRef.clj_regexop_gen() do
         ref = sref(VowRef, :clj_regexop)
-        yay_ref = Vow.conform(ref, data) |> strip_conformed()
-        nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_conformed()
+        yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
+        nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_via_and_spec()
         assert yay_ref == nay_ref
       end
     end
-  end
-
-  defp strip_conformed({:ok, _} = result), do: result
-
-  defp strip_conformed({:error, error}) do
-    problems = Enum.map(error.problems, &%{&1 | via: []})
-    {:error, %{error | problems: problems, spec: nil}}
   end
 end

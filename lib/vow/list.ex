@@ -77,23 +77,11 @@ defmodule Vow.List do
             ConformError.Problem.t()
           ]
     defp length_problems(spec, spec_path, via, value_path, value) do
-      case {value, spec.min_length, spec.max_length} do
-        {list, min, nil} when length(list) < min ->
+      case {spec.min_length, spec.max_length} do
+        {min, _max} when length(value) < min ->
           [ConformError.new_problem(f(&(length(&1) >= min)), spec_path, via, value_path, value)]
 
-        {_list, _min, nil} ->
-          []
-
-        {list, min, max} when length(list) < min and length(list) > max ->
-          [
-            ConformError.new_problem(f(&(length(&1) >= min)), spec_path, via, value_path, value),
-            ConformError.new_problem(f(&(length(&1) <= max)), spec_path, via, value_path, value)
-          ]
-
-        {list, min, _max} when length(list) < min ->
-          [ConformError.new_problem(f(&(length(&1) >= min)), spec_path, via, value_path, value)]
-
-        {list, _min, max} when length(list) > max ->
+        {_min, max} when not is_nil(max) and length(value) > max ->
           [ConformError.new_problem(f(&(length(&1) <= max)), spec_path, via, value_path, value)]
 
         _ ->

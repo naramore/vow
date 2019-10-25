@@ -19,7 +19,7 @@ defmodule Vow.Nilable do
       {:ok, nil}
     end
 
-    def conform(spec, spec_path, via, value_path, value) do
+    def conform(%@for{spec: spec}, spec_path, via, value_path, value) do
       @protocol.conform(spec, spec_path, via, value_path, value)
     end
   end

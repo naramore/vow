@@ -21,9 +21,6 @@ defmodule Vow.OneOf do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    alias Vow.ConformError
-
     def conform(%@for{specs: [{k, spec}]}, spec_path, via, value_path, value) do
       case @protocol.conform(spec, spec_path ++ [k], via, value_path, value) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
@@ -43,14 +40,6 @@ defmodule Vow.OneOf do
             {:error, problems} -> {:error, pblms ++ problems}
           end
       end)
-    end
-
-    def conform(_spec, spec_path, via, value_path, value) when is_list(value) do
-      {:error, [ConformError.new_problem(&proper_list?/1, spec_path, via, value_path, value)]}
-    end
-
-    def conform(_spec, spec_path, via, value_path, value) do
-      {:error, [ConformError.new_problem(&is_list/1, spec_path, via, value_path, value)]}
     end
   end
 end

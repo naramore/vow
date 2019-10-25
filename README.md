@@ -30,3 +30,4 @@ end
 - [ ] add `unform` to the `Spec.Conformable` (and `Spec.RegexOp.Conformable`?) protocol(s)
 - [ ] implement `Spec.Generatable` for all `Spec.Conformable`'s
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
+- [ ] change variable names refering to `spec`(s) to `vow`(s)?

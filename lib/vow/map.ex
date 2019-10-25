@@ -46,7 +46,7 @@ defmodule Vow.Map do
     def conform(spec, spec_path, via, value_path, value) when is_map(value) do
       value
       |> Enum.map(fn {k, v} ->
-        conform_key_value(spec.value_spec, spec_path, via, value_path, {k, v})
+        conform_key_value(spec, spec_path, via, value_path, {k, v})
       end)
       |> Enum.reduce({:ok, []}, fn
         {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}

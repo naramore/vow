@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - readme badges for hex version, github actions status, and codecov
 - credo default config file
 - dependabot badge
+- more tests!
 
 ## [0.0.2] - 2019-10-23
 ### Added
