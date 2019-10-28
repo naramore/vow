@@ -42,7 +42,11 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
     {:error, [ConformError.new_problem(&proper_list?/1, spec_path, via, value_path, value)]}
   end
 
-  def conform(_spec, spec_path, via, value_path, value) do
-    {:error, [ConformError.new_problem(&is_list/1, spec_path, via, value_path, value)]}
+  def conform(spec, spec_path, via, value_path, value) do
+    if Enumerable.impl_for(value) do
+      conform(spec, spec_path, via, value_path, Enum.to_list(value))
+    else
+      {:error, [ConformError.new_problem(&is_list/1, spec_path, via, value_path, value)]}
+    end
   end
 end

@@ -19,19 +19,38 @@ end
 defimpl Vow.Conformable, for: Function do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(fun, spec_path, via, value_path, value) when is_function(fun, 1) do
     case safe_execute(fun, value) do
-      {:ok, true} -> {:ok, value}
-      _ -> {:error, [ConformError.new_problem(fun, spec_path, via, value_path, value)]}
+      {:ok, true} ->
+        {:ok, value}
+
+      {:ok, false} ->
+        {:error, [ConformError.new_problem(fun, spec_path, via, value_path, value)]}
+
+      {:ok, _} ->
+        {:error,
+         [
+           ConformError.new_problem(
+             fun,
+             spec_path,
+             via,
+             value_path,
+             value,
+             "Non-boolean return values are invalid"
+           )
+         ]}
+
+      {:error, reason} ->
+        {:error, [ConformError.new_problem(fun, spec_path, via, value_path, value, reason)]}
     end
   end
 
   def conform(_fun, spec_path, via, value_path, value) do
     {:error,
-     [ConformError.new_problem(f(&is_function(&1, 1)), spec_path, via, value_path, value)]}
+     [ConformError.new_problem(wrap(&is_function(&1, 1)), spec_path, via, value_path, value)]}
   end
 
   @spec safe_execute((term -> term), term) :: {:ok, term} | {:error, term}
@@ -48,7 +67,7 @@ end
 defimpl Vow.Conformable, for: List do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value)
@@ -82,7 +101,7 @@ defimpl Vow.Conformable, for: List do
         {:error,
          [
            ConformError.new_problem(
-             f(&(length(&1) == length(spec))),
+             wrap(&(length(&1) == length(spec))),
              spec_path,
              via,
              value_path,
@@ -94,7 +113,7 @@ defimpl Vow.Conformable, for: List do
         {:error,
          [
            ConformError.new_problem(
-             f(&compatible_form?(spec, &1)),
+             wrap(&compatible_form?(spec, &1)),
              spec_path,
              via,
              value_path,
@@ -178,7 +197,7 @@ end
 defimpl Vow.Conformable, for: Map do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value)
@@ -212,7 +231,7 @@ defimpl Vow.Conformable, for: Map do
     {:error,
      [
        ConformError.new_problem(
-         f(&(map_size(&1) == map_size(spec))),
+         wrap(&(map_size(&1) == map_size(spec))),
          spec_path,
          via,
          value_path,
@@ -241,8 +260,8 @@ defimpl Vow.Conformable, for: Map do
 
     Enum.map(problems, fn prob ->
       prob
-      |> update_in([:spec_path, Access.at(si)], &Enum.at(keys, &1))
-      |> update_in([:value_path, Access.at(vi)], &Enum.at(keys, &1))
+      |> update_in([Access.key!(:spec_path), Access.at(si)], &Enum.at(keys, &1))
+      |> update_in([Access.key!(:value_path), Access.at(vi)], &Enum.at(keys, &1))
     end)
   end
 
@@ -263,7 +282,7 @@ end
 defimpl Vow.Conformable, for: MapSet do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, %MapSet{} = value) do
@@ -271,7 +290,15 @@ defimpl Vow.Conformable, for: MapSet do
       {:ok, value}
     else
       {:error,
-       [ConformError.new_problem(f(&MapSet.subset?(&1, spec)), spec_path, via, value_path, value)]}
+       [
+         ConformError.new_problem(
+           wrap(&MapSet.subset?(&1, spec)),
+           spec_path,
+           via,
+           value_path,
+           value
+         )
+       ]}
     end
   end
 
@@ -280,7 +307,15 @@ defimpl Vow.Conformable, for: MapSet do
       {:ok, value}
     else
       {:error,
-       [ConformError.new_problem(f(&MapSet.member?(spec, &1)), spec_path, via, value_path, value)]}
+       [
+         ConformError.new_problem(
+           wrap(&MapSet.member?(spec, &1)),
+           spec_path,
+           via,
+           value_path,
+           value
+         )
+       ]}
     end
   end
 end
@@ -288,7 +323,7 @@ end
 defimpl Vow.Conformable, for: Regex do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(spec, spec_path, via, value_path, value) when is_bitstring(value) do
@@ -296,7 +331,15 @@ defimpl Vow.Conformable, for: Regex do
       {:ok, value}
     else
       {:error,
-       [ConformError.new_problem(f(&Regex.match?(spec, &1)), spec_path, via, value_path, value)]}
+       [
+         ConformError.new_problem(
+           wrap(&Regex.match?(spec, &1)),
+           spec_path,
+           via,
+           value_path,
+           value
+         )
+       ]}
     end
   end
 
@@ -308,7 +351,7 @@ end
 defimpl Vow.Conformable, for: Range do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(range, spec_path, via, value_path, _.._ = value) do
@@ -324,7 +367,7 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(range, &1.last)),
+             wrap(&Enum.member?(range, &1.last)),
              spec_path,
              via,
              value_path,
@@ -336,7 +379,7 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(range, &1.first)),
+             wrap(&Enum.member?(range, &1.first)),
              spec_path,
              via,
              value_path,
@@ -348,14 +391,14 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(range, &1.first)),
+             wrap(&Enum.member?(range, &1.first)),
              spec_path,
              via,
              value_path,
              value
            ),
            ConformError.new_problem(
-             f(&Enum.member?(range, &1.last)),
+             wrap(&Enum.member?(range, &1.last)),
              spec_path,
              via,
              value_path,
@@ -370,7 +413,15 @@ defimpl Vow.Conformable, for: Range do
       {:ok, value}
     else
       {:error,
-       [ConformError.new_problem(f(&Enum.member?(range, &1)), spec_path, via, value_path, value)]}
+       [
+         ConformError.new_problem(
+           wrap(&Enum.member?(range, &1)),
+           spec_path,
+           via,
+           value_path,
+           value
+         )
+       ]}
     end
   end
 
@@ -382,7 +433,7 @@ end
 defimpl Vow.Conformable, for: Date.Range do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(date_range, spec_path, via, value_path, %Date.Range{} = value) do
@@ -398,7 +449,7 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(date_range, &1.last)),
+             wrap(&Enum.member?(date_range, &1.last)),
              spec_path,
              via,
              value_path,
@@ -410,7 +461,7 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(date_range, &1.first)),
+             wrap(&Enum.member?(date_range, &1.first)),
              spec_path,
              via,
              value_path,
@@ -422,14 +473,14 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             f(&Enum.member?(date_range, &1.first)),
+             wrap(&Enum.member?(date_range, &1.first)),
              spec_path,
              via,
              value_path,
              value
            ),
            ConformError.new_problem(
-             f(&Enum.member?(date_range, &1.last)),
+             wrap(&Enum.member?(date_range, &1.last)),
              spec_path,
              via,
              value_path,
@@ -446,7 +497,7 @@ defimpl Vow.Conformable, for: Date.Range do
       {:error,
        [
          ConformError.new_problem(
-           f(&Enum.member?(date_range, &1)),
+           wrap(&Enum.member?(date_range, &1)),
            spec_path,
            via,
            value_path,
@@ -458,14 +509,14 @@ defimpl Vow.Conformable, for: Date.Range do
 
   def conform(_spec, spec_path, via, value_path, value) do
     {:error,
-     [ConformError.new_problem(f(&match?(%Date{}, &1)), spec_path, via, value_path, value)]}
+     [ConformError.new_problem(wrap(&match?(%Date{}, &1)), spec_path, via, value_path, value)]}
   end
 end
 
 defimpl Vow.Conformable, for: Any do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
   def conform(%{__struct__: mod} = struct, spec_path, via, value_path, %{__struct__: mod} = value) do
@@ -484,7 +535,7 @@ defimpl Vow.Conformable, for: Any do
   def conform(%{__struct__: _} = spec, spec_path, via, value_path, %{__struct__: _} = value) do
     problem =
       ConformError.new_problem(
-        f(&(&1.__struct__ == spec.__struct__)),
+        wrap(&(&1.__struct__ == spec.__struct__)),
         spec_path,
         via,
         value_path,
@@ -507,7 +558,7 @@ defimpl Vow.Conformable, for: Any do
     {:error,
      [
        ConformError.new_problem(
-         f(&Map.has_key?(&1, :__struct__)),
+         wrap(&Map.has_key?(&1, :__struct__)),
          spec_path,
          via,
          value_path,

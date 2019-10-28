@@ -1,7 +1,7 @@
 defmodule VowTestUtils do
   @moduledoc false
 
-  @type conform_result :: {:ok, conformed :: term} | {:error, Vow.ConformError.t}
+  @type conform_result :: {:ok, conformed :: term} | {:error, Vow.ConformError.t()}
 
   @spec strip_spec(conform_result) :: conform_result
   def strip_spec({:ok, _} = result), do: result
@@ -27,5 +27,9 @@ defmodule VowTestUtils do
 
   @spec to_improper([term, ...]) :: maybe_improper_list(term, term) | nil
   def to_improper([]), do: nil
-  def to_improper([h|t]), do: [h | to_improper(t)]
+  def to_improper([h | t]), do: [h | to_improper(t)]
+
+  @spec complement(boolean) :: boolean
+  def complement(true), do: false
+  def complement(false), do: true
 end

@@ -5,7 +5,6 @@ defmodule Vow.Map do
             value_spec: nil,
             min_length: 0,
             max_length: nil,
-            distinct?: false,
             conform_keys?: false
 
   @type t :: %__MODULE__{
@@ -13,25 +12,22 @@ defmodule Vow.Map do
           value_spec: Vow.t(),
           min_length: non_neg_integer,
           max_length: non_neg_integer | nil,
-          distinct?: boolean,
           conform_keys?: boolean
         }
 
-  @spec new(Vow.t(), Vow.t(), non_neg_integer, non_neg_integer | nil, boolean, boolean) :: t
+  @spec new(Vow.t(), Vow.t(), non_neg_integer, non_neg_integer | nil, boolean) :: t
   def new(
         key_spec,
         value_spec,
-        min_length \\ 0,
-        max_length \\ nil,
-        distinct? \\ false,
-        conform_keys? \\ false
+        min_length,
+        max_length,
+        conform_keys?
       ) do
     %__MODULE__{
       key_spec: key_spec,
       value_spec: value_spec,
       min_length: min_length,
       max_length: max_length,
-      distinct?: distinct?,
       conform_keys?: conform_keys?
     }
   end
@@ -39,8 +35,7 @@ defmodule Vow.Map do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    import Vow.Func, only: [f: 1]
-    import Vow.Conformable.Vow.List, only: [distinct_problems: 5]
+    import Vow.FunctionWrapper, only: [wrap: 1]
     alias Vow.ConformError
 
     def conform(spec, spec_path, via, value_path, value) when is_map(value) do
@@ -55,10 +50,6 @@ defmodule Vow.Map do
         {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
       end)
       |> ConformError.add_problems(size_problems(spec, spec_path, via, value_path, value), true)
-      |> ConformError.add_problems(
-        distinct_problems(spec, spec_path, via, value_path, value),
-        true
-      )
       |> case do
         {:ok, conformed} -> {:ok, Enum.into(conformed, %{})}
         {:error, problems} -> {:error, problems}
@@ -101,30 +92,28 @@ defmodule Vow.Map do
             ConformError.Problem.t()
           ]
     defp size_problems(spec, spec_path, via, value_path, value) do
-      case {value, spec.min_length, spec.max_length} do
-        {map, min, nil} when map_size(map) < min ->
-          [ConformError.new_problem(f(&(map_size(&1) >= min)), spec_path, via, value_path, value)]
-
-        {_map, _min, nil} ->
-          []
-
-        {map, min, max} when map_size(map) < min and map_size(map) > max ->
+      case {spec.min_length, spec.max_length} do
+        {min, _max} when map_size(value) < min ->
           [
             ConformError.new_problem(
-              f(&(map_size(&1) >= min)),
+              wrap(&(map_size(&1) >= min)),
               spec_path,
               via,
               value_path,
               value
-            ),
-            ConformError.new_problem(f(&(map_size(&1) <= max)), spec_path, via, value_path, value)
+            )
           ]
 
-        {map, min, _max} when map_size(map) < min ->
-          [ConformError.new_problem(f(&(map_size(&1) >= min)), spec_path, via, value_path, value)]
-
-        {map, _min, max} when map_size(map) > max ->
-          [ConformError.new_problem(f(&(map_size(&1) <= max)), spec_path, via, value_path, value)]
+        {_min, max} when not is_nil(max) and map_size(value) > max ->
+          [
+            ConformError.new_problem(
+              wrap(&(map_size(&1) <= max)),
+              spec_path,
+              via,
+              value_path,
+              value
+            )
+          ]
 
         _ ->
           []

@@ -84,7 +84,7 @@ defmodule Vow.ZeroOrMore do
             via,
             RegexOp.inc_path(value_path),
             rest,
-            acc ++ conformed
+            append(acc, conformed)
           )
       end
     end
@@ -106,11 +106,19 @@ defmodule Vow.ZeroOrMore do
     defp conform_non_regex(spec, spec_path, via, value_path, [h | t] = value, pos, acc) do
       case Conformable.conform(spec, spec_path, via, value_path ++ [pos], h) do
         {:error, _problems} ->
-          {:ok, acc, value}
+          {:ok, Enum.reverse(acc), value}
 
         {:ok, c} ->
           conform_non_regex(spec, spec_path, via, value_path, t, pos + 1, [c | acc])
       end
     end
+
+    @spec append(list | term, list | term) :: list
+    def append([], []), do: []
+    def append([_ | _] = l, []), do: l
+    def append([], [_ | _] = r), do: r
+    def append([_ | _] = l, [_ | _] = r), do: l ++ r
+    def append(l, r) when is_list(r), do: [l | r]
+    def append(l, r) when is_list(l), do: l ++ [r]
   end
 end

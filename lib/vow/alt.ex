@@ -37,15 +37,27 @@ defmodule Vow.Alt do
               {:error, problems} -> {:error, pblms ++ problems}
             end
           else
-            case Conformable.conform(
-                   s,
-                   spec_path ++ [k],
-                   via,
-                   RegexOp.uninit_path(value_path),
-                   value
-                 ) do
-              {:ok, conformed} -> {:ok, %{k => conformed}, []}
-              {:error, problems} -> {:error, pblms ++ problems}
+            value_path = RegexOp.uninit_path(value_path)
+
+            with [h | t] <- value,
+                 {:ok, conformed} <- Conformable.conform(s, spec_path ++ [k], via, value_path, h) do
+              {:ok, [%{k => conformed}], t}
+            else
+              {:error, problems} ->
+                {:error, pblms ++ problems}
+
+              [] ->
+                {:error,
+                 [
+                   ConformError.new_problem(
+                     s,
+                     spec_path,
+                     via,
+                     value_path,
+                     [],
+                     "Insufficient Data"
+                   )
+                 ]}
             end
           end
       end)

@@ -44,53 +44,19 @@ defmodule Vow.Cat do
     @moduledoc false
 
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    alias Vow.{Conformable, ConformError, RegexOp}
+    alias Vow.{Conformable, ConformError, RegexOp, RegexOperator}
 
-    def conform(%@for{specs: specs}, spec_path, via, value_path, []) do
-      Enum.reduce(specs, {:ok, %{}, []}, fn
-        _, {:error, pblms} ->
-          {:error, pblms}
+    @type result ::
+            {:ok, RegexOperator.conformed(), RegexOperator.rest()}
+            | {:error, [ConformError.Problem.t()]}
 
-        {k, s}, {:ok, acc, r} ->
-          if Vow.regex?(s) do
-            case @protocol.conform(s, spec_path ++ [k], via, value_path, r) do
-              {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
-              {:error, problems} -> {:error, problems}
-            end
-          else
-            {:error,
-             [
-               ConformError.new_problem(
-                 :insufficient_data,
-                 spec_path,
-                 via,
-                 RegexOp.uninit_path(value_path),
-                 []
-               )
-             ]}
-          end
-      end)
-    end
-
-    def conform(%@for{specs: specs}, spec_path, via, value_path, [h | t] = value)
-        when length(value) >= 0 do
-      Enum.reduce(specs, {:ok, %{}, value}, fn
-        _, {:error, pblms} ->
-          {:error, pblms}
-
-        {k, s}, {:ok, acc, r} ->
-          if Vow.regex?(s) do
-            case @protocol.conform(s, spec_path ++ [k], via, value_path, r) do
-              {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
-              {:error, problems} -> {:error, problems}
-            end
-          else
-            case Conformable.conform(s, spec_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
-              {:ok, c} -> {:ok, Map.put(acc, k, c), t}
-              {:error, problems} -> {:error, problems}
-            end
-          end
-      end)
+    def conform(%@for{specs: specs} = spec, spec_path, via, value_path, value)
+        when is_list(value) and length(value) >= 0 do
+      Enum.reduce(
+        specs,
+        {:ok, %{}, value},
+        conform_reducer(spec, spec_path, via, value_path)
+      )
     end
 
     def conform(_spec, spec_path, via, value_path, value) when is_list(value) do
@@ -117,6 +83,59 @@ defmodule Vow.Cat do
            value
          )
        ]}
+    end
+
+    @spec conform_reducer(Vow.t(), [term], [Vow.Ref.t()], [term]) ::
+            ({atom, Vow.t()}, result -> result)
+    defp conform_reducer(spec, spec_path, via, value_path) do
+      &conform_reducer(spec, spec_path, via, value_path, &1, &2)
+    end
+
+    @spec conform_reducer(
+            Vow.t(),
+            [term],
+            [Vow.Ref.t()],
+            [term],
+            {atom, Vow.t()},
+            result
+          ) :: result
+    defp conform_reducer(_, _, _, _, _, {:error, pblms}) do
+      {:error, pblms}
+    end
+
+    defp conform_reducer(spec, spec_path, via, value_path, {k, s}, {:ok, acc, []}) do
+      if Vow.regex?(s) do
+        case @protocol.conform(s, spec_path ++ [k], via, value_path, []) do
+          {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
+          {:error, problems} -> {:error, problems}
+        end
+      else
+        {:error,
+         [
+           ConformError.new_problem(
+             spec,
+             spec_path,
+             via,
+             RegexOp.uninit_path(value_path),
+             [],
+             "Insufficient Data"
+           )
+         ]}
+      end
+    end
+
+    defp conform_reducer(_spec, spec_path, via, value_path, {k, s}, {:ok, acc, [h | t] = r}) do
+      if Vow.regex?(s) do
+        case @protocol.conform(s, spec_path ++ [k], via, value_path, r) do
+          {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
+          {:error, problems} -> {:error, problems}
+        end
+      else
+        case Conformable.conform(s, spec_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
+          {:ok, c} -> {:ok, Map.put(acc, k, c), t}
+          {:error, problems} -> {:error, problems}
+        end
+      end
     end
   end
 end

@@ -28,8 +28,8 @@ defmodule Vow.Maybe do
         @protocol.conform(spec, spec_path, via, value_path, value)
       else
         case Conformable.conform(spec, spec_path, via, value_path, h) do
-          {:ok, conformable} -> {:ok, conformable, t}
-          {:error, problems} -> {:error, problems}
+          {:ok, conformable} -> {:ok, [conformable], t}
+          {:error, _problems} -> {:ok, [], value}
         end
       end
     end

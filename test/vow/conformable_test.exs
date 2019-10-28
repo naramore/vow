@@ -177,7 +177,8 @@ defmodule Vow.ConformableTest do
 
     property "non-date values result in error" do
       check all range <- VowData.date_range(),
-                x <- one_of([float(), boolean(), atom(:alphanumeric), list_of(term())]) do
+                x <- one_of([float(), boolean(), atom(:alphanumeric), list_of(term())]),
+                max_runs: 25 do
         assert match?({:error, _}, Vow.conform(range, x))
       end
     end
@@ -248,12 +249,29 @@ defmodule Vow.ConformableTest do
         assert match?({:error, _}, Vow.conform(spec, value))
       end
     end
+
+    property "invalid list spec -> continues to look for problems" do
+      check all value <- tuple({integer(), float(), boolean()}) |> map(&Tuple.to_list/1) do
+        spec = [&is_integer/1, &is_bitstring/1, &is_boolean/1]
+        assert match?({:error, _}, Vow.conform(spec, value))
+      end
+    end
+
+    property "valid (simple) improper spec succeeds" do
+      check all value <-
+                  tuple({integer(), string(:ascii), boolean()})
+                  |> map(fn {i, s, b} -> [i, s | b] end) do
+        spec = [&is_integer/1, (&is_bitstring/1) | &is_boolean/1]
+        assert match?({:ok, _}, Vow.conform(spec, value))
+      end
+    end
   end
 
   describe "Conformable.Tuple.conform/5" do
     property "if value is not a tuple -> error" do
       check all spec <- list_of(constant(nil)),
-                value <- filter(term(), &(not is_tuple(&1))) do
+                value <- filter(term(), &(not is_tuple(&1))),
+                max_runs: 25 do
         assert match?({:error, _}, Vow.conform(List.to_tuple(spec), value))
       end
     end
@@ -271,7 +289,8 @@ defmodule Vow.ConformableTest do
   describe "Conformable.Map.conform/5" do
     property "if value is not a map -> error" do
       check all spec <- map_of(atom(:alphanumeric), constant(nil)),
-                value <- filter(term(), &(not is_map(&1))) do
+                value <- filter(term(), &(not is_map(&1))),
+                max_runs: 25 do
         assert match?({:error, _}, Vow.conform(spec, value))
       end
     end
@@ -279,7 +298,8 @@ defmodule Vow.ConformableTest do
     property "if value and spec do not have the same size -> error" do
       check all spec <- map_of(atom(:alphanumeric), constant(nil)),
                 value <-
-                  filter(map_of(atom(:alphanumeric), term()), &(map_size(&1) != map_size(spec))) do
+                  filter(map_of(atom(:alphanumeric), term()), &(map_size(&1) != map_size(spec))),
+                max_runs: 25 do
         assert match?({:error, _}, Vow.conform(spec, value))
       end
     end
@@ -291,7 +311,8 @@ defmodule Vow.ConformableTest do
                   filter(
                     map_of(atom(:alphanumeric), term(), length: length),
                     &(not Vow.Conformable.Map.all_keys?(&1, spec))
-                  ) do
+                  ),
+                max_runs: 25 do
         assert match?({:error, _}, Vow.conform(spec, value))
       end
     end
@@ -299,8 +320,23 @@ defmodule Vow.ConformableTest do
     property "valid map spec -> conformed value as map w/ same keys" do
       check all spec <- map_of(atom(:alphanumeric), constant(&is_float/1), min_length: 1),
                 vs <- list_of(float(), length: map_size(spec)),
-                value = Enum.zip(Map.keys(spec), vs) |> Enum.into(%{}) do
+                value = Enum.zip(Map.keys(spec), vs) |> Enum.into(%{}),
+                max_runs: 25 do
         assert match?({:ok, ^value}, Vow.conform(spec, value))
+      end
+    end
+
+    property "error problems should have keys" do
+      check all k <- atom(:alphanumeric),
+                v <- string(:ascii) do
+        value = %{k => v}
+        spec = %{k => &is_float/1}
+        {:error, reason} = Vow.conform(spec, value)
+
+        Enum.each(reason.problems, fn p ->
+          assert Enum.all?(p.spec_path, &(&1 == k))
+          assert Enum.all?(p.value_path, &(&1 == k))
+        end)
       end
     end
   end

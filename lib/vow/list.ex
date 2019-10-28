@@ -14,7 +14,7 @@ defmodule Vow.List do
         }
 
   @spec new(Vow.t(), non_neg_integer, non_neg_integer | nil, boolean) :: t
-  def new(spec, min_length \\ 0, max_length \\ nil, distinct? \\ false) do
+  def new(spec, min_length, max_length, distinct?) do
     %__MODULE__{
       spec: spec,
       min_length: min_length,
@@ -26,7 +26,7 @@ defmodule Vow.List do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    import Vow.Func, only: [f: 1]
+    import Vow.FunctionWrapper, only: [wrap: 1]
     alias Vow.ConformError
 
     def conform(spec, spec_path, via, value_path, value)
@@ -79,20 +79,39 @@ defmodule Vow.List do
     defp length_problems(spec, spec_path, via, value_path, value) do
       case {spec.min_length, spec.max_length} do
         {min, _max} when length(value) < min ->
-          [ConformError.new_problem(f(&(length(&1) >= min)), spec_path, via, value_path, value)]
+          [
+            ConformError.new_problem(
+              wrap(&(length(&1) >= min)),
+              spec_path,
+              via,
+              value_path,
+              value
+            )
+          ]
 
         {_min, max} when not is_nil(max) and length(value) > max ->
-          [ConformError.new_problem(f(&(length(&1) <= max)), spec_path, via, value_path, value)]
+          [
+            ConformError.new_problem(
+              wrap(&(length(&1) <= max)),
+              spec_path,
+              via,
+              value_path,
+              value
+            )
+          ]
 
         _ ->
           []
       end
     end
 
+    # NOTE: only used as a predicate indirectly from problem creation
+    # coveralls-ignore-start
     @spec proper_list?(term) :: boolean
     def proper_list?([]), do: true
     def proper_list?([_ | t]) when is_list(t), do: proper_list?(t)
     def proper_list?(_), do: false
+    # coveralls-ignore-stop
 
     @spec distinct?(Enum.t()) :: boolean
     def distinct?(enum) do

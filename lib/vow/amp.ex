@@ -18,19 +18,9 @@ defmodule Vow.Amp do
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
     alias Vow.{Conformable, ConformError, RegexOp}
 
-    def conform(%@for{specs: []}, _spec_path, _via, _value_path, value) do
+    def conform(%@for{specs: []}, _spec_path, _via, _value_path, value)
+        when is_list(value) and length(value) >= 0 do
       {:ok, value, []}
-    end
-
-    def conform(%@for{specs: [spec]}, spec_path, via, value_path, value) do
-      if Vow.regex?(spec) do
-        @protocol.conform(spec, spec_path, via, value_path, value)
-      else
-        case Conformable.conform(spec, spec_path, via, RegexOp.uninit_path(value_path), value) do
-          {:ok, conformed} -> {:ok, conformed, []}
-          {:error, problems} -> {:error, problems}
-        end
-      end
     end
 
     def conform(%@for{specs: specs}, spec_path, via, value_path, value)
@@ -39,8 +29,11 @@ defmodule Vow.Amp do
         _, {:error, pblms} ->
           {:error, pblms}
 
-        s, {:ok, c, _} ->
-          @protocol.conform(@for.new([s]), spec_path, via, value_path, c)
+        s, {:ok, c, rest} ->
+          case conform_impl(s, spec_path, via, value_path, c) do
+            {:ok, conformed, tail} -> {:ok, conformed, tail ++ rest}
+            {:error, problems} -> {:error, problems}
+          end
       end)
     end
 
@@ -68,6 +61,17 @@ defmodule Vow.Amp do
            value
          )
        ]}
+    end
+
+    defp conform_impl(spec, spec_path, via, value_path, value) do
+      if Vow.regex?(spec) do
+        @protocol.conform(spec, spec_path, via, value_path, value)
+      else
+        case Conformable.conform(spec, spec_path, via, RegexOp.uninit_path(value_path), value) do
+          {:ok, conformed} -> {:ok, [conformed], []}
+          {:error, problems} -> {:error, problems}
+        end
+      end
     end
   end
 end

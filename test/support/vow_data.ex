@@ -35,7 +35,7 @@ defmodule VowData do
     ])
   end
 
-  @spec recur_spec(keyword) :: stream_data(Vow.t())
+  @spec recur_spec(stream_data | nil, keyword) :: stream_data(Vow.t())
   def recur_spec(child_data \\ nil, opts \\ []) do
     child_data = process(child_data, opts)
 
@@ -57,6 +57,20 @@ defmodule VowData do
       one_of(child_data, opts)
       # keys(child_data, opts),
       # ref(child_data, opts)
+    ])
+  end
+
+  @spec regex_spec(stream_data | nil, keyword) :: stream_data(Vow.t())
+  def regex_spec(child_data \\ nil, opts \\ []) do
+    child_data = process(child_data, opts)
+
+    StreamData.one_of([
+      alt(child_data, opts),
+      amp(child_data, opts),
+      cat(child_data, opts),
+      maybe(child_data, opts),
+      oom(child_data, opts),
+      zom(child_data, opts)
     ])
   end
 
@@ -89,10 +103,10 @@ defmodule VowData do
     ])
   end
 
-  @spec func(keyword) :: stream_data(Vow.Func.t())
+  @spec func(keyword) :: stream_data(Vow.FunctionWrapper.t())
   def func(opts \\ []) do
     pred_fun(opts)
-    |> StreamData.map(&Vow.Func.new(&1, ~s<¯\_(ツ)_/¯>))
+    |> StreamData.map(&Vow.FunctionWrapper.new(&1, ~s<¯\_(ツ)_/¯>))
   end
 
   @spec mapset(keyword) :: stream_data(MapSet.t())

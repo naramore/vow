@@ -26,8 +26,8 @@ end
 
 - [ ] documentation
 - [ ] tests
-- [ ] implement `Spec.Keys`
-- [ ] add `unform` to the `Spec.Conformable` (and `Spec.RegexOp.Conformable`?) protocol(s)
-- [ ] implement `Spec.Generatable` for all `Spec.Conformable`'s
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
+- [ ] implement `Vow.Keys`
+- [ ] implement `Vow.Generatable` for all `Vow.Conformable`'s
+- [ ] add `unform` to the `Vow.Conformable` (and `Vow.RegexOp.Conformable`?) protocol(s)
 - [ ] change variable names refering to `spec`(s) to `vow`(s)?

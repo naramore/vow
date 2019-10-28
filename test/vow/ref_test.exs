@@ -11,6 +11,11 @@ defmodule Vow.RefTest do
       {:ok, %{}}
     end
 
+    test "given non-atom(s) resolve errors" do
+      ref = sref(VowRef, 42)
+      assert match?({:error, [{_, nil}]}, Vow.Ref.resolve(ref))
+    end
+
     test "fun does not exist -> error" do
       ref = sref(VowRef, :not_there)
       assert match?({:error, [{_, nil}]}, Vow.Ref.resolve(ref))
@@ -42,8 +47,23 @@ defmodule Vow.RefTest do
   end
 
   describe "Vow.Conformable.Vow.Ref.conform/5" do
+    property "successfully conform against referenced spec" do
+      check all value <- term() do
+        spec = sref(VowRef, :any)
+        assert match?({:ok, _}, Vow.conform(spec, value))
+      end
+    end
+
+    property "fail to conform against referenced spec" do
+      check all value <- term() do
+        spec = sref(VowRef, :none)
+        assert match?({:error, _}, Vow.conform(spec, value))
+      end
+    end
+
     property "#SRef<*spec*> == *spec*" do
-      check all data <- VowRef.clj_spec_gen() do
+      check all data <- VowRef.clj_spec_gen(),
+                max_runs: 25 do
         ref = sref(VowRef, :clj_spec)
         yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
         nay_ref = Vow.conform(VowRef.clj_spec(), data) |> strip_via_and_spec()
@@ -53,9 +73,9 @@ defmodule Vow.RefTest do
   end
 
   describe "Vow.RegexOperator.Vow.Ref.conform/5" do
-    @tag skip: true
     property "#SRef<*regex-op*> == *regex-op* when called from a regex-op" do
-      check all data <- VowRef.clj_regexop_gen() do
+      check all data <- VowRef.clj_regexop_gen(),
+                max_runs: 25 do
         ref = sref(VowRef, :clj_regexop)
         yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
         nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_via_and_spec()

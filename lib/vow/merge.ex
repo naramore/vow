@@ -11,7 +11,7 @@ defmodule Vow.Merge do
 
   @spec new([Vow.merged()], (key, value, value -> value) | nil) :: t
         when key: term, value: term
-  def new(specs, merge_fun \\ nil) do
+  def new(specs, merge_fun) do
     %__MODULE__{
       specs: specs,
       merge_fun: merge_fun

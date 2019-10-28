@@ -28,11 +28,11 @@ defmodule Vow.MixProject do
       preferred_cli_env: [
         coveralls: :test,
         "coveralls.html": :test,
-        "coveralls.json": :test,
+        "coveralls.json": :test
       ],
       test_coverage: [
         tool: ExCoveralls,
-        summary: [threshold: 90]
+        summary: [threshold: 85]
       ],
       dialyzer: [
         flags: [:unmatched_returns, :error_handling, :race_conditions, :no_opaque],

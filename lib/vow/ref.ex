@@ -3,7 +3,7 @@ defmodule Vow.Ref do
   TODO
   """
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
 
   defstruct [:mod, :fun]
 
@@ -19,7 +19,7 @@ defmodule Vow.Ref do
     if function_exported?(mod, fun, 0) do
       {:ok, apply(mod, fun, [])}
     else
-      {:error, [{f(&function_exported?(&1.mod, &1.fun, 0)), nil}]}
+      {:error, [{wrap(&function_exported?(&1.mod, &1.fun, 0)), nil}]}
     end
   rescue
     reason -> {:error, [{nil, reason}]}
@@ -29,7 +29,7 @@ defmodule Vow.Ref do
   end
 
   def resolve(_ref) do
-    {:error, [{f(&(is_atom(&1.mod) and is_atom(&1.fun))), nil}]}
+    {:error, [{wrap(&(is_atom(&1.mod) and is_atom(&1.fun))), nil}]}
   end
 
   @doc """
@@ -87,6 +87,7 @@ defmodule Vow.Ref do
     end
   end
 
+  # coveralls-ignore-start
   defimpl Inspect do
     @moduledoc false
 
@@ -94,4 +95,6 @@ defmodule Vow.Ref do
       "#SRef<#{mod}.#{fun}>"
     end
   end
+
+  # coveralls-ignore-stop
 end

@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - dependabot badge
 - more tests!
 
+### Changed
+- `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`
+- coveralls config to ignore wrap macro for coverage purposes
+
 ## [0.0.2] - 2019-10-23
 ### Added
 - release documentation so I don't forget

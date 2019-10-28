@@ -54,6 +54,7 @@ defmodule Vow.ConformError do
   def add_problems({:error, problems}, [_ | _] = more_problems, false),
     do: {:error, problems ++ more_problems}
 
+  # coveralls-ignore-start
   defimpl Inspect do
     @moduledoc false
 
@@ -70,6 +71,8 @@ defmodule Vow.ConformError do
       container_doc("#ConformError<", coll, ">", opts, fun, breaK: :strict, separator: ",")
     end
   end
+
+  # coveralls-ignore-stop
 
   defmodule Problem do
     @moduledoc false
@@ -115,6 +118,7 @@ defmodule Vow.ConformError do
           |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
     end
 
+    # coveralls-ignore-start
     defimpl Inspect do
       @moduledoc false
 
@@ -134,5 +138,7 @@ defmodule Vow.ConformError do
         container_doc("#Problem<", coll, ">", opts, fun, break: :flex, separator: ",")
       end
     end
+
+    # coveralls-ignore-stop
   end
 end

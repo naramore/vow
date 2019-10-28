@@ -15,8 +15,8 @@ defmodule Vow.OneOrMore do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Vow.Func, only: [f: 1]
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
+    import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
     alias Vow.{Conformable, ConformError, RegexOp}
 
     def conform(%@for{spec: spec}, spec_path, via, value_path, value)
@@ -34,10 +34,10 @@ defmodule Vow.OneOrMore do
                  rest
                ) do
             {:ok, ct, rest} ->
-              {:ok, ch ++ ct, rest}
+              {:ok, append(ch, ct), rest}
 
-            {:error, problems} ->
-              {:error, adjust_problems(problems, length(value_path) - 1)}
+            {:error, _problems} ->
+              {:ok, ch, rest}
           end
       end
     end
@@ -70,8 +70,18 @@ defmodule Vow.OneOrMore do
 
     @spec conform_first(Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::
             {:ok, conformed :: [term], rest :: [term]} | {:error, [ConformError.Problem.t()]}
-    defp conform_first(_spec, spec_path, via, value_path, []) do
-      {:error, [ConformError.new_problem(f(&(length(&1) > 0)), spec_path, via, value_path, [])]}
+    defp conform_first(spec, spec_path, via, value_path, []) do
+      {:error,
+       [
+         ConformError.new_problem(
+           spec,
+           spec_path,
+           via,
+           RegexOp.uninit_path(value_path),
+           [],
+           "Insufficient Data"
+         )
+       ]}
     end
 
     defp conform_first(spec, spec_path, via, value_path, [h | t] = value) do
@@ -83,17 +93,6 @@ defmodule Vow.OneOrMore do
           {:error, problems} -> {:error, problems}
         end
       end
-    end
-
-    @spec adjust_problems([ConformError.Problem.t()], non_neg_integer) :: [
-            ConformError.Problem.t()
-          ]
-    defp adjust_problems(problems, index) do
-      update_in(
-        problems,
-        [Access.all(), :value_path, Access.at(index)],
-        fn i -> i + 1 end
-      )
     end
   end
 end

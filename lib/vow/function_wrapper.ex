@@ -1,4 +1,4 @@
-defmodule Vow.Func do
+defmodule Vow.FunctionWrapper do
   @moduledoc """
   TODO
   """
@@ -21,8 +21,8 @@ defmodule Vow.Func do
 
   @doc """
   """
-  @spec f((term -> boolean)) :: Macro.t()
-  defmacro f(function) do
+  @spec wrap((term -> boolean)) :: Macro.t()
+  defmacro wrap(function) do
     func = build(function)
 
     quote do
@@ -36,10 +36,14 @@ defmodule Vow.Func do
     form = Macro.to_string(quoted)
 
     quote do
-      %Vow.Func{function: unquote(quoted), form: unquote(form)}
+      %Vow.FunctionWrapper{
+        function: unquote(quoted),
+        form: unquote(form)
+      }
     end
   end
 
+  # coveralls-ignore-start
   defimpl Inspect do
     @moduledoc false
 
@@ -47,6 +51,8 @@ defmodule Vow.Func do
       to_string(form)
     end
   end
+
+  # coveralls-ignore-stop
 
   defimpl Vow.Conformable do
     @moduledoc false

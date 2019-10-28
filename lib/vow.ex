@@ -51,16 +51,6 @@ defmodule Vow do
 
   @doc """
   """
-  @spec explain(t, value :: term) :: ConformError.t() | nil
-  def explain(spec, value) do
-    case conform(spec, value) do
-      {:ok, _} -> nil
-      {:error, reason} -> reason
-    end
-  end
-
-  @doc """
-  """
   @spec set(Enum.t()) :: MapSet.t()
   def set(enumerable), do: MapSet.new(enumerable)
 
@@ -158,10 +148,9 @@ defmodule Vow do
   """
   @spec map_of(key_spec :: t, value_spec :: t, map_opts) :: t
   def map_of(key_spec, value_spec, opts \\ []) do
-    distinct? = Keyword.get(opts, :distinct?, false)
     conform_keys? = Keyword.get(opts, :conform_keys?, false)
     {min, max} = get_range(opts)
-    Vow.Map.new(key_spec, value_spec, min, max, distinct?, conform_keys?)
+    Vow.Map.new(key_spec, value_spec, min, max, conform_keys?)
   end
 
   @typedoc """

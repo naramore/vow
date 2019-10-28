@@ -1,7 +1,7 @@
 defmodule VowRef do
   @moduledoc false
 
-  import Vow.Func, only: [f: 1]
+  import Vow.FunctionWrapper, only: [wrap: 1]
   alias StreamData, as: SD
 
   def one_arity(_), do: nil
@@ -15,6 +15,7 @@ defmodule VowRef do
   def exit_abnormal!, do: exit(:abnormal)
 
   def any, do: fn _ -> true end
+  def none, do: fn _ -> false end
   def map_spec, do: Vow.map_of(&is_atom/1, &is_bitstring/1)
 
   def clj_spec do
@@ -24,7 +25,7 @@ defmodule VowRef do
         s:
           Vow.also([
             Vow.oom(&is_bitstring/1),
-            f(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
+            wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
           ])
       )
     )
@@ -47,7 +48,7 @@ defmodule VowRef do
         s:
           Vow.amp([
             Vow.oom(&is_bitstring/1),
-            f(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
+            wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
           ])
       )
     )
