@@ -33,8 +33,7 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
         {:error, problems}
 
       {:ok, _conformed, [_ | _]} ->
-        {:error,
-         [ConformError.new_problem(:insufficient_data, vow_path, via, value_path, value)]}
+        {:error, [ConformError.new_problem(:insufficient_data, vow_path, via, value_path, value)]}
     end
   end
 
