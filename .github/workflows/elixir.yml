@@ -34,12 +34,6 @@ jobs:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ./cover/excoveralls.json
 
-    - name: Documentation Improvements
-      if: always()
-      env:
-        MIX_ENV: docs
-      run: mix inch
-
     - name: Documentation Coverage
       if: always()
       env:
@@ -65,7 +59,3 @@ jobs:
     - name: Run Tests
       if: always()
       run: mix test
-
-    - name: Check for Discrepancies
-      if: always()
-      run: mix dialyzer
