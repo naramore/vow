@@ -12,21 +12,21 @@ defmodule Vow do
   @doc """
   """
   @spec conform(t, value :: term) :: {:ok, Conformable.conformed()} | {:error, ConformError.t()}
-  def conform(spec, value) do
-    case Conformable.conform(spec, [], [], [], value) do
+  def conform(vow, value) do
+    case Conformable.conform(vow, [], [], [], value) do
       {:ok, conformed} ->
         {:ok, conformed}
 
       {:error, problems} ->
-        {:error, ConformError.new(problems, spec, value)}
+        {:error, ConformError.new(problems, vow, value)}
     end
   end
 
   @doc """
   """
   @spec conform!(t, value :: term) :: Conformable.conformed() | no_return
-  def conform!(spec, value) do
-    case conform(spec, value) do
+  def conform!(vow, value) do
+    case conform(vow, value) do
       {:ok, conformed} -> conformed
       {:error, reason} -> raise reason
     end
@@ -35,8 +35,8 @@ defmodule Vow do
   @doc """
   """
   @spec valid?(t, value :: term) :: boolean
-  def valid?(spec, value) do
-    case conform(spec, value) do
+  def valid?(vow, value) do
+    case conform(vow, value) do
       {:ok, _} -> true
       {:error, _} -> false
     end
@@ -45,8 +45,8 @@ defmodule Vow do
   @doc """
   """
   @spec invalid?(t, value :: term) :: boolean
-  def invalid?(spec, value) do
-    not valid?(spec, value)
+  def invalid?(vow, value) do
+    not valid?(vow, value)
   end
 
   @doc """
@@ -67,30 +67,30 @@ defmodule Vow do
   @doc """
   """
   @spec also([t]) :: t
-  def also(specs) do
-    Vow.Also.new(specs)
+  def also(vows) do
+    Vow.Also.new(vows)
   end
 
   @doc """
   """
   @spec also(t, t) :: t
-  def also(spec1, spec2) do
-    also([spec1, spec2])
+  def also(vow1, vow2) do
+    also([vow1, vow2])
   end
 
   @doc """
   """
   @spec one_of([{atom, t}, ...]) :: t | no_return
-  def one_of(named_specs)
-      when is_list(named_specs) and length(named_specs) > 0 do
-    Vow.OneOf.new(named_specs)
+  def one_of(named_vows)
+      when is_list(named_vows) and length(named_vows) > 0 do
+    Vow.OneOf.new(named_vows)
   end
 
   @doc """
   """
   @spec nilable(t) :: t
-  def nilable(spec) do
-    Vow.Nilable.new(spec)
+  def nilable(vow) do
+    Vow.Nilable.new(vow)
   end
 
   @typedoc """
@@ -108,10 +108,10 @@ defmodule Vow do
   @doc """
   """
   @spec list_of(t, list_opts) :: t
-  def list_of(spec, opts \\ []) do
+  def list_of(vow, opts \\ []) do
     distinct? = Keyword.get(opts, :distinct?, false)
     {min, max} = get_range(opts)
-    Vow.List.new(spec, min, max, distinct?)
+    Vow.List.new(vow, min, max, distinct?)
   end
 
   @doc false
@@ -130,8 +130,8 @@ defmodule Vow do
   @doc """
   """
   @spec keyword_of(t, list_opts) :: t
-  def keyword_of(spec, opts \\ []) do
-    list_of({&is_atom/1, spec}, opts)
+  def keyword_of(vow, opts \\ []) do
+    list_of({&is_atom/1, vow}, opts)
   end
 
   @typedoc """
@@ -146,11 +146,11 @@ defmodule Vow do
 
   @doc """
   """
-  @spec map_of(key_spec :: t, value_spec :: t, map_opts) :: t
-  def map_of(key_spec, value_spec, opts \\ []) do
+  @spec map_of(key_vow :: t, value_vow :: t, map_opts) :: t
+  def map_of(key_vow, value_vow, opts \\ []) do
     conform_keys? = Keyword.get(opts, :conform_keys?, false)
     {min, max} = get_range(opts)
-    Vow.Map.new(key_spec, value_spec, min, max, conform_keys?)
+    Vow.Map.new(key_vow, value_vow, min, max, conform_keys?)
   end
 
   @typedoc """
@@ -167,25 +167,25 @@ defmodule Vow do
   @doc """
   """
   @spec merge([merged], (key, value, value -> value) | nil) :: t when key: term, value: term
-  def merge(specs, merge_fun \\ nil) do
-    Vow.Merge.new(specs, merge_fun)
+  def merge(vows, merge_fun \\ nil) do
+    Vow.Merge.new(vows, merge_fun)
   end
 
   @typedoc """
   """
-  @type spec_ref :: atom | {module, atom} | Vow.Ref.t()
+  @type vow_ref :: atom | {module, atom} | Vow.Ref.t()
 
   @typedoc """
   """
-  @type spec_ref_expr ::
-          spec_ref
-          | {:and | :or, [spec_ref_expr, ...]}
+  @type vow_ref_expr ::
+          vow_ref
+          | {:and | :or, [vow_ref_expr, ...]}
 
   @typedoc """
   """
   @type key_opt ::
-          {:required, [spec_ref_expr]}
-          | {:optional, [spec_ref_expr]}
+          {:required, [vow_ref_expr]}
+          | {:optional, [vow_ref_expr]}
           | {:into, [] | %{}}
 
   @typedoc """
@@ -202,8 +202,8 @@ defmodule Vow do
   @doc """
   """
   @spec regex?(t) :: boolean
-  def regex?(spec) do
-    case Vow.RegexOperator.impl_for(spec) do
+  def regex?(vow) do
+    case Vow.RegexOperator.impl_for(vow) do
       nil -> false
       _ -> true
     end
@@ -212,84 +212,84 @@ defmodule Vow do
   @doc """
   """
   @spec amp([t]) :: t
-  def amp(specs) do
-    Vow.Amp.new(specs)
+  def amp(vows) do
+    Vow.Amp.new(vows)
   end
 
   @doc """
   """
   @spec amp(t, t) :: t
-  def amp(spec1, spec2) do
-    amp([spec1, spec2])
+  def amp(vow1, vow2) do
+    amp([vow1, vow2])
   end
 
   @doc """
   """
   @spec maybe(t) :: t
-  def maybe(spec) do
-    Vow.Maybe.new(spec)
+  def maybe(vow) do
+    Vow.Maybe.new(vow)
   end
 
   @doc """
   """
   @spec one_or_more(t) :: t
-  def one_or_more(spec) do
-    Vow.OneOrMore.new(spec)
+  def one_or_more(vow) do
+    Vow.OneOrMore.new(vow)
   end
 
   @doc """
   """
   @spec oom(t) :: t
-  def oom(spec), do: one_or_more(spec)
+  def oom(vow), do: one_or_more(vow)
 
   @doc """
   """
   @spec zero_or_more(t) :: t
-  def zero_or_more(spec) do
-    Vow.ZeroOrMore.new(spec)
+  def zero_or_more(vow) do
+    Vow.ZeroOrMore.new(vow)
   end
 
   @doc """
   """
   @spec zom(t) :: t
-  def zom(spec), do: zero_or_more(spec)
+  def zom(vow), do: zero_or_more(vow)
 
   @doc """
   """
   @spec alt([{atom, t}, ...]) :: t | no_return
-  def alt(named_specs)
-      when is_list(named_specs) and length(named_specs) > 0 do
-    Vow.Alt.new(named_specs)
+  def alt(named_vows)
+      when is_list(named_vows) and length(named_vows) > 0 do
+    Vow.Alt.new(named_vows)
   end
 
   @doc """
   """
   @spec cat([{atom, t}, ...]) :: t | no_return
-  def cat(named_specs)
-      when is_list(named_specs) and length(named_specs) > 0 do
-    Vow.Cat.new(named_specs)
+  def cat(named_vows)
+      when is_list(named_vows) and length(named_vows) > 0 do
+    Vow.Cat.new(named_vows)
   end
 
   @typedoc """
   """
-  @type fspec_opt ::
+  @type fvow_opt ::
           {:args, [t]}
           | {:ret, t}
           | {:fun, t}
 
   @typedoc """
   """
-  @type fspec_opts :: [fspec_opt]
+  @type fvow_opts :: [fvow_opt]
 
   @doc """
   """
-  @spec fspec(fspec_opts) :: t
-  def fspec(opts) do
+  @spec fvow(fvow_opts) :: t
+  def fvow(opts) do
     args = Keyword.get(opts, :args)
     ret = Keyword.get(opts, :ret)
     fun = Keyword.get(opts, :fun)
     Vow.Function.new(args, ret, fun)
   end
 
-  defdelegate conform_function(spec, function, args \\ []), to: Vow.Function, as: :conform
+  defdelegate conform_function(vow, function, args \\ []), to: Vow.Function, as: :conform
 end

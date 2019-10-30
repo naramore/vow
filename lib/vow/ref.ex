@@ -47,19 +47,19 @@ defmodule Vow.Ref do
 
     alias Vow.ConformError
 
-    def conform(ref, spec_path, via, value_path, value) do
+    def conform(ref, vow_path, via, value_path, value) do
       case @for.resolve(ref) do
         {:error, reasons} ->
           {:error,
            Enum.map(reasons, fn {p, r} ->
-             ConformError.new_problem(p, spec_path, via ++ [ref], value_path, value, r)
+             ConformError.new_problem(p, vow_path, via ++ [ref], value_path, value, r)
            end)}
 
-        {:ok, spec} ->
-          if Vow.regex?(spec) do
-            @protocol.conform(spec, spec_path, via ++ [ref], value_path, value)
+        {:ok, vow} ->
+          if Vow.regex?(vow) do
+            @protocol.conform(vow, vow_path, via ++ [ref], value_path, value)
           else
-            case Vow.Conformable.conform(spec, spec_path, via, value_path, value) do
+            case Vow.Conformable.conform(vow, vow_path, via, value_path, value) do
               {:ok, conformed} -> {:ok, conformed, []}
               {:error, problems} -> {:error, problems}
             end
@@ -73,15 +73,15 @@ defmodule Vow.Ref do
 
     alias Vow.ConformError
 
-    def conform(ref, spec_path, via, value_path, value) do
+    def conform(ref, vow_path, via, value_path, value) do
       case @for.resolve(ref) do
-        {:ok, spec} ->
-          @protocol.conform(spec, spec_path, via ++ [ref], value_path, value)
+        {:ok, vow} ->
+          @protocol.conform(vow, vow_path, via ++ [ref], value_path, value)
 
         {:error, reasons} ->
           {:error,
            Enum.map(reasons, fn r ->
-             ConformError.new_problem(r, spec_path, via ++ [ref], value_path, value)
+             ConformError.new_problem(r, vow_path, via ++ [ref], value_path, value)
            end)}
       end
     end

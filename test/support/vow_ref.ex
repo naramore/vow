@@ -16,9 +16,9 @@ defmodule VowRef do
 
   def any, do: fn _ -> true end
   def none, do: fn _ -> false end
-  def map_spec, do: Vow.map_of(&is_atom/1, &is_bitstring/1)
+  def map_vow, do: Vow.map_of(&is_atom/1, &is_bitstring/1)
 
-  def clj_spec do
+  def clj_vow do
     Vow.oom(
       Vow.alt(
         n: &is_number/1,
@@ -31,7 +31,7 @@ defmodule VowRef do
     )
   end
 
-  def clj_spec_gen do
+  def clj_vow_gen do
     SD.list_of(
       SD.one_of([
         SD.one_of([SD.integer(), SD.float()]),

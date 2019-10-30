@@ -1,22 +1,22 @@
 defmodule Vow.List do
   @moduledoc false
 
-  defstruct spec: nil,
+  defstruct vow: nil,
             min_length: 0,
             max_length: nil,
             distinct?: false
 
   @type t :: %__MODULE__{
-          spec: Vow.t(),
+          vow: Vow.t(),
           min_length: non_neg_integer,
           max_length: non_neg_integer | nil,
           distinct?: boolean
         }
 
   @spec new(Vow.t(), non_neg_integer, non_neg_integer | nil, boolean) :: t
-  def new(spec, min_length, max_length, distinct?) do
+  def new(vow, min_length, max_length, distinct?) do
     %__MODULE__{
-      spec: spec,
+      vow: vow,
       min_length: min_length,
       max_length: max_length,
       distinct?: distinct?
@@ -29,12 +29,12 @@ defmodule Vow.List do
     import Vow.FunctionWrapper, only: [wrap: 1]
     alias Vow.ConformError
 
-    def conform(spec, spec_path, via, value_path, value)
+    def conform(vow, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       value
       |> Enum.with_index()
       |> Enum.map(fn {e, i} ->
-        @protocol.conform(spec.spec, spec_path, via, value_path ++ [i], e)
+        @protocol.conform(vow.vow, vow_path, via, value_path ++ [i], e)
       end)
       |> Enum.reduce({:ok, []}, fn
         {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}
@@ -42,9 +42,9 @@ defmodule Vow.List do
         {:ok, _}, {:error, ps} -> {:error, ps}
         {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
       end)
-      |> ConformError.add_problems(length_problems(spec, spec_path, via, value_path, value), true)
+      |> ConformError.add_problems(length_problems(vow, vow_path, via, value_path, value), true)
       |> ConformError.add_problems(
-        distinct_problems(spec, spec_path, via, value_path, value),
+        distinct_problems(vow, vow_path, via, value_path, value),
         true
       )
       |> case do
@@ -53,21 +53,21 @@ defmodule Vow.List do
       end
     end
 
-    def conform(_spec, spec_path, via, value_path, value)
+    def conform(_vow, vow_path, via, value_path, value)
         when is_list(value) do
-      {:error, [ConformError.new_problem(&proper_list?/1, spec_path, via, value_path, value)]}
+      {:error, [ConformError.new_problem(&proper_list?/1, vow_path, via, value_path, value)]}
     end
 
-    def conform(_spec, spec_path, via, value_path, value) do
-      {:error, [ConformError.new_problem(&is_list/1, spec_path, via, value_path, value)]}
+    def conform(_vow, vow_path, via, value_path, value) do
+      {:error, [ConformError.new_problem(&is_list/1, vow_path, via, value_path, value)]}
     end
 
     @spec distinct_problems(Vow.t(), [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    def distinct_problems(spec, spec_path, via, value_path, value) do
-      if spec.distinct? and not distinct?(value) do
-        [ConformError.new_problem(&distinct?/1, spec_path, via, value_path, value)]
+    def distinct_problems(vow, vow_path, via, value_path, value) do
+      if vow.distinct? and not distinct?(value) do
+        [ConformError.new_problem(&distinct?/1, vow_path, via, value_path, value)]
       else
         []
       end
@@ -76,13 +76,13 @@ defmodule Vow.List do
     @spec length_problems(@for.t, [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp length_problems(spec, spec_path, via, value_path, value) do
-      case {spec.min_length, spec.max_length} do
+    defp length_problems(vow, vow_path, via, value_path, value) do
+      case {vow.min_length, vow.max_length} do
         {min, _max} when length(value) < min ->
           [
             ConformError.new_problem(
               wrap(&(length(&1) >= min)),
-              spec_path,
+              vow_path,
               via,
               value_path,
               value
@@ -93,7 +93,7 @@ defmodule Vow.List do
           [
             ConformError.new_problem(
               wrap(&(length(&1) <= max)),
-              spec_path,
+              vow_path,
               via,
               value_path,
               value

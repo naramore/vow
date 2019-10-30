@@ -51,39 +51,39 @@ defmodule Vow.Function do
   @spec conform(t, f, args :: [term]) ::
           {:ok, conformed_function}
           | {:error, {:args | :ret | :fun, [ConformError.Problem.t()]}}
-  def conform(spec, fun, args \\ []) do
-    with {:aspec, aspec} when not is_nil(aspec) <- {:aspec, spec.args},
-         {:cargs, {:ok, cargs}} <- {:cargs, Vow.conform(aspec, args)},
+  def conform(vow, fun, args \\ []) do
+    with {:avow, avow} when not is_nil(avow) <- {:avow, vow.args},
+         {:cargs, {:ok, cargs}} <- {:cargs, Vow.conform(avow, args)},
          {:ret, ret} <- {:ret, execute!(fun, args)},
-         {:rspec, rspec, _} when not is_nil(rspec) <- {:rspec, spec.ret, cargs},
-         {:cret, {:ok, cret}} <- {:cret, Vow.conform(rspec, ret)},
+         {:rvow, rvow, _} when not is_nil(rvow) <- {:rvow, vow.ret, cargs},
+         {:cret, {:ok, cret}} <- {:cret, Vow.conform(rvow, ret)},
          {:fval, fval} <- {:fval, %{args: cargs, ret: cret}},
-         {:fspec, fspec, _, _} when not is_nil(fspec) <- {:fspec, spec.fun, cargs, cret},
-         {:cfun, {:ok, cfun}} <- {:cfun, Vow.conform(fspec, fval)} do
+         {:fvow, fvow, _, _} when not is_nil(fvow) <- {:fvow, vow.fun, cargs, cret},
+         {:cfun, {:ok, cfun}} <- {:cfun, Vow.conform(fvow, fval)} do
       {:ok, Map.put(fval, :fun, cfun)}
     else
       {:cargs, {:error, ps}} ->
         {:error, {:args, ps}}
 
-      {:rspec, nil, cargs} ->
+      {:rvow, nil, cargs} ->
         {:ok, %{args: cargs, ret: nil, fun: nil}}
 
       {:cret, {:error, ps}} ->
         {:error, {:ret, ps}}
 
-      {:fspec, nil, cargs, cret} ->
+      {:fvow, nil, cargs, cret} ->
         {:ok, %{args: cargs, ret: cret, fun: nil}}
 
       {:cfun, {:error, ps}} ->
         {:error, {:fun, ps}}
 
-      {:aspec, nil} ->
-        with {:rspec, rspec} when not is_nil(rspec) <- {:rspec, spec.ret},
+      {:avow, nil} ->
+        with {:rvow, rvow} when not is_nil(rvow) <- {:rvow, vow.ret},
              {:ret, ret} <- {:ret, execute!(fun, args)},
-             {:cret, {:ok, cret}} <- {:cret, Vow.conform(rspec, ret)} do
+             {:cret, {:ok, cret}} <- {:cret, Vow.conform(rvow, ret)} do
           %{args: nil, ret: cret, fun: nil}
         else
-          {:rspec, nil} -> {:ok, %{args: nil, ret: nil, fun: nil}}
+          {:rvow, nil} -> {:ok, %{args: nil, ret: nil, fun: nil}}
           {:cret, {:error, ps}} -> {:error, {:ret, ps}}
         end
     end

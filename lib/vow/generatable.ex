@@ -13,13 +13,13 @@ defprotocol Vow.Generatable do
   @doc """
   """
   @spec gen(t, [{[atom], (() -> generator)}]) :: {:ok, generator} | {:error, reason :: term}
-  def gen(spec, overrides \\ [])
+  def gen(vow, overrides \\ [])
 end
 
 defimpl Vow.Generatable, for: Any do
   @moduledoc false
 
-  def gen(_spec, _overrides) do
+  def gen(_vow, _overrides) do
     {:error, :not_implemented}
   end
 end

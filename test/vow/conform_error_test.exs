@@ -4,7 +4,7 @@ defmodule Vow.ConformErrorTest do
   doctest Vow.ConformError
 
   describe "ConformError.Problem" do
-    property "should navigate spec successfully" do
+    property "should navigate vow successfully" do
     end
 
     property "should naviate value successfully to problem.value" do

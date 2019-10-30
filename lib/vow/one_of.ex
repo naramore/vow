@@ -1,41 +1,41 @@
 defmodule Vow.OneOf do
   @moduledoc false
 
-  defstruct [:specs]
+  defstruct [:vows]
 
   @type t :: %__MODULE__{
-          specs: [{atom, Vow.t()}, ...]
+          vows: [{atom, Vow.t()}, ...]
         }
 
   @spec new([Vow.t()]) :: t
-  def new(named_specs) do
-    spec = %__MODULE__{specs: named_specs}
+  def new(named_vows) do
+    vow = %__MODULE__{vows: named_vows}
 
-    if Vow.Cat.unique_keys?(named_specs) do
-      spec
+    if Vow.Cat.unique_keys?(named_vows) do
+      vow
     else
-      raise %Vow.DuplicateNameError{spec: spec}
+      raise %Vow.DuplicateNameError{vow: vow}
     end
   end
 
   defimpl Vow.Conformable do
     @moduledoc false
 
-    def conform(%@for{specs: [{k, spec}]}, spec_path, via, value_path, value) do
-      case @protocol.conform(spec, spec_path ++ [k], via, value_path, value) do
+    def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) do
+      case @protocol.conform(vow, vow_path ++ [k], via, value_path, value) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(%@for{specs: specs}, spec_path, via, value_path, value)
-        when is_list(specs) and length(specs) > 0 do
-      Enum.reduce(specs, {:error, []}, fn
+    def conform(%@for{vows: vows}, vow_path, via, value_path, value)
+        when is_list(vows) and length(vows) > 0 do
+      Enum.reduce(vows, {:error, []}, fn
         _, {:ok, c} ->
           {:ok, c}
 
         {k, s}, {:error, pblms} ->
-          case @protocol.conform(s, spec_path ++ [k], via, value_path, value) do
+          case @protocol.conform(s, vow_path ++ [k], via, value_path, value) do
             {:ok, conformed} -> {:ok, %{k => conformed}}
             {:error, problems} -> {:error, pblms ++ problems}
           end

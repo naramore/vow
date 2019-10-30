@@ -2,7 +2,7 @@ defmodule Vow.RefTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
   import Vow.Ref, only: [sref: 2]
-  import VowTestUtils, only: [strip_via_and_spec: 1]
+  import VowTestUtils, only: [strip_via_and_vow: 1]
   doctest Vow.Ref
 
   describe "Vow.Ref.resolve/1" do
@@ -40,33 +40,33 @@ defmodule Vow.RefTest do
       end
     end)
 
-    test "fun returns spec successfully!" do
+    test "fun returns vow successfully!" do
       ref = sref(VowRef, :any)
       assert match?({:ok, _}, Vow.Ref.resolve(ref))
     end
   end
 
   describe "Vow.Conformable.Vow.Ref.conform/5" do
-    property "successfully conform against referenced spec" do
+    property "successfully conform against referenced vow" do
       check all value <- term() do
-        spec = sref(VowRef, :any)
-        assert match?({:ok, _}, Vow.conform(spec, value))
+        vow = sref(VowRef, :any)
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
-    property "fail to conform against referenced spec" do
+    property "fail to conform against referenced vow" do
       check all value <- term() do
-        spec = sref(VowRef, :none)
-        assert match?({:error, _}, Vow.conform(spec, value))
+        vow = sref(VowRef, :none)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
-    property "#SRef<*spec*> == *spec*" do
-      check all data <- VowRef.clj_spec_gen(),
+    property "#SRef<*vow*> == *vow*" do
+      check all data <- VowRef.clj_vow_gen(),
                 max_runs: 25 do
-        ref = sref(VowRef, :clj_spec)
-        yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
-        nay_ref = Vow.conform(VowRef.clj_spec(), data) |> strip_via_and_spec()
+        ref = sref(VowRef, :clj_vow)
+        yay_ref = Vow.conform(ref, data) |> strip_via_and_vow()
+        nay_ref = Vow.conform(VowRef.clj_vow(), data) |> strip_via_and_vow()
         assert yay_ref == nay_ref
       end
     end
@@ -77,8 +77,8 @@ defmodule Vow.RefTest do
       check all data <- VowRef.clj_regexop_gen(),
                 max_runs: 25 do
         ref = sref(VowRef, :clj_regexop)
-        yay_ref = Vow.conform(ref, data) |> strip_via_and_spec()
-        nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_via_and_spec()
+        yay_ref = Vow.conform(ref, data) |> strip_via_and_vow()
+        nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_via_and_vow()
         assert yay_ref == nay_ref
       end
     end

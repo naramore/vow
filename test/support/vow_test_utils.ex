@@ -3,11 +3,11 @@ defmodule VowTestUtils do
 
   @type conform_result :: {:ok, conformed :: term} | {:error, Vow.ConformError.t()}
 
-  @spec strip_spec(conform_result) :: conform_result
-  def strip_spec({:ok, _} = result), do: result
+  @spec strip_vow(conform_result) :: conform_result
+  def strip_vow({:ok, _} = result), do: result
 
-  def strip_spec({:error, error}) do
-    {:error, %{error | spec: nil}}
+  def strip_vow({:error, error}) do
+    {:error, %{error | vow: nil}}
   end
 
   @spec strip_via(conform_result) :: conform_result
@@ -18,11 +18,11 @@ defmodule VowTestUtils do
     {:error, %{error | problems: problems}}
   end
 
-  @spec strip_via_and_spec(conform_result) :: conform_result
-  def strip_via_and_spec(result) do
+  @spec strip_via_and_vow(conform_result) :: conform_result
+  def strip_via_and_vow(result) do
     result
     |> strip_via()
-    |> strip_spec()
+    |> strip_vow()
   end
 
   @spec to_improper([term, ...]) :: maybe_improper_list(term, term) | nil

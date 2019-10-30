@@ -1,15 +1,15 @@
 defmodule Vow.OneOrMore do
   @moduledoc false
 
-  defstruct [:spec]
+  defstruct [:vow]
 
   @type t :: %__MODULE__{
-          spec: Vow.t()
+          vow: Vow.t()
         }
 
   @spec new(Vow.t()) :: t
-  def new(spec) do
-    %__MODULE__{spec: spec}
+  def new(vow) do
+    %__MODULE__{vow: vow}
   end
 
   defimpl Vow.RegexOperator do
@@ -19,16 +19,16 @@ defmodule Vow.OneOrMore do
     import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
     alias Vow.{Conformable, ConformError, RegexOp}
 
-    def conform(%@for{spec: spec}, spec_path, via, value_path, value)
+    def conform(%@for{vow: vow}, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
-      case conform_first(spec, spec_path, via, value_path, value) do
+      case conform_first(vow, vow_path, via, value_path, value) do
         {:error, problems} ->
           {:error, problems}
 
         {:ok, ch, rest} ->
           case @protocol.conform(
-                 Vow.zom(spec),
-                 spec_path,
+                 Vow.zom(vow),
+                 vow_path,
                  via,
                  RegexOp.inc_path(value_path),
                  rest
@@ -42,12 +42,12 @@ defmodule Vow.OneOrMore do
       end
     end
 
-    def conform(_spec, spec_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           spec_path,
+           vow_path,
            via,
            RegexOp.uninit_path(value_path),
            value
@@ -55,12 +55,12 @@ defmodule Vow.OneOrMore do
        ]}
     end
 
-    def conform(_spec, spec_path, via, value_path, value) do
+    def conform(_vow, vow_path, via, value_path, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           spec_path,
+           vow_path,
            via,
            RegexOp.uninit_path(value_path),
            value
@@ -70,12 +70,12 @@ defmodule Vow.OneOrMore do
 
     @spec conform_first(Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::
             {:ok, conformed :: [term], rest :: [term]} | {:error, [ConformError.Problem.t()]}
-    defp conform_first(spec, spec_path, via, value_path, []) do
+    defp conform_first(vow, vow_path, via, value_path, []) do
       {:error,
        [
          ConformError.new_problem(
-           spec,
-           spec_path,
+           vow,
+           vow_path,
            via,
            RegexOp.uninit_path(value_path),
            [],
@@ -84,11 +84,11 @@ defmodule Vow.OneOrMore do
        ]}
     end
 
-    defp conform_first(spec, spec_path, via, value_path, [h | t] = value) do
-      if Vow.regex?(spec) do
-        @protocol.conform(spec, spec_path, via, value_path, value)
+    defp conform_first(vow, vow_path, via, value_path, [h | t] = value) do
+      if Vow.regex?(vow) do
+        @protocol.conform(vow, vow_path, via, value_path, value)
       else
-        case Conformable.conform(spec, spec_path, via, value_path, h) do
+        case Conformable.conform(vow, vow_path, via, value_path, h) do
           {:ok, conformed} -> {:ok, [conformed], t}
           {:error, problems} -> {:error, problems}
         end

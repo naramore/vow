@@ -4,10 +4,10 @@ defmodule VowData do
   @type stream_data(a) :: StreamData.t(a)
   @type stream_data :: stream_data(term)
 
-  @spec spec(keyword) :: stream_data(Vow.t())
-  def spec(opts \\ []) do
-    child_data = Keyword.get(opts, :child_data, &non_recur_spec/1)
-    parent_data = Keyword.get(opts, :parent_data, &recur_spec/2)
+  @spec vow(keyword) :: stream_data(Vow.t())
+  def vow(opts \\ []) do
+    child_data = Keyword.get(opts, :child_data, &non_recur_vow/1)
+    parent_data = Keyword.get(opts, :parent_data, &recur_vow/2)
 
     StreamData.tree(
       child_data.(opts),
@@ -15,8 +15,8 @@ defmodule VowData do
     )
   end
 
-  @spec non_recur_spec(keyword) :: stream_data(Vow.t())
-  def non_recur_spec(opts \\ []) do
+  @spec non_recur_vow(keyword) :: stream_data(Vow.t())
+  def non_recur_vow(opts \\ []) do
     StreamData.one_of([
       func(opts),
       pred_fun(opts),
@@ -35,8 +35,8 @@ defmodule VowData do
     ])
   end
 
-  @spec recur_spec(stream_data | nil, keyword) :: stream_data(Vow.t())
-  def recur_spec(child_data \\ nil, opts \\ []) do
+  @spec recur_vow(stream_data | nil, keyword) :: stream_data(Vow.t())
+  def recur_vow(child_data \\ nil, opts \\ []) do
     child_data = process(child_data, opts)
 
     StreamData.one_of([
@@ -60,8 +60,8 @@ defmodule VowData do
     ])
   end
 
-  @spec regex_spec(stream_data | nil, keyword) :: stream_data(Vow.t())
-  def regex_spec(child_data \\ nil, opts \\ []) do
+  @spec regex_vow(stream_data | nil, keyword) :: stream_data(Vow.t())
+  def regex_vow(child_data \\ nil, opts \\ []) do
     child_data = process(child_data, opts)
 
     StreamData.one_of([
@@ -305,7 +305,7 @@ defmodule VowData do
   def cat(child_data \\ nil, opts \\ []) do
     child_data
     |> process(opts)
-    |> named_specs(opts)
+    |> named_vows(opts)
     |> StreamData.map(&Vow.cat/1)
   end
 
@@ -313,7 +313,7 @@ defmodule VowData do
   def alt(child_data \\ nil, opts \\ []) do
     child_data
     |> process(opts)
-    |> named_specs(opts)
+    |> named_vows(opts)
     |> StreamData.map(&Vow.alt/1)
   end
 
@@ -321,12 +321,12 @@ defmodule VowData do
   def one_of(child_data \\ nil, opts \\ []) do
     child_data
     |> process(opts)
-    |> named_specs(opts)
+    |> named_vows(opts)
     |> StreamData.map(&Vow.one_of/1)
   end
 
-  @spec named_specs(stream_data(a), keyword) :: stream_data(keyword(a)) when a: term
-  defp named_specs(data, opts) do
+  @spec named_vows(stream_data(a), keyword) :: stream_data(keyword(a)) when a: term
+  defp named_vows(data, opts) do
     StreamData.uniq_list_of(
       StreamData.tuple({StreamData.atom(:alphanumeric), data}),
       Keyword.merge(opts, min_length: 1, uniq_fun: &elem(&1, 0))
@@ -334,6 +334,6 @@ defmodule VowData do
   end
 
   @spec process(stream_data() | nil, keyword) :: stream_data()
-  defp process(nil, opts), do: spec(opts)
+  defp process(nil, opts), do: vow(opts)
   defp process(data, _opts), do: data
 end

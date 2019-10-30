@@ -57,8 +57,8 @@ defmodule Vow.FunctionWrapper do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    def conform(%@for{function: fun} = func, spec_path, via, value_path, value) do
-      case @protocol.Function.conform(fun, spec_path, via, value_path, value) do
+    def conform(%@for{function: fun} = func, vow_path, via, value_path, value) do
+      case @protocol.Function.conform(fun, vow_path, via, value_path, value) do
         {:ok, conformed} ->
           {:ok, conformed}
 

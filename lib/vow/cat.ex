@@ -1,41 +1,41 @@
 defmodule Vow.DuplicateNameError do
   @moduledoc false
 
-  defexception [:spec]
+  defexception [:vow]
 
   @type t :: %__MODULE__{
-          spec: Vow.t()
+          vow: Vow.t()
         }
 
   @impl Exception
-  def message(%__MODULE__{spec: spec}) do
-    "Duplicate sub-spec names are not allowed in #{spec.__struct__}"
+  def message(%__MODULE__{vow: vow}) do
+    "Duplicate sub-vow names are not allowed in #{vow.__struct__}"
   end
 end
 
 defmodule Vow.Cat do
   @moduledoc false
 
-  defstruct [:specs]
+  defstruct [:vows]
 
   @type t :: %__MODULE__{
-          specs: [{atom, Vow.t()}, ...]
+          vows: [{atom, Vow.t()}, ...]
         }
 
   @spec new([{atom, Vow.t()}, ...]) :: t | no_return
-  def new(named_specs) do
-    spec = %__MODULE__{specs: named_specs}
+  def new(named_vows) do
+    vow = %__MODULE__{vows: named_vows}
 
-    if unique_keys?(named_specs) do
-      spec
+    if unique_keys?(named_vows) do
+      vow
     else
-      raise %Vow.DuplicateNameError{spec: spec}
+      raise %Vow.DuplicateNameError{vow: vow}
     end
   end
 
   @spec unique_keys?([{atom, Vow.t()}]) :: boolean
-  def unique_keys?(named_specs) do
-    {keys, _} = Enum.unzip(named_specs)
+  def unique_keys?(named_vows) do
+    {keys, _} = Enum.unzip(named_vows)
     unique_keys = Enum.uniq(keys)
     length(keys) == length(unique_keys)
   end
@@ -50,21 +50,21 @@ defmodule Vow.Cat do
             {:ok, RegexOperator.conformed(), RegexOperator.rest()}
             | {:error, [ConformError.Problem.t()]}
 
-    def conform(%@for{specs: specs} = spec, spec_path, via, value_path, value)
+    def conform(%@for{vows: vows} = vow, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(
-        specs,
+        vows,
         {:ok, %{}, value},
-        conform_reducer(spec, spec_path, via, value_path)
+        conform_reducer(vow, vow_path, via, value_path)
       )
     end
 
-    def conform(_spec, spec_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           spec_path,
+           vow_path,
            via,
            RegexOp.uninit_path(value_path),
            value
@@ -72,12 +72,12 @@ defmodule Vow.Cat do
        ]}
     end
 
-    def conform(_spec, spec_path, via, value_path, value) do
+    def conform(_vow, vow_path, via, value_path, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           spec_path,
+           vow_path,
            via,
            RegexOp.uninit_path(value_path),
            value
@@ -87,8 +87,8 @@ defmodule Vow.Cat do
 
     @spec conform_reducer(Vow.t(), [term], [Vow.Ref.t()], [term]) ::
             ({atom, Vow.t()}, result -> result)
-    defp conform_reducer(spec, spec_path, via, value_path) do
-      &conform_reducer(spec, spec_path, via, value_path, &1, &2)
+    defp conform_reducer(vow, vow_path, via, value_path) do
+      &conform_reducer(vow, vow_path, via, value_path, &1, &2)
     end
 
     @spec conform_reducer(
@@ -103,9 +103,9 @@ defmodule Vow.Cat do
       {:error, pblms}
     end
 
-    defp conform_reducer(spec, spec_path, via, value_path, {k, s}, {:ok, acc, []}) do
+    defp conform_reducer(vow, vow_path, via, value_path, {k, s}, {:ok, acc, []}) do
       if Vow.regex?(s) do
-        case @protocol.conform(s, spec_path ++ [k], via, value_path, []) do
+        case @protocol.conform(s, vow_path ++ [k], via, value_path, []) do
           {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
           {:error, problems} -> {:error, problems}
         end
@@ -113,8 +113,8 @@ defmodule Vow.Cat do
         {:error,
          [
            ConformError.new_problem(
-             spec,
-             spec_path,
+             vow,
+             vow_path,
              via,
              RegexOp.uninit_path(value_path),
              [],
@@ -124,14 +124,14 @@ defmodule Vow.Cat do
       end
     end
 
-    defp conform_reducer(_spec, spec_path, via, value_path, {k, s}, {:ok, acc, [h | t] = r}) do
+    defp conform_reducer(_vow, vow_path, via, value_path, {k, s}, {:ok, acc, [h | t] = r}) do
       if Vow.regex?(s) do
-        case @protocol.conform(s, spec_path ++ [k], via, value_path, r) do
+        case @protocol.conform(s, vow_path ++ [k], via, value_path, r) do
           {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
           {:error, problems} -> {:error, problems}
         end
       else
-        case Conformable.conform(s, spec_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
+        case Conformable.conform(s, vow_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
           {:ok, c} -> {:ok, Map.put(acc, k, c), t}
           {:error, problems} -> {:error, problems}
         end

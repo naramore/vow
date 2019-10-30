@@ -26,8 +26,11 @@ end
 
 - [ ] documentation
 - [ ] tests
+- [ ] test for nested lists conforming with expected behavior... (especially the regex operators)
+- [ ] add many *specific* compound vow examples (look at `clojure.spec` docs / guides for inspiration)
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
-- [ ] implement `Vow.Keys`
+- [ ] implement `Vow.Keys` (+ accept any keys not specified as required or optional, but don't conform them...obviously)
 - [ ] implement `Vow.Generatable` for all `Vow.Conformable`'s
 - [ ] add `unform` to the `Vow.Conformable` (and `Vow.RegexOp.Conformable`?) protocol(s)
-- [ ] change variable names refering to `spec`(s) to `vow`(s)?
+- [x] change variable names refering to `spec`(s) to `vow`(s)?
+- [ ] refactor `Vow.Conformable.Map` to accept maps with *at least* the listed keys (the given map can have more, the values just remain unconformed), effectively changing this from the idea of a 'fixed' or 'static' map, to more how pattern matching in Elixir/Erlang works on maps

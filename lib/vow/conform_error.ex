@@ -1,15 +1,13 @@
 defmodule Vow.ConformError do
   @moduledoc false
 
-  alias Vow.Conformable
-
   defexception problems: [],
-               spec: nil,
+               vow: nil,
                value: nil
 
   @type t :: %__MODULE__{
           problems: [__MODULE__.Problem.t()],
-          spec: Conformable.t(),
+          vow: Vow.t(),
           value: term
         }
 
@@ -21,16 +19,16 @@ defmodule Vow.ConformError do
     |> Enum.join("\n")
   end
 
-  @spec new([__MODULE__.Problem.t()], Conformable.t(), term) :: t
-  def new(problems, spec, value) do
+  @spec new([__MODULE__.Problem.t()], Vow.t(), term) :: t
+  def new(problems, vow, value) do
     %__MODULE__{
       problems: problems,
-      spec: spec,
+      vow: vow,
       value: value
     }
   end
 
-  defdelegate new_problem(predicate, spec_path, via, value_path, value, reason \\ nil),
+  defdelegate new_problem(predicate, vow_path, via, value_path, value, reason \\ nil),
     to: __MODULE__.Problem,
     as: :new
 
@@ -63,7 +61,7 @@ defmodule Vow.ConformError do
     def inspect(e, opts) do
       coll = [
         {:prob, e.problems},
-        {:spec, e.spec},
+        {:vow, e.vow},
         {:val, e.value}
       ]
 
@@ -78,7 +76,7 @@ defmodule Vow.ConformError do
     @moduledoc false
 
     defstruct predicate: nil,
-              spec_path: [],
+              vow_path: [],
               via: [],
               value_path: [],
               value: nil,
@@ -86,7 +84,7 @@ defmodule Vow.ConformError do
 
     @type t :: %__MODULE__{
             predicate: Vow.t(),
-            spec_path: [atom],
+            vow_path: [atom],
             via: [{module, atom}],
             value_path: [term],
             value: term,
@@ -94,10 +92,10 @@ defmodule Vow.ConformError do
           }
 
     @spec new(Vow.t(), [atom], [module], [term], term, String.t() | nil) :: t
-    def new(predicate, spec_path, via, value_path, value, reason \\ nil) do
+    def new(predicate, vow_path, via, value_path, value, reason \\ nil) do
       %__MODULE__{
         predicate: predicate,
-        spec_path: spec_path,
+        vow_path: vow_path,
         via: via,
         value_path: value_path,
         value: value,
@@ -112,8 +110,8 @@ defmodule Vow.ConformError do
         else:
           "in: #{p.value_path}"
           |> (&"#{&1} value: #{p.value} fails").()
-          |> (&if(p.via == [], do: &1, else: "#{&1} spec: #{List.last(p.via)}")).()
-          |> (&if(p.spec_path == [], do: &1, else: "#{&1} at: #{p.spec_path}")).()
+          |> (&if(p.via == [], do: &1, else: "#{&1} vow: #{List.last(p.via)}")).()
+          |> (&if(p.vow_path == [], do: &1, else: "#{&1} at: #{p.vow_path}")).()
           |> (&"#{&1} predicate: #{p.predicate}").()
           |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
     end
@@ -127,7 +125,7 @@ defmodule Vow.ConformError do
       def inspect(problem, opts) do
         coll = [
           {:pred, problem.predicate},
-          {:spath, problem.spec_path},
+          {:spath, problem.vow_path},
           {:via, problem.via},
           {:vpath, problem.value_path},
           {:value, problem.value},
