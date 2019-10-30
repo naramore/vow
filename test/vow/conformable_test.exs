@@ -295,25 +295,27 @@ defmodule Vow.ConformableTest do
       end
     end
 
-    property "if value and vow do not have the same size -> error" do
-      check all vow <- map_of(atom(:alphanumeric), constant(nil)),
-                value <-
-                  filter(map_of(atom(:alphanumeric), term()), &(map_size(&1) != map_size(vow))),
+    property "if value does not have all the keys in the vow -> error" do
+      check all vow <- map_of(atom(:alphanumeric), constant(&is_integer/1), min_length: 1),
+                vs <- list_of(integer(), length: map_size(vow)),
+                key <- member_of(Map.keys(vow)),
+                value = Enum.zip(Map.keys(vow), vs)
+                        |> Enum.into(%{})
+                        |> Map.delete(key),
                 max_runs: 25 do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
-    property "if value and vow do not have all the same keys -> error" do
-      check all length <- integer(1..20),
-                vow <- map_of(atom(:alphanumeric), constant(nil), length: length),
-                value <-
-                  filter(
-                    map_of(atom(:alphanumeric), term(), length: length),
-                    &(not Vow.Conformable.Map.all_keys?(&1, vow))
-                  ),
+    property "if value has at least all the keys in the vow -> success" do
+      check all vow <- map_of(atom(:alphanumeric), constant(&is_integer/1), min_length: 1),
+                vs <- list_of(integer(), length: map_size(vow)),
+                extra_values <- map_of(string(:ascii), float()),
+                value = Enum.zip(Map.keys(vow), vs)
+                        |> Enum.into(%{})
+                        |> Map.merge(extra_values),
                 max_runs: 25 do
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -323,20 +325,6 @@ defmodule Vow.ConformableTest do
                 value = Enum.zip(Map.keys(vow), vs) |> Enum.into(%{}),
                 max_runs: 25 do
         assert match?({:ok, ^value}, Vow.conform(vow, value))
-      end
-    end
-
-    property "error problems should have keys" do
-      check all k <- atom(:alphanumeric),
-                v <- string(:ascii) do
-        value = %{k => v}
-        vow = %{k => &is_float/1}
-        {:error, reason} = Vow.conform(vow, value)
-
-        Enum.each(reason.problems, fn p ->
-          assert Enum.all?(p.vow_path, &(&1 == k))
-          assert Enum.all?(p.value_path, &(&1 == k))
-        end)
       end
     end
   end

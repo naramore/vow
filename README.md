@@ -32,5 +32,4 @@ end
 - [ ] implement `Vow.Keys` (+ accept any keys not specified as required or optional, but don't conform them...obviously)
 - [ ] implement `Vow.Generatable` for all `Vow.Conformable`'s
 - [ ] add `unform` to the `Vow.Conformable` (and `Vow.RegexOp.Conformable`?) protocol(s)
-- [x] change variable names refering to `spec`(s) to `vow`(s)?
-- [ ] refactor `Vow.Conformable.Map` to accept maps with *at least* the listed keys (the given map can have more, the values just remain unconformed), effectively changing this from the idea of a 'fixed' or 'static' map, to more how pattern matching in Elixir/Erlang works on maps
+- [ ] look for other `Vow.ConformError.Problem`s that could use `Vow.FunctionWrapper.wrap/2` w/ bindings

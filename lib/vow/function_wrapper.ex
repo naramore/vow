@@ -3,43 +3,38 @@ defmodule Vow.FunctionWrapper do
   TODO
   """
 
-  defstruct [:function, :form]
+  defstruct [
+    function: nil,
+    form: nil,
+    bindings: []
+  ]
 
   @type t :: %__MODULE__{
           function: (term -> boolean),
-          form: String.t()
+          form: Macro.t(),
+          bindings: keyword()
         }
 
   @doc false
-  @spec new((term -> boolean), String.t()) :: t
-  def new(function, form) do
+  @spec new((term -> boolean), Macro.t(), keyword()) :: t
+  def new(function, form, bindings \\ []) do
     %__MODULE__{
       function: function,
-      form: form
+      form: form,
+      bindings: bindings
     }
   end
 
   @doc """
   """
-  @spec wrap((term -> boolean)) :: Macro.t()
-  defmacro wrap(function) do
-    func = build(function)
-
+  @spec wrap(Macro.t(), keyword()) :: Macro.t()
+  defmacro wrap(quoted, bindings \\ []) do
     quote do
-      unquote(func)
-    end
-  end
-
-  @doc false
-  @spec build(Macro.t()) :: Macro.t()
-  defp build(quoted) do
-    form = Macro.to_string(quoted)
-
-    quote do
-      %Vow.FunctionWrapper{
-        function: unquote(quoted),
-        form: unquote(form)
-      }
+      Vow.FunctionWrapper.new(
+        unquote(quoted),
+        unquote(Macro.escape(quoted)),
+        unquote(bindings)
+      )
     end
   end
 
@@ -47,8 +42,24 @@ defmodule Vow.FunctionWrapper do
   defimpl Inspect do
     @moduledoc false
 
-    def inspect(%@for{form: form}, _opts) do
-      to_string(form)
+    def inspect(%@for{form: form, bindings: bindings}, opts) do
+      Macro.to_string(form, fn
+        {var, _, mod}, string when is_atom(var) and is_atom(mod) ->
+          if Keyword.has_key?(bindings, var) do
+            Keyword.get(bindings, var)
+            |> Kernel.inspect(opts_to_keyword(opts))
+          else
+            string
+          end
+        _ast, string -> string
+      end)
+    end
+
+    @spec opts_to_keyword(Inspect.Opts.t) :: keyword
+    defp opts_to_keyword(opts) do
+      opts
+      |> Map.from_struct()
+      |> Enum.into([])
     end
   end
 

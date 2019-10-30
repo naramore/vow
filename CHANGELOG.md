@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`
 - coveralls config to ignore wrap macro for coverage purposes
 - all 'named' references of `spec` to `vow`
+- `Vow.FunctionWrapper` to allow optional variable bindings for pretty printing
+- `Vow.Conformable.Map` to allow for keys not specified in the specification, similar to pattern matching
 
 ## [0.0.2] - 2019-10-23
 ### Added

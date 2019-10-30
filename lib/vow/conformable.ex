@@ -197,85 +197,49 @@ end
 defimpl Vow.Conformable, for: Map do
   @moduledoc false
 
-  import Vow.FunctionWrapper, only: [wrap: 1]
+  import Vow.FunctionWrapper
   alias Vow.ConformError
 
-  def conform(vow, vow_path, via, value_path, value)
-      when is_map(value) and map_size(vow) == map_size(value) do
-    if all_keys?(vow, value) do
-      {keys, list_vow, list_value} = unzip_samesize(vow, value)
-
-      case @protocol.List.conform(list_vow, vow_path, via, value_path, list_value) do
-        {:ok, conformed} ->
-          {:ok, Enum.zip(keys, conformed) |> Enum.into(%{})}
-
-        {:error, problems} ->
-          {:error, keyize_problems(problems, keys, vow_path, value_path)}
-      end
-    else
-      {:error,
-       [
-         ConformError.new_problem(
-           vow,
-           vow_path,
-           via,
-           value_path,
-           value,
-           "Key Mismatch b/t vow and value"
-         )
-       ]}
-    end
-  end
+  @type result :: {:ok, Vow.Conformable.conformed} | {:error, [ConformError.Problem.t]}
 
   def conform(vow, vow_path, via, value_path, value) when is_map(value) do
-    {:error,
-     [
-       ConformError.new_problem(
-         wrap(&(map_size(&1) == map_size(vow))),
-         vow_path,
-         via,
-         value_path,
-         value
-       )
-     ]}
+    Enum.reduce(
+      vow,
+      {:ok, %{}},
+      conform_reducer(vow_path, via, value_path, value)
+    )
   end
 
   def conform(_vow, vow_path, via, value_path, value) do
     {:error, [ConformError.new_problem(&is_map/1, vow_path, via, value_path, value)]}
   end
 
-  @spec all_keys?(map, map) :: boolean
-  def all_keys?(map1, map2) do
-    MapSet.new(Map.keys(map1)) == MapSet.new(Map.keys(map2))
+  @spec conform_reducer([term], [Vow.Ref.t], [term], map) :: ({term, Vow.t}, result -> result)
+  defp conform_reducer(vow_path, via, value_path, value) do
+    &conform_reducer(vow_path, via, value_path, value, &1, &2)
   end
 
-  @spec keyize_problems([ConformError.Problem.t()], [term], [term], [term]) :: [
-          ConformError.Problem.t()
-        ]
-  def keyize_problems([], _keys, _vow_path, _value_path), do: []
-
-  def keyize_problems(problems, keys, vow_path, value_path) do
-    si = length(vow_path)
-    vi = length(value_path)
-
-    Enum.map(problems, fn prob ->
-      prob
-      |> update_in([Access.key!(:vow_path), Access.at(si)], &Enum.at(keys, &1))
-      |> update_in([Access.key!(:value_path), Access.at(vi)], &Enum.at(keys, &1))
-    end)
+  @spec conform_reducer([term], [Vow.Ref.t], [term], map, {term, Vow.t}, result) :: result
+  defp conform_reducer(vow_path, via, value_path, value, {k, s}, {:ok, c}) do
+    if Map.has_key?(value, k) do
+      case @protocol.conform(s, vow_path ++ [k], via, value_path ++ [k], Map.get(value, k)) do
+        {:ok, conformed} -> {:ok, Map.put(c, k, conformed)}
+        {:error, problems} -> {:error, problems}
+      end
+    else
+      {:error, [ConformError.new_problem(wrap(&Map.has_key?(&1, k), k: k), vow_path, via, value_path, value)]}
+    end
   end
 
-  @spec unzip_samesize(map, map) :: {keys :: list, values1 :: list, values2 :: list}
-  def unzip_samesize(map1, map2)
-      when map_size(map1) == map_size(map2) do
-    keys = Map.keys(map1)
-
-    {values1, values2} =
-      Enum.reduce(keys, {[], []}, fn k, {values1, values2} ->
-        {[Map.get(map1, k) | values1], [Map.get(map2, k) | values2]}
-      end)
-
-    {keys, Enum.reverse(values1), Enum.reverse(values2)}
+  defp conform_reducer(vow_path, via, value_path, value, {k, s}, {:error, ps}) do
+    if Map.has_key?(value, k) do
+      case @protocol.conform(s, vow_path ++ [k], via, value_path ++ [k], Map.get(value, k)) do
+        {:ok, _conformed} -> {:error, ps}
+        {:error, problems} -> {:error, ps ++ problems}
+      end
+    else
+      {:error, [ConformError.new_problem(wrap(&Map.has_key?(&1, k), k: k), vow_path, via, value_path, value)]}
+    end
   end
 end
 
