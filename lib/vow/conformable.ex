@@ -318,10 +318,10 @@ defimpl Vow.Conformable, for: Range do
   import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
-  def conform(range, vow_path, via, value_path, _.._ = value) do
+  def conform(vow, vow_path, via, value_path, _.._ = value) do
     {
-      Enum.member?(range, value.first),
-      Enum.member?(range, value.last)
+      Enum.member?(vow, value.first),
+      Enum.member?(vow, value.last)
     }
     |> case do
       {true, true} ->
@@ -331,7 +331,7 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(range, &1.last)),
+             wrap(&Enum.member?(vow, &1.last)),
              vow_path,
              via,
              value_path,
@@ -343,7 +343,7 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(range, &1.first)),
+             wrap(&Enum.member?(vow, &1.first)),
              vow_path,
              via,
              value_path,
@@ -355,14 +355,14 @@ defimpl Vow.Conformable, for: Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(range, &1.first)),
+             wrap(&Enum.member?(vow, &1.first)),
              vow_path,
              via,
              value_path,
              value
            ),
            ConformError.new_problem(
-             wrap(&Enum.member?(range, &1.last)),
+             wrap(&Enum.member?(vow, &1.last)),
              vow_path,
              via,
              value_path,
@@ -372,14 +372,14 @@ defimpl Vow.Conformable, for: Range do
     end
   end
 
-  def conform(range, vow_path, via, value_path, value) when is_integer(value) do
-    if Enum.member?(range, value) do
+  def conform(vow, vow_path, via, value_path, value) when is_integer(value) do
+    if Enum.member?(vow, value) do
       {:ok, value}
     else
       {:error,
        [
          ConformError.new_problem(
-           wrap(&Enum.member?(range, &1)),
+           wrap(&Enum.member?(vow, &1)),
            vow_path,
            via,
            value_path,
@@ -400,10 +400,10 @@ defimpl Vow.Conformable, for: Date.Range do
   import Vow.FunctionWrapper, only: [wrap: 1]
   alias Vow.ConformError
 
-  def conform(date_range, vow_path, via, value_path, %Date.Range{} = value) do
+  def conform(vow, vow_path, via, value_path, %Date.Range{} = value) do
     {
-      Enum.member?(date_range, value.first),
-      Enum.member?(date_range, value.last)
+      Enum.member?(vow, value.first),
+      Enum.member?(vow, value.last)
     }
     |> case do
       {true, true} ->
@@ -413,7 +413,7 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(date_range, &1.last)),
+             wrap(&Enum.member?(vow, &1.last)),
              vow_path,
              via,
              value_path,
@@ -425,7 +425,7 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(date_range, &1.first)),
+             wrap(&Enum.member?(vow, &1.first)),
              vow_path,
              via,
              value_path,
@@ -437,14 +437,14 @@ defimpl Vow.Conformable, for: Date.Range do
         {:error,
          [
            ConformError.new_problem(
-             wrap(&Enum.member?(date_range, &1.first)),
+             wrap(&Enum.member?(vow, &1.first)),
              vow_path,
              via,
              value_path,
              value
            ),
            ConformError.new_problem(
-             wrap(&Enum.member?(date_range, &1.last)),
+             wrap(&Enum.member?(vow, &1.last)),
              vow_path,
              via,
              value_path,
@@ -454,14 +454,14 @@ defimpl Vow.Conformable, for: Date.Range do
     end
   end
 
-  def conform(date_range, vow_path, via, value_path, %Date{} = value) do
-    if Enum.member?(date_range, value) do
+  def conform(vow, vow_path, via, value_path, %Date{} = value) do
+    if Enum.member?(vow, value) do
       {:ok, value}
     else
       {:error,
        [
          ConformError.new_problem(
-           wrap(&Enum.member?(date_range, &1)),
+           wrap(&Enum.member?(vow, &1)),
            vow_path,
            via,
            value_path,
@@ -531,11 +531,11 @@ defimpl Vow.Conformable, for: Any do
      ]}
   end
 
-  def conform(any, vow_path, via, value_path, value) do
-    if any == value do
+  def conform(vow, vow_path, via, value_path, value) do
+    if vow == value do
       {:ok, value}
     else
-      {:error, [ConformError.new_problem(:==, vow_path, via, value_path, value)]}
+      {:error, [ConformError.new_problem(wrap(&(&1 == vow)), vow_path, via, value_path, value)]}
     end
   end
 end

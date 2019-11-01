@@ -4,6 +4,15 @@ defmodule VowRef do
   import Vow.FunctionWrapper, only: [wrap: 1]
   alias StreamData, as: SD
 
+  def i, do: &is_integer/1
+  def n, do: &is_number/1
+  def f, do: &is_float/1
+  def b, do: &is_boolean/1
+  def s, do: &is_bitstring/1
+  def l, do: &is_list/1
+  def m, do: &is_map/1
+  def t, do: &is_tuple/1
+
   def one_arity(_), do: nil
   def two_arity(_, _), do: nil
   def three_arity(_, _, _), do: nil

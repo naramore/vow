@@ -33,7 +33,6 @@ defmodule Vow.Merge do
 
     def conform(%@for{vows: [_ | _] = vows} = vow, vow_path, via, value_path, value)
         when is_map(value) do
-      # NOTE: pretty sure this doesn't work how I think it does...I should look into it...
       Enum.map(vows, fn s ->
         @protocol.conform(s, vow_path, via, value_path, value)
       end)

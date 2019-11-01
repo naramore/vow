@@ -160,9 +160,6 @@ defmodule Vow do
           | Vow.Map.t()
           | Vow.Keys.t()
           | map
-          | Vow.Alt.t()
-          | Vow.OneOf.t()
-          | Vow.Cat.t()
 
   @doc """
   """
@@ -186,7 +183,7 @@ defmodule Vow do
   @type key_opt ::
           {:required, [vow_ref_expr]}
           | {:optional, [vow_ref_expr]}
-          | {:into, [] | %{}}
+          | {:default_module, module | nil}
 
   @typedoc """
   """
@@ -196,7 +193,20 @@ defmodule Vow do
   """
   @spec keys(key_opts) :: t | no_return
   def keys(opts) do
-    Vow.Keys.new(opts)
+    required = Keyword.get(opts, :required, [])
+    optional = Keyword.get(opts, :optional, [])
+    default_module = Keyword.get(opts, :default_module, nil)
+    Vow.Keys.new(required, optional, default_module)
+  end
+
+  @doc """
+  """
+  @spec mkeys(key_opts) :: Macro.t
+  defmacro mkeys(opts) do
+    opts = Keyword.put(opts, :default_module, __CALLER__.module)
+    quote do
+      Vow.keys(unquote(opts))
+    end
   end
 
   @doc """

@@ -1,4 +1,4 @@
-alias Vow.{Also, Alt, Amp, Cat, Keys, Maybe, Merge, Nilable, OneOf, OneOrMore, ZeroOrMore}
+alias Vow.{Also, Alt, Amp, Cat, Maybe, Merge, Nilable, OneOf, OneOrMore, ZeroOrMore}
 
 defimpl Inspect,
   for: [
@@ -6,7 +6,6 @@ defimpl Inspect,
     Alt,
     Amp,
     Cat,
-    Keys,
     Maybe,
     Merge,
     Nilable,

@@ -51,7 +51,6 @@ defmodule VowData do
       list(child_data, opts),
       map(child_data, opts),
       tuple(child_data, opts),
-      merge(child_data, opts),
       cat(child_data, opts),
       alt(child_data, opts),
       one_of(child_data, opts)
@@ -291,13 +290,32 @@ defmodule VowData do
     |> StreamData.map(&List.to_tuple/1)
   end
 
+  @spec merged(stream_data | nil, keyword) :: stream_data(Vow.Merge.t | Vow.Map.t | map)
+  def merged(child_data \\ nil, opts \\ []) do
+    StreamData.tree(
+      process(child_data, opts),
+      &merged_recur(&1, opts)
+    )
+  end
+
+  @spec merged_recur(stream_data | nil, keyword) :: stream_data(Vow.Merge.t | Vow.Map.t | map)
+  def merged_recur(child_data \\ nil, opts \\ []) do
+    child_data = process(child_data, opts)
+    StreamData.one_of([
+      StreamData.map_of(StreamData.atom(:alphanumeric), child_data, opts),
+      map(child_data, opts),
+      merge(child_data, opts)
+    ])
+  end
+
   @spec merge(stream_data | nil, keyword) :: stream_data(Vow.Merge.t())
   def merge(child_data \\ nil, opts \\ []) do
     merge_fun = Keyword.get(opts, :merge_fun)
+    child_data =
+      process(child_data, opts)
+      |> merged(opts)
 
-    child_data
-    |> process(opts)
-    |> StreamData.list_of(opts)
+    StreamData.list_of(child_data, opts)
     |> StreamData.map(&Vow.merge(&1, merge_fun))
   end
 

@@ -101,6 +101,16 @@ defmodule VowRegexTest do
   end
 
   describe "Vow.alt/1" do
+    property "should raise given an unnamed list of vows" do
+      check all vows <- list_of(tuple({atom(:alphanumeric), constant(nil)}), min_length: 1),
+                index <- integer(0..length(vows)),
+                bad_vows = List.insert_at(vows, index, nil) do
+        assert_raise(Vow.UnnamedVowsError, fn ->
+          Vow.alt(bad_vows)
+        end)
+      end
+    end
+
     property "should succeed on matching at least one of the given vows" do
       check all value <- list_of(one_of([integer(), float()]), min_length: 1) do
         vow = Vow.alt(i: &is_integer/1, f: &is_float/1)
@@ -190,6 +200,16 @@ defmodule VowRegexTest do
   end
 
   describe "Vow.cat/1" do
+    property "should raise given an unnamed list of vows" do
+      check all vows <- list_of(tuple({atom(:alphanumeric), constant(nil)}), min_length: 1),
+                index <- integer(0..length(vows)),
+                bad_vows = List.insert_at(vows, index, nil) do
+        assert_raise(Vow.UnnamedVowsError, fn ->
+          Vow.cat(bad_vows)
+        end)
+      end
+    end
+
     test "if cat contains non-regex operators and given empty list -> insufficient data" do
       vow =
         Vow.cat(

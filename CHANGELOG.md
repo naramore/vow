@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - credo default config file
 - dependabot badge
 - more tests!
+- implemented `Vow.Keys`
 
 ### Changed
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`

@@ -26,7 +26,7 @@ defmodule Vow.List do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    import Vow.FunctionWrapper, only: [wrap: 1]
+    import Vow.FunctionWrapper
     alias Vow.ConformError
 
     def conform(vow, vow_path, via, value_path, value)
@@ -81,7 +81,7 @@ defmodule Vow.List do
         {min, _max} when length(value) < min ->
           [
             ConformError.new_problem(
-              wrap(&(length(&1) >= min)),
+              wrap(&(length(&1) >= min), min: min),
               vow_path,
               via,
               value_path,
@@ -92,7 +92,7 @@ defmodule Vow.List do
         {_min, max} when not is_nil(max) and length(value) > max ->
           [
             ConformError.new_problem(
-              wrap(&(length(&1) <= max)),
+              wrap(&(length(&1) <= max), max: max),
               vow_path,
               via,
               value_path,

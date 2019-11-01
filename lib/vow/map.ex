@@ -35,7 +35,7 @@ defmodule Vow.Map do
   defimpl Vow.Conformable do
     @moduledoc false
 
-    import Vow.FunctionWrapper, only: [wrap: 1]
+    import Vow.FunctionWrapper
     alias Vow.ConformError
 
     def conform(vow, vow_path, via, value_path, value) when is_map(value) do
@@ -96,7 +96,7 @@ defmodule Vow.Map do
         {min, _max} when map_size(value) < min ->
           [
             ConformError.new_problem(
-              wrap(&(map_size(&1) >= min)),
+              wrap(&(map_size(&1) >= min), min: min),
               vow_path,
               via,
               value_path,
@@ -107,7 +107,7 @@ defmodule Vow.Map do
         {_min, max} when not is_nil(max) and map_size(value) > max ->
           [
             ConformError.new_problem(
-              wrap(&(map_size(&1) <= max)),
+              wrap(&(map_size(&1) <= max), max: max),
               vow_path,
               via,
               value_path,

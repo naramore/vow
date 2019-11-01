@@ -30,8 +30,6 @@ end
 - [ ] add many *specific* compound vow examples (look at `clojure.spec` docs / guides for inspiration)
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
   - [ ] and re-add dialyzer back to the action
-- [ ] implement `Vow.Keys` (+ accept any keys not specified as required or optional, but don't conform them...obviously)
 - [ ] implement `Vow.Generatable` for all `Vow.Conformable`'s
 - [ ] add `unform` to the `Vow.Conformable` (and `Vow.RegexOp.Conformable`?) protocol(s)
-- [ ] look for other `Vow.ConformError.Problem`s that could use `Vow.FunctionWrapper.wrap/2` w/ bindings
-- [ ] figure out inch-ci via `inch_ex`
+- [ ] 'figure out' inch-ci via `inch_ex`

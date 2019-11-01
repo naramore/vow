@@ -8,9 +8,18 @@ defmodule Vow.Ref do
   defstruct [:mod, :fun]
 
   @type t :: %__MODULE__{
-          mod: module,
+          mod: module | nil,
           fun: atom
         }
+
+  @doc false
+  @spec new(module | nil, atom) :: t
+  def new(module, function) do
+    %__MODULE__{
+      mod: module,
+      fun: function
+    }
+  end
 
   @doc false
   @spec resolve(t) :: {:ok, Vow.t()} | {:error, [{Vow.t(), String.t() | nil}]}
@@ -34,12 +43,15 @@ defmodule Vow.Ref do
 
   @doc """
   """
-  @spec sref(module, atom) :: t
-  def sref(module, function) do
-    %Vow.Ref{
-      mod: module,
-      fun: function
-    }
+  @spec sref(module | nil, atom) :: Macro.t
+  defmacro sref(module \\ nil, function) do
+    module = module || __CALLER__.module
+    quote do
+      Vow.Ref.new(
+        unquote(module),
+        unquote(function)
+      )
+    end
   end
 
   defimpl Vow.RegexOperator do
@@ -91,6 +103,9 @@ defmodule Vow.Ref do
   defimpl Inspect do
     @moduledoc false
 
+    def inspect(%@for{mod: nil, fun: fun}, _opts) do
+      "#SRef<#{fun}>"
+    end
     def inspect(%@for{mod: mod, fun: fun}, _opts) do
       "#SRef<#{mod}.#{fun}>"
     end

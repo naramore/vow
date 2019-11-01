@@ -13,6 +13,21 @@ defmodule Vow.DuplicateNameError do
   end
 end
 
+defmodule Vow.UnnamedVowsError do
+  @moduledoc false
+
+  defexception [:vows]
+
+  @type t :: %__MODULE__{
+    vows: [Vow.t]
+  }
+
+  @impl Exception
+  def message(%__MODULE__{}) do
+    "Expected a list of named vows (i.e. [{atom, Vow.t}])."
+  end
+end
+
 defmodule Vow.Cat do
   @moduledoc false
 
@@ -33,11 +48,15 @@ defmodule Vow.Cat do
     end
   end
 
-  @spec unique_keys?([{atom, Vow.t()}]) :: boolean
+  @spec unique_keys?([{atom, Vow.t()}]) :: boolean | no_return
   def unique_keys?(named_vows) do
-    {keys, _} = Enum.unzip(named_vows)
-    unique_keys = Enum.uniq(keys)
-    length(keys) == length(unique_keys)
+    if Enum.all?(named_vows, &match?({name, _} when is_atom(name), &1)) do
+      {keys, _} = Enum.unzip(named_vows)
+      unique_keys = Enum.uniq(keys)
+      length(keys) == length(unique_keys)
+    else
+      raise %Vow.UnnamedVowsError{vows: named_vows}
+    end
   end
 
   defimpl Vow.RegexOperator do
