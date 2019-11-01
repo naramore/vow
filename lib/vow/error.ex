@@ -1,3 +1,65 @@
+defmodule Vow.DuplicateNameError do
+  @moduledoc false
+
+  defexception [:vow]
+
+  @type t :: %__MODULE__{
+          vow: Vow.t()
+        }
+
+  @impl Exception
+  def message(%__MODULE__{vow: vow}) do
+    "Duplicate sub-vow names are not allowed in #{vow.__struct__}"
+  end
+end
+
+defmodule Vow.UnnamedVowsError do
+  @moduledoc false
+
+  defexception [:vows]
+
+  @type t :: %__MODULE__{
+    vows: [Vow.t]
+  }
+
+  @impl Exception
+  def message(%__MODULE__{}) do
+    "Expected a list of named vows (i.e. [{atom, Vow.t}])."
+  end
+end
+
+defmodule Vow.DuplicateKeyError do
+  @moduledoc false
+
+  defexception [
+    duplicates: []
+  ]
+
+  @type t :: %__MODULE__{
+          duplicates: [atom]
+        }
+
+  @impl Exception
+  def message(%__MODULE__{duplicates: dups}) do
+    "Duplicate key names are not allowed: #{inspect(dups)}"
+  end
+end
+
+defmodule Vow.UnformError do
+  @moduledoc false
+
+  defexception [:vow, :value]
+  @type t :: %__MODULE__{
+    vow: Vow.t,
+    value: Vow.Conformable.conformed
+  }
+
+  @impl Exception
+  def message(%__MODULE__{vow: vow, value: value}) do
+    "Value, #{value}, was not conformed by vow, #{vow}."
+  end
+end
+
 defmodule Vow.ConformError do
   @moduledoc false
 

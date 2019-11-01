@@ -29,6 +29,7 @@ defmodule Vow.List do
     import Vow.FunctionWrapper
     alias Vow.ConformError
 
+    @impl Vow.Conformable
     def conform(vow, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       value
@@ -61,6 +62,20 @@ defmodule Vow.List do
     def conform(_vow, vow_path, via, value_path, value) do
       {:error, [ConformError.new_problem(&is_list/1, vow_path, via, value_path, value)]}
     end
+
+    @impl Vow.Conformable
+    def unform(%@for{vow: vow}, value) when is_list(value) do
+      Enum.reduce(value, {:ok, []}, fn
+        _, {:error, reason} -> {:error, reason}
+        item, {:ok, acc} ->
+          case @protocol.unform(vow, item) do
+            {:error, reason} -> {:error, reason}
+            {:ok, unformed} -> {:ok, acc ++ [unformed]}
+          end
+      end)
+    end
+    def unform(vow, value),
+      do: {:error, %Vow.UnformError{vow: vow, value: value}}
 
     @spec distinct_problems(Vow.t(), [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()

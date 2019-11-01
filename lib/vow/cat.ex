@@ -1,33 +1,3 @@
-defmodule Vow.DuplicateNameError do
-  @moduledoc false
-
-  defexception [:vow]
-
-  @type t :: %__MODULE__{
-          vow: Vow.t()
-        }
-
-  @impl Exception
-  def message(%__MODULE__{vow: vow}) do
-    "Duplicate sub-vow names are not allowed in #{vow.__struct__}"
-  end
-end
-
-defmodule Vow.UnnamedVowsError do
-  @moduledoc false
-
-  defexception [:vows]
-
-  @type t :: %__MODULE__{
-    vows: [Vow.t]
-  }
-
-  @impl Exception
-  def message(%__MODULE__{}) do
-    "Expected a list of named vows (i.e. [{atom, Vow.t}])."
-  end
-end
-
 defmodule Vow.Cat do
   @moduledoc false
 
@@ -63,12 +33,14 @@ defmodule Vow.Cat do
     @moduledoc false
 
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
+    import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
     alias Vow.{Conformable, ConformError, RegexOp, RegexOperator}
 
     @type result ::
             {:ok, RegexOperator.conformed(), RegexOperator.rest()}
             | {:error, [ConformError.Problem.t()]}
 
+    @impl Vow.RegexOperator
     def conform(%@for{vows: vows} = vow, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(
@@ -102,6 +74,25 @@ defmodule Vow.Cat do
            value
          )
        ]}
+    end
+
+    @impl Vow.RegexOperator
+    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
+      Enum.reduce(vows, {:ok, []}, fn
+        _, {:error, reason} -> {:error, reason}
+        {k, v}, {:ok, acc} ->
+          if Map.has_key?(value, k) do
+            case Conformable.unform(v, Map.get(value, k)) do
+              {:error, reason} -> {:error, reason}
+              {:ok, unformed} -> {:ok, append(acc, unformed)}
+            end
+          else
+            {:error, %Vow.UnformError{vow: vow, value: value}}
+          end
+      end)
+    end
+    def unform(vow, value) do
+      {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
     @spec conform_reducer(Vow.t(), [term], [Vow.Ref.t()], [term]) ::

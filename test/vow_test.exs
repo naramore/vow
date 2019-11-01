@@ -451,18 +451,6 @@ defmodule VowTest do
         refute Vow.conform(Vow.merge([a, b, c]), value) == Vow.conform(Vow.merge([a, c, b]), value)
       end
     end
-
-    property "if a merge_fun is specified -> use it when merging returned maps" do
-      check all value <- tuple({integer(), boolean(), string(:ascii), one_of([integer(), float()])})
-                         |> map(fn {w, x, y, z} -> %{a: w, b: x, c: y, d: z} end) do
-        a = %{a: &is_integer/1, b: &is_boolean/1}
-        b = %{c: &is_bitstring/1, d: &is_number/1}
-        c = %{d: Vow.one_of(i: &is_integer/1, f: &is_float/1)}
-        merge_fun = fn _, a, _ -> a end
-        vow = Vow.merge([a, b, c], merge_fun)
-        assert match? {:ok, %{d: d}} when is_number(d), Vow.conform(vow, value)
-      end
-    end
   end
 
   describe "Vow.keys/1" do

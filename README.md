@@ -31,5 +31,4 @@ end
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
   - [ ] and re-add dialyzer back to the action
 - [ ] implement `Vow.Generatable` for all `Vow.Conformable`'s
-- [ ] add `unform` to the `Vow.Conformable` (and `Vow.RegexOp.Conformable`?) protocol(s)
 - [ ] 'figure out' inch-ci via `inch_ex`

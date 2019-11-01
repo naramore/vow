@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - dependabot badge
 - more tests!
 - implemented `Vow.Keys`
+- `Vow.Conformable.unform/2`, `Vow.unform/2`, & `Vow.unform!/2`
 
 ### Changed
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`
@@ -21,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - all 'named' references of `spec` to `vow`
 - `Vow.FunctionWrapper` to allow optional variable bindings for pretty printing
 - `Vow.Conformable.Map` to allow for keys not specified in the specification, similar to pattern matching
+- re-organized all errors into the vow/error.ex file, including vow/conform_error.ex
+
+### Removed
+- `merge_fun` option from `Vow.merge/2` b/c it made conforming difficult (impossible?) to unform
 
 ## [0.0.2] - 2019-10-23
 ### Added

@@ -18,6 +18,7 @@ defmodule Vow.ZeroOrMore do
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
     alias Vow.{Conformable, ConformError, RegexOp}
 
+    @impl Vow.RegexOperator
     def conform(_vow, _vow_path, _via, _value_path, []) do
       {:ok, [], []}
     end
@@ -55,6 +56,22 @@ defmodule Vow.ZeroOrMore do
            value
          )
        ]}
+    end
+
+    @impl Vow.RegexOperator
+    def unform(%@for{vow: vow}, value)
+      when is_list(value) and length(value) >= 0 do
+        Enum.reduce(value, {:ok, []}, fn
+          _, {:error, reason} -> {:error, reason}
+          item, {:ok, acc} ->
+            case Conformable.unform(vow, item) do
+              {:error, reason} -> {:error, reason}
+              {:ok, unformed} -> {:ok, acc ++ [unformed]}
+            end
+        end)
+    end
+    def unform(vow, value) do
+      {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
     @spec conform_regex(

@@ -310,13 +310,12 @@ defmodule VowData do
 
   @spec merge(stream_data | nil, keyword) :: stream_data(Vow.Merge.t())
   def merge(child_data \\ nil, opts \\ []) do
-    merge_fun = Keyword.get(opts, :merge_fun)
     child_data =
       process(child_data, opts)
       |> merged(opts)
 
     StreamData.list_of(child_data, opts)
-    |> StreamData.map(&Vow.merge(&1, merge_fun))
+    |> StreamData.map(&Vow.merge/1)
   end
 
   @spec cat(stream_data | nil, keyword) :: stream_data(Vow.Cat.t())

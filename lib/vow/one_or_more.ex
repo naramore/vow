@@ -19,6 +19,7 @@ defmodule Vow.OneOrMore do
     import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
     alias Vow.{Conformable, ConformError, RegexOp}
 
+    @impl Vow.RegexOperator
     def conform(%@for{vow: vow}, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       case conform_first(vow, vow_path, via, value_path, value) do
@@ -66,6 +67,14 @@ defmodule Vow.OneOrMore do
            value
          )
        ]}
+    end
+
+    @impl Vow.RegexOperator
+    def unform(vow, []) do
+      {:error, %Vow.UnformError{vow: vow, value: []}}
+    end
+    def unform(vow, value) do
+      @protocol.Vow.ZeroOrMore.unform(vow, value)
     end
 
     @spec conform_first(Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::

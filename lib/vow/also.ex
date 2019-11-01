@@ -15,6 +15,7 @@ defmodule Vow.Also do
   defimpl Vow.Conformable do
     @moduledoc false
 
+    @impl Vow.Conformable
     def conform(%@for{vows: []}, _vow_path, _via, _value_path, value) do
       {:ok, value}
     end
@@ -29,10 +30,18 @@ defmodule Vow.Also do
           {:error, pblms}
 
         s, {:ok, c} ->
-          case @protocol.conform(s, vow_path, via, value_path, c) do
-            {:ok, conformed} -> {:ok, conformed}
-            {:error, problems} -> {:error, problems}
-          end
+          @protocol.conform(s, vow_path, via, value_path, c)
+      end)
+    end
+
+    @impl Vow.Conformable
+    def unform(%@for{vows: vows}, value) do
+      vows
+      |> Enum.reverse()
+      |> Enum.reduce({:ok, value}, fn
+        _, {:error, reason} -> {:error, reason}
+        vow, {:ok, unformed} ->
+          @protocol.unform(vow, unformed)
       end)
     end
   end

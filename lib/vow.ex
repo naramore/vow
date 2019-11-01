@@ -49,6 +49,18 @@ defmodule Vow do
     not valid?(vow, value)
   end
 
+  defdelegate unform(vow, value), to: Vow.Conformable
+
+  @doc """
+  """
+  @spec unform!(t, Conformable.conformed) :: value :: term | no_return
+  def unform!(vow, value) do
+    case unform(vow, value) do
+      {:ok, unformed} -> unformed
+      {:error, reason} -> raise reason
+    end
+  end
+
   @doc """
   """
   @spec set(Enum.t()) :: MapSet.t()
@@ -163,9 +175,9 @@ defmodule Vow do
 
   @doc """
   """
-  @spec merge([merged], (key, value, value -> value) | nil) :: t when key: term, value: term
-  def merge(vows, merge_fun \\ nil) do
-    Vow.Merge.new(vows, merge_fun)
+  @spec merge([merged]) :: t
+  def merge(vows) do
+    Vow.Merge.new(vows)
   end
 
   @typedoc """

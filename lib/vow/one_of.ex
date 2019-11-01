@@ -21,6 +21,7 @@ defmodule Vow.OneOf do
   defimpl Vow.Conformable do
     @moduledoc false
 
+    @impl Vow.Conformable
     def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) do
       case @protocol.conform(vow, vow_path ++ [k], via, value_path, value) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
@@ -40,6 +41,16 @@ defmodule Vow.OneOf do
             {:error, problems} -> {:error, pblms ++ problems}
           end
       end)
+    end
+
+    @impl Vow.Conformable
+    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
+      with [key] <- Map.keys(value),
+            true <- Keyword.has_key?(vows, key) do
+        @protocol.unform(Keyword.get(vows, key), Map.get(value, key))
+      else
+        _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
+      end
     end
   end
 end

@@ -1,20 +1,3 @@
-defmodule Vow.DuplicateKeyError do
-  @moduledoc false
-
-  defexception [
-    duplicates: []
-  ]
-
-  @type t :: %__MODULE__{
-          duplicates: [atom]
-        }
-
-  @impl Exception
-  def message(%__MODULE__{duplicates: dups}) do
-    "Duplicate key names are not allowed: #{inspect(dups)}"
-  end
-end
-
 defmodule Vow.Keys do
   @moduledoc false
 
@@ -41,6 +24,8 @@ defmodule Vow.Keys do
         }
     end
   end
+
+  # NOTE: 'genericize' traversal of the expr tree/path?
 
   @spec check_keys([Vow.vow_ref_expr] | Vow.vow_ref_expr, {[atom], [atom]}) :: {[atom], [atom]}
   defp check_keys(keys, acc \\ {[], []})
@@ -95,6 +80,7 @@ defmodule Vow.Keys do
     import Vow.Ref
     alias Vow.ConformError
 
+    @impl Vow.Conformable
     def conform(vow, vow_path, via, value_path, value)
       when is_map(value) do
         context = {vow_path, via, value_path}
@@ -107,6 +93,51 @@ defmodule Vow.Keys do
     def conform(_vow, vow_path, via, value_path, value) do
       {:error, [ConformError.new_problem(&is_map/1, vow_path, via, value_path, value)]}
     end
+
+    @impl Vow.Conformable
+    def unform(vow, value) when is_map(value) do
+      case unform_impl(false, vow.optional, value) do
+        {:ok, unformed} -> unform_impl(true, vow.required, unformed)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+    def unform(vow, value) do
+      {:error, %Vow.UnformError{vow: vow, value: value}}
+    end
+
+    @spec unform_impl(boolean, [Vow.vow_ref_expr] | Vow.vow_ref_expr, map) :: {:ok, map} | {:error, Vow.UnformError.t}
+    defp unform_impl(required?, keys, val) when is_list(keys) do
+      Enum.reduce(keys, {:ok, val}, fn
+        _, {:error, reason} ->
+          {:error, reason}
+        k, {:ok, v} ->
+          unform_impl(required?, k, v)
+      end)
+    end
+    defp unform_impl(required?, {:or, keys} = vow, val) do
+      Enum.reduce(keys, {:error, %Vow.UnformError{vow: vow, value: val}}, fn
+        _, {:ok, unformed} -> {:ok, unformed}
+        k, {:error, _} ->
+          case unform_impl(required?, k, val) do
+            {:ok, unformed} -> {:ok, unformed}
+            {:error, _reason} -> {:error, %Vow.UnformError{vow: vow, value: val}}
+          end
+      end)
+    end
+    defp unform_impl(required?, {:and, keys}, val) do
+      unform_impl(required?, keys, val)
+    end
+    defp unform_impl(required?, %Vow.Ref{fun: f} = ref, val) do
+      case {required?, Map.has_key?(val, f)} do
+        {_, true} -> @protocol.unform(ref, val)
+        {true, false} -> {:error, %Vow.UnformError{vow: ref, value: val}}
+        {false, false} -> {:ok, val}
+      end
+    end
+    defp unform_impl(required?, {m, f}, val) do
+      unform_impl(required?, Vow.Ref.new(m, f), val)
+    end
+    defp unform_impl(required?, f, val), do: unform_impl(required?, {nil, f}, val)
 
     @spec conform_impl(boolean(), [Vow.vow_ref_expr] | Vow.vow_ref_expr, map, {[term], [Vow.Ref.t], [term]})
       :: {:ok, Vow.Conformable.conformed} | {:error, [ConformError.Problem.t]}

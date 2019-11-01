@@ -15,6 +15,7 @@ defmodule Vow.Nilable do
   defimpl Vow.Conformable do
     @moduledoc false
 
+    @impl Vow.Conformable
     def conform(_vow, _vow_path, _via, _value_path, nil) do
       {:ok, nil}
     end
@@ -22,5 +23,9 @@ defmodule Vow.Nilable do
     def conform(%@for{vow: vow}, vow_path, via, value_path, value) do
       @protocol.conform(vow, vow_path, via, value_path, value)
     end
+
+    @impl Vow.Conformable
+    def unform(_vow, nil), do: {:ok, nil}
+    def unform(%@for{vow: vow}, value), do: @protocol.unform(vow, value)
   end
 end

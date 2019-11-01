@@ -24,6 +24,7 @@ defmodule Vow.Alt do
     import Vow.Conformable.Vow.List, only: [proper_list?: 1]
     alias Vow.{Conformable, ConformError, RegexOp}
 
+    @impl Vow.RegexOperator
     def conform(%@for{vows: vows}, vow_path, via, value_path, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(vows, {:error, []}, fn
@@ -87,6 +88,19 @@ defmodule Vow.Alt do
            value
          )
        ]}
+    end
+
+    @impl Vow.RegexOperator
+    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
+      with [key] <- Map.keys(value),
+            true <- Keyword.has_key?(vows, key) do
+        Conformable.unform(Keyword.get(vows, key), Map.get(value, key))
+      else
+        _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
+      end
+    end
+    def unform(vow, value) do
+      {:error, %Vow.UnformError{vow: vow, value: value}}
     end
   end
 end

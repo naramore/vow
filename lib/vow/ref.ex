@@ -59,6 +59,7 @@ defmodule Vow.Ref do
 
     alias Vow.ConformError
 
+    @impl Vow.RegexOperator
     def conform(ref, vow_path, via, value_path, value) do
       case @for.resolve(ref) do
         {:error, reasons} ->
@@ -78,6 +79,11 @@ defmodule Vow.Ref do
           end
       end
     end
+
+    @impl Vow.RegexOperator
+    def unform(vow, value) do
+      Vow.Conformable.unform(vow, value)
+    end
   end
 
   defimpl Vow.Conformable do
@@ -85,6 +91,7 @@ defmodule Vow.Ref do
 
     alias Vow.ConformError
 
+    @impl Vow.Conformable
     def conform(ref, vow_path, via, value_path, value) do
       case @for.resolve(ref) do
         {:ok, vow} ->
@@ -95,6 +102,16 @@ defmodule Vow.Ref do
            Enum.map(reasons, fn r ->
              ConformError.new_problem(r, vow_path, via ++ [ref], value_path, value)
            end)}
+      end
+    end
+
+    @impl Vow.Conformable
+    def unform(vow, value) do
+      case @for.resolve(vow) do
+        {:ok, vow} ->
+          @protocol.unform(vow, value)
+        {:error, _} ->
+          {:error, %Vow.UnformError{vow: vow, value: value}}
       end
     end
   end
