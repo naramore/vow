@@ -3,11 +3,9 @@ defmodule Vow.FunctionWrapper do
   TODO
   """
 
-  defstruct [
-    function: nil,
-    form: nil,
-    bindings: []
-  ]
+  defstruct function: nil,
+            form: nil,
+            bindings: []
 
   @type t :: %__MODULE__{
           function: (term -> boolean),
@@ -51,11 +49,13 @@ defmodule Vow.FunctionWrapper do
           else
             string
           end
-        _ast, string -> string
+
+        _ast, string ->
+          string
       end)
     end
 
-    @spec opts_to_keyword(Inspect.Opts.t) :: keyword
+    @spec opts_to_keyword(Inspect.Opts.t()) :: keyword
     defp opts_to_keyword(opts) do
       opts
       |> Map.from_struct()

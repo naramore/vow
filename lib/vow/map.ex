@@ -63,20 +63,23 @@ defmodule Vow.Map do
 
     @impl Vow.Conformable
     def unform(%@for{key_vow: kv, value_vow: vv} = vow, value)
-      when is_map(value) do
-        Enum.reduce(value, {:ok, %{}}, fn
-          _, {:error, reason} -> {:error, reason}
-          {k, v}, {:ok, acc} ->
-            with {:ok, uv} <- @protocol.unform(vv, v),
-                 {true, _} <- {vow.conform_keys?, uv},
-                 {:ok, uk} <- @protocol.unform(kv, v) do
-              {:ok, Map.put(acc, uk, uv)}
-            else
-              {false, uv} -> {:ok, Map.put(acc, k, uv)}
-              {:error, reason} -> {:error, reason}
-            end
-        end)
+        when is_map(value) do
+      Enum.reduce(value, {:ok, %{}}, fn
+        _, {:error, reason} ->
+          {:error, reason}
+
+        {k, v}, {:ok, acc} ->
+          with {:ok, uv} <- @protocol.unform(vv, v),
+               {true, _} <- {vow.conform_keys?, uv},
+               {:ok, uk} <- @protocol.unform(kv, v) do
+            {:ok, Map.put(acc, uk, uv)}
+          else
+            {false, uv} -> {:ok, Map.put(acc, k, uv)}
+            {:error, reason} -> {:error, reason}
+          end
+      end)
     end
+
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end

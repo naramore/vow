@@ -46,7 +46,7 @@ defmodule Vow.OneOf do
     @impl Vow.Conformable
     def unform(%@for{vows: vows} = vow, value) when is_map(value) do
       with [key] <- Map.keys(value),
-            true <- Keyword.has_key?(vows, key) do
+           true <- Keyword.has_key?(vows, key) do
         @protocol.unform(Keyword.get(vows, key), Map.get(value, key))
       else
         _ -> {:error, %Vow.UnformError{vow: vow, value: value}}

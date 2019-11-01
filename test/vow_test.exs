@@ -395,22 +395,23 @@ defmodule VowTest do
     property "fails to conform if not given a map" do
       check all value <- one_of([boolean(), integer(), float(), string(:ascii)]) do
         vow = Vow.merge([%{}, %{}])
-        assert match? {:error, _}, Vow.conform(vow, value)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "returns the value itself if value is map and merge is empty" do
       check all value <- map_of(atom(:alphanumeric), constant(nil)) do
         vow = Vow.merge([])
-        assert match? {:ok, ^value}, Vow.conform(vow, value)
+        assert match?({:ok, ^value}, Vow.conform(vow, value))
       end
     end
 
     property "of 1 vow is equivalent to the inner vow itself" do
       check all value <- map_of(atom(:alphanumeric), constant(nil)),
-                vow <- map_of(atom(:alphanumeric), VowData.pred_fun())
-                       |> list_of(length: 2..5)
-                       |> map(&Vow.merge(&1)) do
+                vow <-
+                  map_of(atom(:alphanumeric), VowData.pred_fun())
+                  |> list_of(length: 2..5)
+                  |> map(&Vow.merge(&1)) do
         vow_result = Vow.conform(vow, value) |> VTU.strip_vow()
         merge_result = Vow.conform(Vow.merge([vow]), value) |> VTU.strip_vow()
         assert vow_result == merge_result
@@ -421,12 +422,14 @@ defmodule VowTest do
       check all others <- map_of(atom(:alphanumeric), one_of([boolean(), atom(:alphanumeric)])),
                 {a, b} <- tuple({atom(:alphanumeric), boolean()}),
                 value = Map.merge(others, %{a: a, b: b}) do
-        vow = Vow.merge([
-          %{a: &is_atom/1, b: &is_boolean/1},
-          Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1)),
-          %{a: &is_integer/1}
-        ])
-        assert match? {:error, _}, Vow.conform(vow, value)
+        vow =
+          Vow.merge([
+            %{a: &is_atom/1, b: &is_boolean/1},
+            Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1)),
+            %{a: &is_integer/1}
+          ])
+
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -434,21 +437,26 @@ defmodule VowTest do
       check all others <- map_of(atom(:alphanumeric), one_of([boolean(), atom(:alphanumeric)])),
                 {a, b} <- tuple({atom(:alphanumeric), boolean()}),
                 value = Map.merge(others, %{a: a, b: b}) do
-        vow = Vow.merge([
-          %{a: &is_atom/1, b: &is_boolean/1},
-          Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1))
-        ])
-        assert match? {:ok, _}, Vow.conform(vow, value)
+        vow =
+          Vow.merge([
+            %{a: &is_atom/1, b: &is_boolean/1},
+            Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1))
+          ])
+
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
     property "the order of merges can effect the result" do
-      check all value <- tuple({integer(), boolean(), string(:ascii), one_of([integer(), float()])})
-                         |> map(fn {w, x, y, z} -> %{a: w, b: x, c: y, d: z} end) do
+      check all value <-
+                  tuple({integer(), boolean(), string(:ascii), one_of([integer(), float()])})
+                  |> map(fn {w, x, y, z} -> %{a: w, b: x, c: y, d: z} end) do
         a = %{a: &is_integer/1, b: &is_boolean/1}
         b = %{c: &is_bitstring/1, d: &is_number/1}
         c = %{d: Vow.one_of(i: &is_integer/1, f: &is_float/1)}
-        refute Vow.conform(Vow.merge([a, b, c]), value) == Vow.conform(Vow.merge([a, c, b]), value)
+
+        refute Vow.conform(Vow.merge([a, b, c]), value) ==
+                 Vow.conform(Vow.merge([a, c, b]), value)
       end
     end
   end
@@ -457,7 +465,7 @@ defmodule VowTest do
     property "fails to conform if not given a map" do
       check all value <- tree(one_of([boolean(), integer(), float(), string(:ascii)]), &list_of/1) do
         vow = Vow.keys(required: [:i, :n, :f], default_module: VowRef)
-        assert match? {:error, _}, Vow.conform(vow, value)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -482,7 +490,7 @@ defmodule VowTest do
                 key <- member_of(Map.keys(map)),
                 value = Map.delete(map, key) do
         vow = Vow.keys(required: [:i, :f, :b, :s], default_module: VowRef)
-        assert match? {:error, _}, Vow.conform(vow, value)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -490,7 +498,7 @@ defmodule VowTest do
       check all {i, f, b, s} <- tuple({integer(), float(), boolean(), string(:ascii)}),
                 value = %{i: i, f: f, b: b, ss: s} do
         vow = Vow.keys(required: [:i, :f, :b, :ss], default_module: VowRef)
-        assert match? {:error, _}, Vow.conform(vow, value)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -500,7 +508,7 @@ defmodule VowTest do
                 key <- member_of(Map.keys(map)),
                 value = Map.delete(map, key) do
         vow = Vow.keys(optional: [:i, :f, :b, :s], default_module: VowRef)
-        refute match? {:error, _}, Vow.conform(vow, value)
+        refute match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -508,29 +516,31 @@ defmodule VowTest do
       check all {i, f, b, s} <- tuple({integer(), integer(), boolean(), string(:ascii)}),
                 value = %{i: i, f: f, b: b, s: s} do
         vow = Vow.keys(required: [:i, :f, :b, :s], default_module: VowRef)
-        assert match? {:error, _}, Vow.conform(vow, value)
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "{:or, [...]} will match the 1st key that exists and conforms" do
-      check all value <- tuple({integer(), one_of([float(), string(:ascii)])})
-                         |> map(fn
-                          {i, f} when is_float(f) -> %{i: i, f: f}
-                          {i, s} -> %{i: i, s: s}
-                         end) do
+      check all value <-
+                  tuple({integer(), one_of([float(), string(:ascii)])})
+                  |> map(fn
+                    {i, f} when is_float(f) -> %{i: i, f: f}
+                    {i, s} -> %{i: i, s: s}
+                  end) do
         vow = Vow.keys(required: [:i, {:or, [:f, :s]}], default_module: VowRef)
-        assert match? {:ok, _}, Vow.conform(vow, value)
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
     property "{:and, [...]} will match only if all keys exist and conform" do
-      check all value <- tuple({integer(), one_of([string(:ascii), tuple({boolean(), float()})])})
-                         |> map(fn
-                          {i, {b, f}} -> %{i: i, b: b, f: f}
-                          {i, s} -> %{i: i, s: s}
-                         end) do
+      check all value <-
+                  tuple({integer(), one_of([string(:ascii), tuple({boolean(), float()})])})
+                  |> map(fn
+                    {i, {b, f}} -> %{i: i, b: b, f: f}
+                    {i, s} -> %{i: i, s: s}
+                  end) do
         vow = Vow.keys(required: [:i, {:or, [:s, {:and, [:b, :f]}]}], default_module: VowRef)
-        assert match? {:ok, _}, Vow.conform(vow, value)
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -538,7 +548,7 @@ defmodule VowTest do
       check all {i, f, b, s} <- tuple({integer(), float(), boolean(), string(:ascii)}),
                 value = %{i: i, f: f, b: b, s: s} do
         vow = Vow.keys(required: [:i, :f, :b, :s], default_module: VowRef)
-        assert match? {:ok, _}, Vow.conform(vow, value)
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
   end

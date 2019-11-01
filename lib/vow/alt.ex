@@ -93,12 +93,13 @@ defmodule Vow.Alt do
     @impl Vow.RegexOperator
     def unform(%@for{vows: vows} = vow, value) when is_map(value) do
       with [key] <- Map.keys(value),
-            true <- Keyword.has_key?(vows, key) do
+           true <- Keyword.has_key?(vows, key) do
         Conformable.unform(Keyword.get(vows, key), Map.get(value, key))
       else
         _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
       end
     end
+
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end

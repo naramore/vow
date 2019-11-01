@@ -16,7 +16,7 @@ defprotocol Vow.RegexOperator do
 
   @doc """
   """
-  @spec unform(t, conformed) :: {:ok, value :: term} | {:error, Vow.UnformError.t}
+  @spec unform(t, conformed) :: {:ok, value :: term} | {:error, Vow.UnformError.t()}
   def unform(vow, conformed_value)
 end
 
@@ -39,7 +39,8 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
         {:error, problems}
 
       {:ok, _conformed, [_ | _]} ->
-        {:error, [ConformError.new_problem(vow, vow_path, via, value_path, value, "Insufficient Data")]}
+        {:error,
+         [ConformError.new_problem(vow, vow_path, via, value_path, value, "Insufficient Data")]}
     end
   end
 

@@ -43,9 +43,10 @@ defmodule Vow.Ref do
 
   @doc """
   """
-  @spec sref(module | nil, atom) :: Macro.t
+  @spec sref(module | nil, atom) :: Macro.t()
   defmacro sref(module \\ nil, function) do
     module = module || __CALLER__.module
+
     quote do
       Vow.Ref.new(
         unquote(module),
@@ -110,6 +111,7 @@ defmodule Vow.Ref do
       case @for.resolve(vow) do
         {:ok, vow} ->
           @protocol.unform(vow, value)
+
         {:error, _} ->
           {:error, %Vow.UnformError{vow: vow, value: value}}
       end
@@ -123,6 +125,7 @@ defmodule Vow.Ref do
     def inspect(%@for{mod: nil, fun: fun}, _opts) do
       "#SRef<#{fun}>"
     end
+
     def inspect(%@for{mod: mod, fun: fun}, _opts) do
       "#SRef<#{mod}.#{fun}>"
     end

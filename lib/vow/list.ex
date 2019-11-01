@@ -66,7 +66,9 @@ defmodule Vow.List do
     @impl Vow.Conformable
     def unform(%@for{vow: vow}, value) when is_list(value) do
       Enum.reduce(value, {:ok, []}, fn
-        _, {:error, reason} -> {:error, reason}
+        _, {:error, reason} ->
+          {:error, reason}
+
         item, {:ok, acc} ->
           case @protocol.unform(vow, item) do
             {:error, reason} -> {:error, reason}
@@ -74,6 +76,7 @@ defmodule Vow.List do
           end
       end)
     end
+
     def unform(vow, value),
       do: {:error, %Vow.UnformError{vow: vow, value: value}}
 

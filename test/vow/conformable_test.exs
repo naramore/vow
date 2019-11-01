@@ -299,9 +299,10 @@ defmodule Vow.ConformableTest do
       check all vow <- map_of(atom(:alphanumeric), constant(&is_integer/1), min_length: 1),
                 vs <- list_of(integer(), length: map_size(vow)),
                 key <- member_of(Map.keys(vow)),
-                value = Enum.zip(Map.keys(vow), vs)
-                        |> Enum.into(%{})
-                        |> Map.delete(key),
+                value =
+                  Enum.zip(Map.keys(vow), vs)
+                  |> Enum.into(%{})
+                  |> Map.delete(key),
                 max_runs: 25 do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -311,9 +312,10 @@ defmodule Vow.ConformableTest do
       check all vow <- map_of(atom(:alphanumeric), constant(&is_integer/1), min_length: 1),
                 vs <- list_of(integer(), length: map_size(vow)),
                 extra_values <- map_of(string(:ascii), float()),
-                value = Enum.zip(Map.keys(vow), vs)
-                        |> Enum.into(%{})
-                        |> Map.merge(extra_values),
+                value =
+                  Enum.zip(Map.keys(vow), vs)
+                  |> Enum.into(%{})
+                  |> Map.merge(extra_values),
                 max_runs: 25 do
         assert match?({:ok, _}, Vow.conform(vow, value))
       end

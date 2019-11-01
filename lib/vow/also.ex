@@ -39,7 +39,9 @@ defmodule Vow.Also do
       vows
       |> Enum.reverse()
       |> Enum.reduce({:ok, value}, fn
-        _, {:error, reason} -> {:error, reason}
+        _, {:error, reason} ->
+          {:error, reason}
+
         vow, {:ok, unformed} ->
           @protocol.unform(vow, unformed)
       end)

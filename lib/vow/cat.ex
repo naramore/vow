@@ -79,7 +79,9 @@ defmodule Vow.Cat do
     @impl Vow.RegexOperator
     def unform(%@for{vows: vows} = vow, value) when is_map(value) do
       Enum.reduce(vows, {:ok, []}, fn
-        _, {:error, reason} -> {:error, reason}
+        _, {:error, reason} ->
+          {:error, reason}
+
         {k, v}, {:ok, acc} ->
           if Map.has_key?(value, k) do
             case Conformable.unform(v, Map.get(value, k)) do
@@ -91,6 +93,7 @@ defmodule Vow.Cat do
           end
       end)
     end
+
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end

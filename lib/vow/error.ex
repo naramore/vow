@@ -19,8 +19,8 @@ defmodule Vow.UnnamedVowsError do
   defexception [:vows]
 
   @type t :: %__MODULE__{
-    vows: [Vow.t]
-  }
+          vows: [Vow.t()]
+        }
 
   @impl Exception
   def message(%__MODULE__{}) do
@@ -31,9 +31,7 @@ end
 defmodule Vow.DuplicateKeyError do
   @moduledoc false
 
-  defexception [
-    duplicates: []
-  ]
+  defexception duplicates: []
 
   @type t :: %__MODULE__{
           duplicates: [atom]
@@ -49,10 +47,11 @@ defmodule Vow.UnformError do
   @moduledoc false
 
   defexception [:vow, :value]
+
   @type t :: %__MODULE__{
-    vow: Vow.t,
-    value: Vow.Conformable.conformed
-  }
+          vow: Vow.t(),
+          value: Vow.Conformable.conformed()
+        }
 
   @impl Exception
   def message(%__MODULE__{vow: vow, value: value}) do

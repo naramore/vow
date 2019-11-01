@@ -73,6 +73,7 @@ defmodule Vow.OneOrMore do
     def unform(vow, []) do
       {:error, %Vow.UnformError{vow: vow, value: []}}
     end
+
     def unform(vow, value) do
       @protocol.Vow.ZeroOrMore.unform(vow, value)
     end

@@ -60,16 +60,19 @@ defmodule Vow.ZeroOrMore do
 
     @impl Vow.RegexOperator
     def unform(%@for{vow: vow}, value)
-      when is_list(value) and length(value) >= 0 do
-        Enum.reduce(value, {:ok, []}, fn
-          _, {:error, reason} -> {:error, reason}
-          item, {:ok, acc} ->
-            case Conformable.unform(vow, item) do
-              {:error, reason} -> {:error, reason}
-              {:ok, unformed} -> {:ok, acc ++ [unformed]}
-            end
-        end)
+        when is_list(value) and length(value) >= 0 do
+      Enum.reduce(value, {:ok, []}, fn
+        _, {:error, reason} ->
+          {:error, reason}
+
+        item, {:ok, acc} ->
+          case Conformable.unform(vow, item) do
+            {:error, reason} -> {:error, reason}
+            {:ok, unformed} -> {:ok, acc ++ [unformed]}
+          end
+      end)
     end
+
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end

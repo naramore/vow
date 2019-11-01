@@ -53,7 +53,7 @@ defmodule Vow do
 
   @doc """
   """
-  @spec unform!(t, Conformable.conformed) :: value :: term | no_return
+  @spec unform!(t, Conformable.conformed()) :: value :: term | no_return
   def unform!(vow, value) do
     case unform(vow, value) do
       {:ok, unformed} -> unformed
@@ -213,9 +213,10 @@ defmodule Vow do
 
   @doc """
   """
-  @spec mkeys(key_opts) :: Macro.t
+  @spec mkeys(key_opts) :: Macro.t()
   defmacro mkeys(opts) do
     opts = Keyword.put(opts, :default_module, __CALLER__.module)
+
     quote do
       Vow.keys(unquote(opts))
     end

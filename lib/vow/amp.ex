@@ -66,15 +66,18 @@ defmodule Vow.Amp do
 
     @impl Vow.RegexOperator
     def unform(%@for{vows: vows}, value)
-      when is_list(value) and length(value) >= 0 do
-        vows
-        |> Enum.reverse()
-        |> Enum.reduce({:ok, value}, fn
-          _, {:error, reason} -> {:error, reason}
-          vow, {:ok, unformed} ->
-            Conformable.unform(vow, unformed)
-        end)
+        when is_list(value) and length(value) >= 0 do
+      vows
+      |> Enum.reverse()
+      |> Enum.reduce({:ok, value}, fn
+        _, {:error, reason} ->
+          {:error, reason}
+
+        vow, {:ok, unformed} ->
+          Conformable.unform(vow, unformed)
+      end)
     end
+
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end

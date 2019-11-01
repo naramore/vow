@@ -50,7 +50,9 @@ defmodule Vow.Merge do
       vows
       |> Enum.reverse()
       |> Enum.reduce({:ok, %{}}, fn
-        _, {:error, reason} -> {:error, reason}
+        _, {:error, reason} ->
+          {:error, reason}
+
         vow, {:ok, acc} ->
           case @protocol.unform(vow, value) do
             {:ok, unformed} -> {:ok, Map.merge(acc, unformed)}
@@ -58,6 +60,7 @@ defmodule Vow.Merge do
           end
       end)
     end
+
     def unform(vow, value),
       do: {:error, %Vow.UnformError{vow: vow, value: value}}
   end

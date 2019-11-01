@@ -290,7 +290,7 @@ defmodule VowData do
     |> StreamData.map(&List.to_tuple/1)
   end
 
-  @spec merged(stream_data | nil, keyword) :: stream_data(Vow.Merge.t | Vow.Map.t | map)
+  @spec merged(stream_data | nil, keyword) :: stream_data(Vow.Merge.t() | Vow.Map.t() | map)
   def merged(child_data \\ nil, opts \\ []) do
     StreamData.tree(
       process(child_data, opts),
@@ -298,9 +298,10 @@ defmodule VowData do
     )
   end
 
-  @spec merged_recur(stream_data | nil, keyword) :: stream_data(Vow.Merge.t | Vow.Map.t | map)
+  @spec merged_recur(stream_data | nil, keyword) :: stream_data(Vow.Merge.t() | Vow.Map.t() | map)
   def merged_recur(child_data \\ nil, opts \\ []) do
     child_data = process(child_data, opts)
+
     StreamData.one_of([
       StreamData.map_of(StreamData.atom(:alphanumeric), child_data, opts),
       map(child_data, opts),
