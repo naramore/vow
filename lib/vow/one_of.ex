@@ -1,5 +1,6 @@
 defmodule Vow.OneOf do
   @moduledoc false
+  @behaviour Access
 
   defstruct [:vows]
 
@@ -16,6 +17,21 @@ defmodule Vow.OneOf do
     else
       raise %Vow.DuplicateNameError{vow: vow}
     end
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+    Access.fetch(vows, key)
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+    Access.get_and_update(vows, key, fun)
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
+    Access.pop(vows, key)
   end
 
   defimpl Vow.Conformable do
@@ -50,6 +66,28 @@ defmodule Vow.OneOf do
         @protocol.unform(Keyword.get(vows, key), Map.get(value, key))
       else
         _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
+      end
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(%@for{vows: vows}) do
+        Enum.reduce(vows, {:ok, []}, fn
+          _, {:error, reason} -> {:error, reason}
+          {_, v}, {:ok, acc} ->
+            case @protocol.gen(v) do
+              {:error, reason} -> {:error, reason}
+              {:ok, data} -> {:ok, [data|acc]}
+            end
+        end)
+        |> case do
+          {:error, reason} -> {:error, reason}
+          {:ok, datas} -> {:ok, StreamData.one_of(datas)}
+        end
       end
     end
   end

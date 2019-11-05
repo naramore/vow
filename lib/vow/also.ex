@@ -1,5 +1,6 @@
 defmodule Vow.Also do
   @moduledoc false
+  @behaviour Access
 
   defstruct vows: []
 
@@ -10,6 +11,18 @@ defmodule Vow.Also do
   @spec new([Vow.t()]) :: t
   def new(vows) do
     %__MODULE__{vows: vows}
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
   end
 
   defimpl Vow.Conformable do
@@ -45,6 +58,35 @@ defmodule Vow.Also do
         vow, {:ok, unformed} ->
           @protocol.unform(vow, unformed)
       end)
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+      alias Vow.Generatable.Utils
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        Enum.reduce(vow.vows, {:ok, []}, fn
+          _, {:error, reason} -> {:error, reason}
+          v, {:ok, acc} ->
+            case @protocol.gen(v) do
+              {:error, reason} -> {:error, reason}
+              {:ok, data} -> {:ok, [data|acc]}
+            end
+        end)
+        |> case do
+          {:error, reason} -> {:error, reason}
+          {:ok, datas} ->
+            _ = Utils.no_override_warn(vow)
+            datas
+            |> Enum.reverse()
+            |> StreamData.one_of()
+            |> StreamData.filter(&Vow.valid?(vow, &1))
+            |> (&{:ok, &1}).()
+        end
+      end
     end
   end
 end

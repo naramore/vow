@@ -1,5 +1,6 @@
 defmodule Vow.Cat do
   @moduledoc false
+  @behaviour Access
 
   defstruct [:vows]
 
@@ -16,6 +17,18 @@ defmodule Vow.Cat do
     else
       raise %Vow.DuplicateNameError{vow: vow}
     end
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
   end
 
   @spec unique_keys?([{atom, Vow.t()}]) :: boolean | no_return
@@ -147,6 +160,39 @@ defmodule Vow.Cat do
         case Conformable.conform(s, vow_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
           {:ok, c} -> {:ok, Map.put(acc, k, c), t}
           {:error, problems} -> {:error, problems}
+        end
+      end
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+      import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        Enum.reduce(vow.vows, {:ok, []}, fn
+          _, {:error, reason} -> {:error, reason}
+          {k, v}, {:ok, acc} ->
+            case @protocol.gen(v) do
+              {:error, reason} -> {:error, reason}
+              {:ok, data} -> {:ok, acc ++ [StreamData.tuple({StreamData.constant(k), data})]}
+            end
+        end)
+        |> case do
+          {:error, reason} -> {:error, reason}
+          {:ok, datas} ->
+            {:ok, StreamData.map(
+              StreamData.fixed_list(datas),
+              &Enum.reduce(&1, [], fn {k, v}, acc ->
+                if Vow.regex?(Keyword.get(&1, k)) do
+                  append(acc, v)
+                else
+                  acc ++ [v]
+                end
+              end)
+            )}
         end
       end
     end

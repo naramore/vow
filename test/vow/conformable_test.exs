@@ -107,7 +107,7 @@ defmodule Vow.ConformableTest do
   describe "Conformable.Range.conform/5" do
     property "range value bounded by vow range -> value" do
       check all {range, f, l} <-
-                  VowData.range()
+                  StreamDataUtils.range()
                   |> bind(&{constant(&1), member_of(&1), member_of(&1)}) do
         assert match?({:ok, ^f..^l}, Vow.conform(range, f..l))
       end
@@ -115,7 +115,7 @@ defmodule Vow.ConformableTest do
 
     property "range value outside of vow range -> error(s)" do
       check all {range, vrange} <-
-                  VowData.range()
+                  StreamDataUtils.range()
                   |> bind(fn x..y ->
                     z = if x <= y, do: y + 1, else: y - 1
                     {constant(x..y), constant(x..z)}
@@ -126,7 +126,7 @@ defmodule Vow.ConformableTest do
 
     property "range min..max succeeds with integer value b/t min and max" do
       check all {range, x} <-
-                  VowData.range()
+                  StreamDataUtils.range()
                   |> bind(&{constant(&1), member_of(&1)}) do
         assert match?({:ok, ^x}, Vow.conform(range, x))
       end
@@ -134,7 +134,7 @@ defmodule Vow.ConformableTest do
 
     property "integer value outside of range errors" do
       check all {range, x} <-
-                  VowData.range()
+                  StreamDataUtils.range()
                   |> bind(fn x..y ->
                     z =
                       if x <= y do
@@ -150,7 +150,7 @@ defmodule Vow.ConformableTest do
     end
 
     property "non-integer values result in error" do
-      check all range <- VowData.range(),
+      check all range <- StreamDataUtils.range(),
                 x <- one_of([float(), boolean(), atom(:alphanumeric), list_of(term())]) do
         assert match?({:error, _}, Vow.conform(range, x))
       end
@@ -160,7 +160,7 @@ defmodule Vow.ConformableTest do
   describe "Conformable.Date.Range.conform/5" do
     property "date_range value bounded by vow date_range -> value" do
       check all {range, f, l} <-
-                  VowData.date_range()
+                  StreamDataUtils.date_range()
                   |> bind(&{constant(&1), member_of(&1), member_of(&1)}) do
         value = Date.range(f, l)
         assert match?({:ok, ^value}, Vow.conform(range, value))
@@ -169,14 +169,14 @@ defmodule Vow.ConformableTest do
 
     property "date_range succeeds with date value b/t first and last" do
       check all {range, x} <-
-                  VowData.date_range()
+                  StreamDataUtils.date_range()
                   |> bind(&{constant(&1), member_of(&1)}) do
         assert match?({:ok, ^x}, Vow.conform(range, x))
       end
     end
 
     property "non-date values result in error" do
-      check all range <- VowData.date_range(),
+      check all range <- StreamDataUtils.date_range(),
                 x <- one_of([float(), boolean(), atom(:alphanumeric), list_of(term())]),
                 max_runs: 25 do
         assert match?({:error, _}, Vow.conform(range, x))

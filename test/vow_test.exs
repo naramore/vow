@@ -230,6 +230,19 @@ defmodule VowTest do
         assert nilable == subvow
       end
     end
+
+    property "unform should return nil given nil" do
+      check all vow <- map(VowData.vow(), &Vow.nilable/1) do
+        assert match? {:ok, nil}, Vow.unform(vow, nil)
+      end
+    end
+
+    property "unform on nilable == unform on inner vow" do
+      check all vow <- VowData.nilable(VowData.non_recur_vow()),
+                value <- one_of([boolean(), integer(), float(), string(:ascii)]) do
+        assert Vow.unform(vow, value) == Vow.unform(vow.vow, value)
+      end
+    end
   end
 
   describe "Vow.list_of/2" do

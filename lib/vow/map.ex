@@ -144,4 +144,25 @@ defmodule Vow.Map do
       end
     end
   end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        with {:ok, key_gen} <- @protocol.gen(vow.key_vow),
+             {:ok, value_gen} <- @protocol.gen(vow.value_vow),
+             {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]) do
+          {:ok, StreamData.map_of(
+            key_gen,
+            value_gen,
+            Enum.into(opts, [])
+          )}
+        else
+          {:error, reason} -> {:error, reason}
+        end
+      end
+    end
+  end
 end

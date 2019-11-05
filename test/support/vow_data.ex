@@ -21,8 +21,8 @@ defmodule VowData do
       func(opts),
       pred_fun(opts),
       mapset(opts),
-      range(opts),
-      date_range(opts),
+      StreamDataUtils.range(),
+      StreamDataUtils.date_range(opts),
       StreamData.boolean(),
       StreamData.integer(),
       StreamData.float(),
@@ -128,84 +128,6 @@ defmodule VowData do
   def subset(set, opts \\ []) do
     StreamData.member_of(set)
     |> (&mapset(Keyword.put(opts, :child_data, &1))).()
-  end
-
-  @spec range(keyword) :: stream_data(Range.t())
-  def range(_opts \\ []) do
-    StreamData.tuple({
-      StreamData.integer(),
-      StreamData.integer()
-    })
-    |> StreamData.map(fn {min, max} -> min..max end)
-  end
-
-  @spec date_range(keyword) :: stream_data(Date.Range.t())
-  def date_range(opts \\ []) do
-    StreamData.tuple({
-      date(opts),
-      date(opts)
-    })
-    |> StreamData.map(fn {min, max} -> Date.range(min, max) end)
-  end
-
-  @spec date(keyword) :: stream_data(Date.t())
-  def date(_opts \\ []) do
-    StreamData.tuple({
-      StreamData.integer(1970..2070),
-      StreamData.integer(1..12),
-      StreamData.integer(1..28)
-    })
-    |> StreamData.map(fn {y, m, d} ->
-      Date.new(y, m, d) |> elem(1)
-    end)
-  end
-
-  @spec time(keyword) :: stream_data(Time.t())
-  def time(_opts \\ []) do
-    StreamData.tuple({
-      StreamData.integer(0..23),
-      StreamData.integer(0..59),
-      StreamData.integer(0..59),
-      microseconds()
-    })
-    |> StreamData.map(fn {h, m, s, us} ->
-      Time.new(h, m, s, us) |> elem(1)
-    end)
-  end
-
-  @spec microseconds(keyword) :: stream_data({0..999_999, 0..6})
-  def microseconds(_opts \\ []) do
-    StreamData.integer(0..999_999)
-    |> StreamData.map(fn i ->
-      case Integer.digits(i) do
-        [0] -> {0, 0}
-        x -> {i, length(x)}
-      end
-    end)
-  end
-
-  @spec datetime(keyword) :: stream_data(DateTime.t())
-  def datetime(opts \\ []) do
-    StreamData.tuple({
-      date(opts),
-      time(opts)
-    })
-    |> StreamData.map(fn {d, t} ->
-      %DateTime{
-        calendar: t.calendar,
-        day: d.day,
-        hour: t.hour,
-        microsecond: t.microsecond,
-        minute: t.minute,
-        month: d.month,
-        second: t.second,
-        std_offset: 0,
-        time_zone: "Etc/UTC",
-        utc_offset: 0,
-        year: d.year,
-        zone_abbr: "UTC"
-      }
-    end)
   end
 
   @spec list_of(stream_data | nil, keyword) :: stream_data(Vow.List.t())

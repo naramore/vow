@@ -1,5 +1,6 @@
 defmodule Vow.Amp do
   @moduledoc false
+  @behaviour Access
 
   defstruct [:vows]
 
@@ -10,6 +11,18 @@ defmodule Vow.Amp do
   @spec new([Vow.t()]) :: t
   def new(vows) do
     %__MODULE__{vows: vows}
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
   end
 
   defimpl Vow.RegexOperator do
@@ -90,6 +103,17 @@ defmodule Vow.Amp do
           {:ok, conformed} -> {:ok, [conformed], []}
           {:error, problems} -> {:error, problems}
         end
+      end
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        @protocol.Vow.Also.gen(Vow.also(vow.vows))
       end
     end
   end

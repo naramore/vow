@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - more tests!
 - implemented `Vow.Keys`
 - `Vow.Conformable.unform/2`, `Vow.unform/2`, & `Vow.unform!/2`
+- `Vow.Generatable` for all `Vow.Conformable`
+- `Vow.get_in/2` & `Vow.{put|update}_in/3` w/ 'lazy' paths
+- `Access` behaviour to 'all' `Vow.Conformable` (some are intentionally not implemented b/c it doesn't make sense, e.g. `Vow.FunctionWrapper`)
 
 ### Changed
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Vow.FunctionWrapper` to allow optional variable bindings for pretty printing
 - `Vow.Conformable.Map` to allow for keys not specified in the specification, similar to pattern matching
 - re-organized all errors into the vow/error.ex file, including vow/conform_error.ex
+- moved some of the date/time-related generators in test/support/vow_data.ex to test/support/stream_data_utils.ex
 
 ### Removed
 - `merge_fun` option from `Vow.merge/2` b/c it made conforming difficult (impossible?) to unform

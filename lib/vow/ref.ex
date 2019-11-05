@@ -3,6 +3,8 @@ defmodule Vow.Ref do
   TODO
   """
 
+  @behaviour Access
+
   import Vow.FunctionWrapper, only: [wrap: 1]
 
   defstruct [:mod, :fun]
@@ -19,6 +21,26 @@ defmodule Vow.Ref do
       mod: module,
       fun: function
     }
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{} = vow, key) do
+    case resolve(vow) do
+      {:ok, vow} -> Access.fetch(vow, key)
+      {:error, _} -> :error
+    end
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{} = vow, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{} = vow, key) do
+    case resolve(vow) do
+      {:ok, vow} -> Access.pop(vow, key)
+      {:error, _} -> {nil, vow}
+    end
   end
 
   @doc false
@@ -132,4 +154,18 @@ defmodule Vow.Ref do
   end
 
   # coveralls-ignore-stop
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        case @for.resolve(vow) do
+          {:ok, vow} -> @protocol.gen(vow)
+          {:error, reason} -> {:error, reason}
+        end
+      end
+    end
+  end
 end

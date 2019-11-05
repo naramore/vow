@@ -1,5 +1,6 @@
 defmodule Vow.Alt do
   @moduledoc false
+  @behaviour Access
 
   defstruct [:vows]
 
@@ -18,6 +19,21 @@ defmodule Vow.Alt do
     end
   end
 
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+    Access.fetch(vows, key)
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+    Access.get_and_update(vows, key, fun)
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
+    Access.pop(vows, key)
+  end
+
   defimpl Vow.RegexOperator do
     @moduledoc false
 
@@ -34,7 +50,7 @@ defmodule Vow.Alt do
         {k, s}, {:error, pblms} ->
           if Vow.regex?(s) do
             case @protocol.conform(s, vow_path ++ [k], via, value_path, value) do
-              {:ok, conformed, rest} -> {:ok, %{k => conformed}, rest}
+              {:ok, conformed, rest} -> {:ok, [%{k => conformed}], rest}
               {:error, problems} -> {:error, pblms ++ problems}
             end
           else
@@ -102,6 +118,17 @@ defmodule Vow.Alt do
 
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        @protocol.Vow.OneOf.gen(Vow.one_of(vow.vows))
+      end
     end
   end
 end

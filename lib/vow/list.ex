@@ -1,5 +1,6 @@
 defmodule Vow.List do
   @moduledoc false
+  @behaviour Access
 
   defstruct vow: nil,
             min_length: 0,
@@ -21,6 +22,21 @@ defmodule Vow.List do
       max_length: max_length,
       distinct?: distinct?
     }
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vow: vow}, key) do
+    Access.fetch(vow, key)
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vow: vow}, key, fun) do
+    Access.get_and_update(vow, key, fun)
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vow: vow}, key) do
+    Access.pop(vow, key)
   end
 
   defimpl Vow.Conformable do
@@ -136,6 +152,25 @@ defmodule Vow.List do
       count = enum |> Enum.count()
       unique_count = enum |> Enum.uniq() |> Enum.count()
       count == unique_count
+    end
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        with {:ok, item_gen} <- @protocol.gen(vow.vow),
+             {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]),
+             {false, _, _} <- {vow.distinct?, item_gen, opts} do
+          {:ok, StreamData.list_of(item_gen, Enum.into(opts, []))}
+        else
+          {:error, reason} -> {:error, reason}
+          {true, gen, opts} ->
+            {:ok, StreamData.uniq_list_of(gen, Enum.into(opts, []))}
+        end
+      end
     end
   end
 end

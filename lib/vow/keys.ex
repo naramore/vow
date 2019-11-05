@@ -1,5 +1,6 @@
 defmodule Vow.Keys do
   @moduledoc false
+  @behaviour Access
 
   defstruct required: [],
             optional: []
@@ -24,6 +25,18 @@ defmodule Vow.Keys do
           optional: optional
         }
     end
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{} = vow, key) do
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{} = vow, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{} = vow, key) do
   end
 
   # NOTE: 'genericize' traversal of the expr tree/path?
@@ -263,4 +276,15 @@ defmodule Vow.Keys do
   end
 
   # coveralls-ignore-stop
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(_vow) do
+        {:error, :not_implemented}
+      end
+    end
+  end
 end

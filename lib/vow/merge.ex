@@ -1,5 +1,6 @@
 defmodule Vow.Merge do
   @moduledoc false
+  @behaviour Access
 
   defstruct vows: []
 
@@ -12,6 +13,18 @@ defmodule Vow.Merge do
     %__MODULE__{
       vows: vows
     }
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vows: vows}, key) do
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vows: vows}, key) do
   end
 
   defimpl Vow.Conformable do
@@ -63,5 +76,16 @@ defmodule Vow.Merge do
 
     def unform(vow, value),
       do: {:error, %Vow.UnformError{vow: vow, value: value}}
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        @protocol.Vow.Also.gen(Vow.also(vow.vows))
+      end
+    end
   end
 end

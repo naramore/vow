@@ -1,5 +1,6 @@
 defmodule Vow.ZeroOrMore do
   @moduledoc false
+  @behaviour Access
 
   defstruct vow: nil
 
@@ -10,6 +11,21 @@ defmodule Vow.ZeroOrMore do
   @spec new(Vow.t()) :: t
   def new(vow) do
     %__MODULE__{vow: vow}
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{vow: vow}, key) do
+    Access.fetch(vow, key)
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{vow: vow}, key, fun) do
+    Access.get_and_update(vow, key, fun)
+  end
+
+  @impl Access
+  def pop(%__MODULE__{vow: vow}, key) do
+    Access.pop(vow, key)
   end
 
   defimpl Vow.RegexOperator do
@@ -140,5 +156,28 @@ defmodule Vow.ZeroOrMore do
     def append([_ | _] = l, [_ | _] = r), do: l ++ r
     def append(l, r) when is_list(r), do: [l | r]
     def append(l, r) when is_list(l), do: l ++ [r]
+  end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+      import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        case @protocol.gen(vow.vow) do
+          {:error, reason} -> {:error, reason}
+          {:ok, data} ->
+            if Vow.regex?(vow.vow) do
+              {:ok, StreamData.map(
+                StreamData.list_of(data),
+                fn x -> Enum.reduce(x, [], &append/2) end
+              )}
+            else
+              {:ok, StreamData.list_of(data)}
+            end
+        end
+      end
+    end
   end
 end

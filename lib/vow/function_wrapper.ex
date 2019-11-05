@@ -85,4 +85,15 @@ defmodule Vow.FunctionWrapper do
     @impl Vow.Conformable
     def unform(_vow, value), do: {:ok, value}
   end
+
+  if Code.ensure_loaded?(StreamData) do
+    defimpl Vow.Generatable do
+      @moduledoc false
+
+      @impl Vow.Generatable
+      def gen(vow) do
+        @protocol.Function.gen(vow)
+      end
+    end
+  end
 end
