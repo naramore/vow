@@ -1,5 +1,6 @@
 defmodule Vow.Map do
   @moduledoc false
+  @behaviour Access
 
   defstruct key_vow: nil,
             value_vow: nil,
@@ -30,6 +31,53 @@ defmodule Vow.Map do
       max_length: max_length,
       conform_keys?: conform_keys?
     }
+  end
+
+  @impl Access
+  def fetch(%__MODULE__{} = vow, key) do
+    case {Access.fetch(vow.key_value, key), Access.fetch(vow.value_vow, key)} do
+      {{:ok, kval}, {:ok, vval}} -> {:ok, [kval, vval]}
+      {:error, :error} -> :error
+      {{:ok, val}, _} -> {:ok, val}
+      {_, {:ok, val}} -> {:ok, val}
+    end
+  end
+
+  @impl Access
+  def pop(%__MODULE__{} = vow, key) do
+    case {Access.pop(vow.key_value, key), Access.pop(vow.value_vow, key)} do
+      {{nil, _}, {nil, _}} ->
+        {nil, vow}
+
+      {{nil, _}, {val, data}} ->
+        {val, Map.put(vow, :value_vow, data)}
+
+      {{val, data}, {nil, _}} ->
+        {val, Map.put(vow, :key_vow, data)}
+
+      {{kval, kdata}, {vval, vdata}} ->
+        {[kval, vval], Map.merge(vow, %{key_vow: kdata, value_vow: vdata})}
+    end
+  end
+
+  @impl Access
+  def get_and_update(%__MODULE__{} = vow, key, fun) do
+    case Access.get_and_update(vow.key_vow, key, fun) do
+      {nil, _} ->
+        case Access.get_and_update(vow.value_vow, key, fun) do
+          {nil, _} -> {nil, vow}
+          {vget, vupdate} -> {vget, Map.put(vow, :value_vow, vupdate)}
+        end
+
+      {kget, kupdate} ->
+        case Access.get_and_update(vow.value_vow, key, fun) do
+          {nil, _} ->
+            {kget, Map.put(vow, :key_vow, kupdate)}
+
+          {vget, vupdate} ->
+            {[kget, vget], Map.merge(vow, %{key_vow: kupdate, value_vow: vupdate})}
+        end
+    end
   end
 
   defimpl Vow.Conformable do
@@ -154,11 +202,12 @@ defmodule Vow.Map do
         with {:ok, key_gen} <- @protocol.gen(vow.key_vow),
              {:ok, value_gen} <- @protocol.gen(vow.value_vow),
              {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]) do
-          {:ok, StreamData.map_of(
-            key_gen,
-            value_gen,
-            Enum.into(opts, [])
-          )}
+          {:ok,
+           StreamData.map_of(
+             key_gen,
+             value_gen,
+             Enum.into(opts, [])
+           )}
         else
           {:error, reason} -> {:error, reason}
         end

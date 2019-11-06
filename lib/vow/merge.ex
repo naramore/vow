@@ -1,6 +1,7 @@
 defmodule Vow.Merge do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut,
+    type: :many_passthrough
 
   defstruct vows: []
 
@@ -13,18 +14,6 @@ defmodule Vow.Merge do
     %__MODULE__{
       vows: vows
     }
-  end
-
-  @impl Access
-  def fetch(%__MODULE__{vows: vows}, key) do
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vows: vows}, key) do
   end
 
   defimpl Vow.Conformable do

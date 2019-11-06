@@ -265,7 +265,7 @@ defmodule VowData do
     |> StreamData.map(&Vow.one_of/1)
   end
 
-  @spec named_vows(stream_data(a), keyword) :: stream_data(keyword(a)) when a: term
+  @spec named_vows(stream_data(), keyword) :: stream_data([any])
   defp named_vows(data, opts) do
     StreamData.uniq_list_of(
       StreamData.tuple({StreamData.atom(:alphanumeric), data}),

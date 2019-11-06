@@ -233,7 +233,7 @@ defmodule VowTest do
 
     property "unform should return nil given nil" do
       check all vow <- map(VowData.vow(), &Vow.nilable/1) do
-        assert match? {:ok, nil}, Vow.unform(vow, nil)
+        assert match?({:ok, nil}, Vow.unform(vow, nil))
       end
     end
 

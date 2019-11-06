@@ -18,6 +18,7 @@ defimpl Inspect,
   @moduledoc false
 
   import Inspect.Algebra
+  import Vow.Utils, only: [append_if: 3, non_default_range: 1]
 
   def inspect(vow, opts) do
     name = suffix(vow.__struct__)
@@ -81,19 +82,4 @@ defimpl Inspect,
     |> String.split(".")
     |> List.last()
   end
-
-  @spec append_if(list, boolean, term) :: list
-  defp append_if(list, true, item), do: list ++ [item]
-  defp append_if(list, false, _item), do: list
-
-  @spec non_default_range(term) :: String.t() | nil
-  defp non_default_range(%{max_length: max} = list) when not is_nil(max) do
-    "#{list.min_length}..#{max}"
-  end
-
-  defp non_default_range(%{min_length: min}) when min > 0 do
-    "#{min}.."
-  end
-
-  defp non_default_range(_list), do: nil
 end

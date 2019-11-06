@@ -35,7 +35,14 @@ defmodule Vow.MixProject do
         summary: [threshold: 85]
       ],
       dialyzer: [
-        flags: [:unmatched_returns, :error_handling, :race_conditions, :no_opaque],
+        flags: [
+          # :specdiffs,
+          :underspecs,
+          :error_handling,
+          :unmatched_returns,
+          :unknown,
+          :race_conditions
+        ],
         paths: ["_build/#{Mix.env()}/lib/#{@app}/ebin"],
         ignore_warnings: ".dialyzer_ignore.exs",
         list_unused_filters: true

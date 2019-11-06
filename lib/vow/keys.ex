@@ -28,15 +28,18 @@ defmodule Vow.Keys do
   end
 
   @impl Access
-  def fetch(%__MODULE__{} = vow, key) do
+  def fetch(%__MODULE__{} = _vow, _key) do
+    :error
   end
 
   @impl Access
-  def get_and_update(%__MODULE__{} = vow, key, fun) do
+  def get_and_update(%__MODULE__{} = vow, _key, _fun) do
+    {nil, vow}
   end
 
   @impl Access
-  def pop(%__MODULE__{} = vow, key) do
+  def pop(%__MODULE__{} = vow, _key) do
+    {nil, vow}
   end
 
   # NOTE: 'genericize' traversal of the expr tree/path?

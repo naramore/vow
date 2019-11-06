@@ -35,8 +35,7 @@ end
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
   - [ ] and re-add dialyzer back to the action
 - [ ] 'figure out' inch-ci via `inch_ex`
-- [ ] refactor `StreamDataUtils` into its own library?
 - [ ] add `Vow.{Conformable|Generatable}.with_gen/2` + have `Vow.Generatable.gen/2` prioritize 'with-gen's over default or overrides
-- [ ] move `Vow.{get|put|update}_in/{2|3}` into separate library? `Lazy.{get|put|update}_in/{2|3}`?
-- [ ] implement `Vow.Generatable.gen/1` for `Vow.Keys`
-- [ ] complete implementation of `Access` for `Vow.{Keys, Ref, Also, Amp, Cat, Merge}`
+- [ ] implement `Vow.Generatable.gen/1` & `Access` for `Vow.Keys`
+- [ ] make `Vow.Ref.resolve/1` errors more usable by non-`Vow.Conformable.conform/5`
+- [ ] add 'ignore_warn?' option to `Vow.Generatable.gen/1`

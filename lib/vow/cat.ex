@@ -1,6 +1,6 @@
 defmodule Vow.Cat do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut
 
   defstruct [:vows]
 
@@ -19,18 +19,6 @@ defmodule Vow.Cat do
     end
   end
 
-  @impl Access
-  def fetch(%__MODULE__{vows: vows}, key) do
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vows: vows}, key) do
-  end
-
   @spec unique_keys?([{atom, Vow.t()}]) :: boolean | no_return
   def unique_keys?(named_vows) do
     if Enum.all?(named_vows, &match?({name, _} when is_atom(name), &1)) do
@@ -45,9 +33,9 @@ defmodule Vow.Cat do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
-    alias Vow.{Conformable, ConformError, RegexOp, RegexOperator}
+    import Acs.Improper, only: [proper_list?: 1]
+    import Vow.Utils, only: [append: 2]
+    alias Vow.{Conformable, ConformError, Utils, RegexOperator}
 
     @type result ::
             {:ok, RegexOperator.conformed(), RegexOperator.rest()}
@@ -70,7 +58,7 @@ defmodule Vow.Cat do
            &proper_list?/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -83,7 +71,7 @@ defmodule Vow.Cat do
            &is_list/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -142,7 +130,7 @@ defmodule Vow.Cat do
              vow,
              vow_path,
              via,
-             RegexOp.uninit_path(value_path),
+             Utils.uninit_path(value_path),
              [],
              "Insufficient Data"
            )
@@ -157,7 +145,7 @@ defmodule Vow.Cat do
           {:error, problems} -> {:error, problems}
         end
       else
-        case Conformable.conform(s, vow_path ++ [k], via, RegexOp.uninit_path(value_path), h) do
+        case Conformable.conform(s, vow_path ++ [k], via, Utils.uninit_path(value_path), h) do
           {:ok, c} -> {:ok, Map.put(acc, k, c), t}
           {:error, problems} -> {:error, problems}
         end
@@ -168,12 +156,14 @@ defmodule Vow.Cat do
   if Code.ensure_loaded?(StreamData) do
     defimpl Vow.Generatable do
       @moduledoc false
-      import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
+      import Vow.Utils, only: [append: 2]
 
       @impl Vow.Generatable
       def gen(vow) do
         Enum.reduce(vow.vows, {:ok, []}, fn
-          _, {:error, reason} -> {:error, reason}
+          _, {:error, reason} ->
+            {:error, reason}
+
           {k, v}, {:ok, acc} ->
             case @protocol.gen(v) do
               {:error, reason} -> {:error, reason}
@@ -181,18 +171,21 @@ defmodule Vow.Cat do
             end
         end)
         |> case do
-          {:error, reason} -> {:error, reason}
+          {:error, reason} ->
+            {:error, reason}
+
           {:ok, datas} ->
-            {:ok, StreamData.map(
-              StreamData.fixed_list(datas),
-              &Enum.reduce(&1, [], fn {k, v}, acc ->
-                if Vow.regex?(Keyword.get(&1, k)) do
-                  append(acc, v)
-                else
-                  acc ++ [v]
-                end
-              end)
-            )}
+            {:ok,
+             StreamData.map(
+               StreamData.fixed_list(datas),
+               &Enum.reduce(&1, [], fn {k, v}, acc ->
+                 if Vow.regex?(Keyword.get(&1, k)) do
+                   append(acc, v)
+                 else
+                   acc ++ [v]
+                 end
+               end)
+             )}
         end
       end
     end

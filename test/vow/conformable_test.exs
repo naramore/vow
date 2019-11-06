@@ -2,7 +2,7 @@ defmodule Vow.ConformableTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
   import StreamData
-  alias Vow.Conformable.List, as: SCL
+  alias Vow.Utils
   doctest Vow.Conformable
 
   describe "Conformable.Function.conform/5" do
@@ -221,7 +221,7 @@ defmodule Vow.ConformableTest do
                 value <-
                   filter(
                     maybe_improper_list_of(constant(nil), constant(nil)),
-                    &(not SCL.compatible_form?(&1, vow))
+                    &(not Utils.compatible_form?(&1, vow))
                   ) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end

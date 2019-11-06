@@ -1,6 +1,7 @@
 defmodule Vow.List do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut,
+    type: :single_passthrough
 
   defstruct vow: nil,
             min_length: 0,
@@ -24,25 +25,12 @@ defmodule Vow.List do
     }
   end
 
-  @impl Access
-  def fetch(%__MODULE__{vow: vow}, key) do
-    Access.fetch(vow, key)
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vow: vow}, key, fun) do
-    Access.get_and_update(vow, key, fun)
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vow: vow}, key) do
-    Access.pop(vow, key)
-  end
-
   defimpl Vow.Conformable do
     @moduledoc false
 
     import Vow.FunctionWrapper
+    import Acs.Improper, only: [proper_list?: 1]
+    import Vow.Utils, only: [distinct?: 1]
     alias Vow.ConformError
 
     @impl Vow.Conformable
@@ -138,21 +126,6 @@ defmodule Vow.List do
           []
       end
     end
-
-    # NOTE: only used as a predicate indirectly from problem creation
-    # coveralls-ignore-start
-    @spec proper_list?(term) :: boolean
-    def proper_list?([]), do: true
-    def proper_list?([_ | t]) when is_list(t), do: proper_list?(t)
-    def proper_list?(_), do: false
-    # coveralls-ignore-stop
-
-    @spec distinct?(Enum.t()) :: boolean
-    def distinct?(enum) do
-      count = enum |> Enum.count()
-      unique_count = enum |> Enum.uniq() |> Enum.count()
-      count == unique_count
-    end
   end
 
   if Code.ensure_loaded?(StreamData) do
@@ -166,7 +139,9 @@ defmodule Vow.List do
              {false, _, _} <- {vow.distinct?, item_gen, opts} do
           {:ok, StreamData.list_of(item_gen, Enum.into(opts, []))}
         else
-          {:error, reason} -> {:error, reason}
+          {:error, reason} ->
+            {:error, reason}
+
           {true, gen, opts} ->
             {:ok, StreamData.uniq_list_of(gen, Enum.into(opts, []))}
         end

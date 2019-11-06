@@ -1,6 +1,7 @@
 defmodule Vow.ZeroOrMore do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut,
+    type: :single_passthrough
 
   defstruct vow: nil
 
@@ -13,26 +14,12 @@ defmodule Vow.ZeroOrMore do
     %__MODULE__{vow: vow}
   end
 
-  @impl Access
-  def fetch(%__MODULE__{vow: vow}, key) do
-    Access.fetch(vow, key)
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vow: vow}, key, fun) do
-    Access.get_and_update(vow, key, fun)
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vow: vow}, key) do
-    Access.pop(vow, key)
-  end
-
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    alias Vow.{Conformable, ConformError, RegexOp}
+    import Acs.Improper, only: [proper_list?: 1]
+    import Vow.Utils, only: [append: 2]
+    alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
     def conform(_vow, _vow_path, _via, _value_path, []) do
@@ -44,7 +31,7 @@ defmodule Vow.ZeroOrMore do
       if Vow.regex?(vow) do
         conform_regex(vow, vow_path, via, value_path, value)
       else
-        conform_non_regex(vow, vow_path, via, RegexOp.uninit_path(value_path), value)
+        conform_non_regex(vow, vow_path, via, Utils.uninit_path(value_path), value)
       end
     end
 
@@ -55,7 +42,7 @@ defmodule Vow.ZeroOrMore do
            &proper_list?/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -68,7 +55,7 @@ defmodule Vow.ZeroOrMore do
            &is_list/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -118,7 +105,7 @@ defmodule Vow.ZeroOrMore do
             vow,
             vow_path,
             via,
-            RegexOp.inc_path(value_path),
+            Utils.inc_path(value_path),
             rest,
             append(acc, conformed)
           )
@@ -148,31 +135,26 @@ defmodule Vow.ZeroOrMore do
           conform_non_regex(vow, vow_path, via, value_path, t, pos + 1, [c | acc])
       end
     end
-
-    @spec append(list | term, list | term) :: list
-    def append([], []), do: []
-    def append([_ | _] = l, []), do: l
-    def append([], [_ | _] = r), do: r
-    def append([_ | _] = l, [_ | _] = r), do: l ++ r
-    def append(l, r) when is_list(r), do: [l | r]
-    def append(l, r) when is_list(l), do: l ++ [r]
   end
 
   if Code.ensure_loaded?(StreamData) do
     defimpl Vow.Generatable do
       @moduledoc false
-      import Vow.RegexOperator.Vow.ZeroOrMore, only: [append: 2]
+      import Vow.Utils, only: [append: 2]
 
       @impl Vow.Generatable
       def gen(vow) do
         case @protocol.gen(vow.vow) do
-          {:error, reason} -> {:error, reason}
+          {:error, reason} ->
+            {:error, reason}
+
           {:ok, data} ->
             if Vow.regex?(vow.vow) do
-              {:ok, StreamData.map(
-                StreamData.list_of(data),
-                fn x -> Enum.reduce(x, [], &append/2) end
-              )}
+              {:ok,
+               StreamData.map(
+                 StreamData.list_of(data),
+                 fn x -> Enum.reduce(x, [], &append/2) end
+               )}
             else
               {:ok, StreamData.list_of(data)}
             end

@@ -1,6 +1,7 @@
 defmodule Vow.Nilable do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut,
+    type: :single_passthrough
 
   defstruct [:vow]
 
@@ -11,21 +12,6 @@ defmodule Vow.Nilable do
   @spec new(Vow.t()) :: t
   def new(vow) do
     %__MODULE__{vow: vow}
-  end
-
-  @impl Access
-  def fetch(%__MODULE__{vow: vow}, key) do
-    Access.fetch(vow, key)
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vow: vow}, key, fun) do
-    Access.get_and_update(vow, key, fun)
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vow: vow}, key) do
-    Access.pop(vow, key)
   end
 
   defimpl Vow.Conformable do
@@ -52,12 +38,15 @@ defmodule Vow.Nilable do
       @impl Vow.Generatable
       def gen(vow) do
         case @protocol.gen(vow.vow) do
-          {:error, reason} -> {:error, reason}
+          {:error, reason} ->
+            {:error, reason}
+
           {:ok, data} ->
-            {:ok, StreamData.one_of([
-              StreamData.constant(nil),
-              data
-            ])}
+            {:ok,
+             StreamData.one_of([
+               StreamData.constant(nil),
+               data
+             ])}
         end
       end
     end

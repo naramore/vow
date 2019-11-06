@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Vow.Generatable` for all `Vow.Conformable`
 - `Vow.get_in/2` & `Vow.{put|update}_in/3` w/ 'lazy' paths
 - `Access` behaviour to 'all' `Vow.Conformable` (some are intentionally not implemented b/c it doesn't make sense, e.g. `Vow.FunctionWrapper`)
+- `Acs`, a.k.a. 'lazy' `Access`, will auto-wrap integer and atom keys in `Access.{at, elem, key}/1` and return non-errors if path is invalid
+- `StreamDataUtils` which has a bunch of generators I wish `StreamData` had
+- `Vow.Utils` and consolidated all the 'utility' functions that were lying around in random places
+- `Vow.Utils.AccessShortcut.__using__/1` which auto-implements 3 common Access patterns for my `Vow` structs
 
 ### Changed
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`

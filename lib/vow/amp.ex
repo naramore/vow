@@ -1,11 +1,12 @@
 defmodule Vow.Amp do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut,
+    type: :many_passthrough
 
   defstruct [:vows]
 
   @type t :: %__MODULE__{
-          vows: [{atom, Vow.t()}]
+          vows: [Vow.t()]
         }
 
   @spec new([Vow.t()]) :: t
@@ -13,23 +14,11 @@ defmodule Vow.Amp do
     %__MODULE__{vows: vows}
   end
 
-  @impl Access
-  def fetch(%__MODULE__{vows: vows}, key) do
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vows: vows}, key) do
-  end
-
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    alias Vow.{Conformable, ConformError, RegexOp}
+    import Acs.Improper, only: [proper_list?: 1]
+    alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
     def conform(%@for{vows: []}, _vow_path, _via, _value_path, value)
@@ -58,7 +47,7 @@ defmodule Vow.Amp do
            &proper_list?/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -71,7 +60,7 @@ defmodule Vow.Amp do
            &is_list/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -95,11 +84,13 @@ defmodule Vow.Amp do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
+    @spec conform_impl(Vow.t(), [term], [Vow.Ref.t()], [term], term) ::
+            {:ok, Conformable.conformed(), @protocol.rest} | {:error, [ConformError.Problem.t()]}
     defp conform_impl(vow, vow_path, via, value_path, value) do
       if Vow.regex?(vow) do
         @protocol.conform(vow, vow_path, via, value_path, value)
       else
-        case Conformable.conform(vow, vow_path, via, RegexOp.uninit_path(value_path), value) do
+        case Conformable.conform(vow, vow_path, via, Utils.uninit_path(value_path), value) do
           {:ok, conformed} -> {:ok, [conformed], []}
           {:error, problems} -> {:error, problems}
         end

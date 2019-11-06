@@ -77,6 +77,7 @@ defimpl Vow.Conformable, for: List do
   @moduledoc false
 
   import Vow.FunctionWrapper, only: [wrap: 1]
+  import Vow.Utils, only: [compatible_form?: 2, improper_info: 1]
   alias Vow.ConformError
 
   @impl Vow.Conformable
@@ -185,21 +186,6 @@ defimpl Vow.Conformable, for: List do
     @protocol.unform(vow, value)
   end
 
-  @spec compatible_form?(list, term) :: boolean
-  def compatible_form?(list, value) do
-    case {improper_info(list), improper_info(value)} do
-      {{true, n}, {true, n}} -> true
-      {{false, n}, {false, n}} -> true
-      _ -> false
-    end
-  end
-
-  @spec improper_info(list) :: {boolean, non_neg_integer}
-  defp improper_info(list, n \\ 0)
-  defp improper_info([], n), do: {false, n}
-  defp improper_info([_ | t], n) when is_list(t), do: improper_info(t, n + 1)
-  defp improper_info(_, n), do: {true, n}
-
   @type position :: non_neg_integer | :__improper_tail__
 
   @spec conform_improper(
@@ -290,18 +276,7 @@ defimpl Vow.Conformable, for: Map do
 
   @impl Vow.Conformable
   def unform(vow, value) when is_map(value) do
-    Enum.reduce(vow, {:ok, value}, fn
-      _, {:error, reason} ->
-        {:error, reason}
-
-      {k, v}, {:ok, acc} ->
-        if Map.has_key?(value, k) do
-          case @protocol.unform(v, Map.get(value, k)) do
-            {:ok, unformed} -> {:ok, Map.put(acc, k, unformed)}
-            {:error, reason} -> {:error, reason}
-          end
-        end
-    end)
+    Enum.reduce(vow, {:ok, value}, unform_reducer(value))
   end
 
   def unform(vow, value) do
@@ -351,6 +326,23 @@ defimpl Vow.Conformable, for: Map do
            value
          )
        ]}
+    end
+  end
+
+  @spec unform_reducer(map) :: ({term, Vow.t()}, result -> result)
+  defp unform_reducer(value) do
+    fn x, acc -> unform_reducer(value, x, acc) end
+  end
+
+  @spec unform_reducer(map, {term, Vow.t()}, result) :: result
+  defp unform_reducer(_value, _item, {:error, reason}), do: {:error, reason}
+
+  defp unform_reducer(value, {k, v}, {:ok, acc}) do
+    if Map.has_key?(value, k) do
+      case @protocol.unform(v, Map.get(value, k)) do
+        {:ok, unformed} -> {:ok, Map.put(acc, k, unformed)}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 end

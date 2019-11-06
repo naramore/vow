@@ -1,6 +1,6 @@
 defmodule Vow.Alt do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut
 
   defstruct [:vows]
 
@@ -19,26 +19,11 @@ defmodule Vow.Alt do
     end
   end
 
-  @impl Access
-  def fetch(%__MODULE__{vows: vows}, key) do
-    Access.fetch(vows, key)
-  end
-
-  @impl Access
-  def get_and_update(%__MODULE__{vows: vows}, key, fun) do
-    Access.get_and_update(vows, key, fun)
-  end
-
-  @impl Access
-  def pop(%__MODULE__{vows: vows}, key) do
-    Access.pop(vows, key)
-  end
-
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-    alias Vow.{Conformable, ConformError, RegexOp}
+    import Acs.Improper, only: [proper_list?: 1]
+    alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
     def conform(%@for{vows: vows}, vow_path, via, value_path, value)
@@ -54,7 +39,7 @@ defmodule Vow.Alt do
               {:error, problems} -> {:error, pblms ++ problems}
             end
           else
-            value_path = RegexOp.uninit_path(value_path)
+            value_path = Utils.uninit_path(value_path)
 
             with [h | t] <- value,
                  {:ok, conformed} <- Conformable.conform(s, vow_path ++ [k], via, value_path, h) do
@@ -87,7 +72,7 @@ defmodule Vow.Alt do
            &proper_list?/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}
@@ -100,7 +85,7 @@ defmodule Vow.Alt do
            &is_list/1,
            vow_path,
            via,
-           RegexOp.uninit_path(value_path),
+           Utils.uninit_path(value_path),
            value
          )
        ]}

@@ -25,13 +25,13 @@ alias Vow.{Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore}
 defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
   @moduledoc false
 
-  import Vow.Conformable.Vow.List, only: [proper_list?: 1]
-  alias Vow.{ConformError, RegexOp, RegexOperator}
+  import Acs.Improper, only: [proper_list?: 1]
+  alias Vow.{ConformError, Utils, RegexOperator}
 
   @impl Vow.Conformable
   def conform(vow, vow_path, via, value_path, value)
       when is_list(value) and length(value) >= 0 do
-    case RegexOperator.conform(vow, vow_path, via, RegexOp.init_path(value_path), value) do
+    case RegexOperator.conform(vow, vow_path, via, Utils.init_path(value_path), value) do
       {:ok, conformed, []} ->
         {:ok, conformed}
 

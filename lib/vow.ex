@@ -3,7 +3,7 @@ defmodule Vow do
   TODO
   """
 
-  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3]
+  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3]
   alias Vow.{Conformable, ConformError}
 
   @typedoc """
@@ -52,58 +52,21 @@ defmodule Vow do
 
   defdelegate unform(vow, value), to: Vow.Conformable
 
-  @doc """
+  defdelegate get_in(data, keys), to: Acs
+  defdelegate get_and_update_in(data, keys, fun), to: Acs
+  defdelegate update_in(data, keys, fun), to: Acs
+  defdelegate put_in(data, keys, fun), to: Acs
+
+  @typedoc """
   """
-  @spec get_in(t, path :: [term]) :: t | nil
-  def get_in(vow, []), do: vow
-  def get_in(vow, path) do
-    try do
-      Kernel.get_in(vow, Enum.map(path, &lazy_path/1))
-    rescue
-      _ -> nil
-    end
-  end
+  @type generator :: Vow.Generatable.generator()
 
-  @doc """
+  @typedoc """
   """
-  @spec update_in(t, path :: [term], (term -> term)) :: t
-  def update_in(vow, [], fun), do: fun.(vow)
-  def update_in(vow, path, fun) do
-    try do
-      Kernel.update_in(vow, Enum.map(path, &lazy_path/1), fun)
-    rescue
-      _ -> vow
-    end
-  end
-
-  @doc """
-  """
-  @spec put_in(t, path :: [term], value :: term) :: t
-  def put_in(vow, path, value) do
-    update_in(vow, path, fn _ -> value end)
-  end
-
-  @doc false
-  @spec lazy_path(term) :: Access.access_fun(t, term)
-  defp lazy_path(fun) when is_function(fun, 3), do: fun
-  defp lazy_path(i) when is_integer(i) do
-    fn
-      type, data, next when is_list(data) ->
-        Access.at(i).(type, data, next)
-      type, data, next when is_tuple(data) ->
-        Access.elem(i).(type, data, next)
-      type, data, next ->
-        Access.key(i).(type, data, next)
-    end
-  end
-  defp lazy_path(key) do
-    fn type, data, next ->
-      Access.key(key).(type, data, next)
-    end
-  end
-
-  @type generator :: Vow.Generatable.generator
   @type gen_fun :: (() -> generator)
+
+  @typedoc """
+  """
   @type override :: {path :: [term], gen_fun}
 
   @doc """
@@ -133,12 +96,12 @@ defmodule Vow do
 
   @doc """
   """
-  @spec term?(term) :: boolean
+  @spec term?(term) :: true
   def term?(_term), do: true
 
   @doc """
   """
-  @spec any?(term) :: boolean
+  @spec any?(term) :: true
   def any?(term), do: term?(term)
 
   @doc """
