@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `StreamDataUtils` which has a bunch of generators I wish `StreamData` had
 - `Vow.Utils` and consolidated all the 'utility' functions that were lying around in random places
 - `Vow.Utils.AccessShortcut.__using__/1` which auto-implements 3 common Access patterns for my `Vow` structs
+- `Vow.WithGen` to wrap any other vow and bind it to a specified generator function to enable more optimized data generation
 
 ### Changed
 - `Vow.Func.f/1` -> `Vow.FunctionWrapper.wrap/1`

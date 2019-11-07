@@ -13,12 +13,16 @@ defprotocol Vow.Generatable do
 
   @typedoc """
   """
+  @type gen_fun :: (() -> generator)
+
+  @typedoc """
+  """
   @type gen_opt :: {:ignore_warn?, boolean}
 
   @doc """
   """
   @spec gen(t, [gen_opt]) :: {:ok, generator} | {:error, reason :: term}
-  def gen(vow, opts \\ [])
+  def gen(generatable, opts \\ [])
 end
 
 if Code.ensure_loaded?(StreamData) do
