@@ -25,10 +25,11 @@ defmodule Vow.MixProject do
         formatters: ["html", "epub"]
       ],
       deps: deps(),
+      aliases: aliases(),
       preferred_cli_env: [
         coveralls: :test,
-        "coveralls.html": :test,
-        "coveralls.json": :test
+        "coveralls.json": :test,
+        "test.check": :test
       ],
       test_coverage: [
         tool: ExCoveralls,
@@ -82,6 +83,20 @@ defmodule Vow.MixProject do
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp aliases do
+    [
+      "test.check": [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "xref unreachable",
+        "xref deprecated",
+        "credo --strict",
+        "test --cover",
+        "dialyzer"
+      ]
     ]
   end
 end

@@ -2,12 +2,13 @@ defmodule Vow.WithGen do
   @moduledoc false
 
   defstruct [:vow, :gen]
-  @type t :: %__MODULE__{
-    vow: Vow.t,
-    gen: Vow.Generatable.gen_fun
-  }
 
-  @spec new(Vow.t, Vow.Generatable.gen_fun) :: t
+  @type t :: %__MODULE__{
+          vow: Vow.t(),
+          gen: Vow.Generatable.gen_fun()
+        }
+
+  @spec new(Vow.t(), Vow.Generatable.gen_fun()) :: t
   def new(vow, gen_fun) do
     %__MODULE__{
       vow: vow,

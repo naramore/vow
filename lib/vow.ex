@@ -59,11 +59,11 @@ defmodule Vow do
 
   @typedoc """
   """
-  @type override :: {path :: [term], Vow.Generatable.gen_fun}
+  @type override :: {path :: [term], Vow.Generatable.gen_fun()}
 
   @doc """
   """
-  @spec gen(t, [override]) :: {:ok, Vow.Generatable.generator} | {:error, reason :: term}
+  @spec gen(t, [override]) :: {:ok, Vow.Generatable.generator()} | {:error, reason :: term}
   def gen(vow, overrides \\ []) do
     Enum.reduce(overrides, vow, fn {path, gen_fun}, acc ->
       put_in(acc, path, gen_fun.())
@@ -71,8 +71,7 @@ defmodule Vow do
     |> Vow.Generatable.gen()
   end
 
-  defdelegate with_gen(vow, gen_fun),
-    to: Vow.WithGen, as: :new
+  defdelegate with_gen(vow, gen_fun), to: Vow.WithGen, as: :new
 
   @doc """
   """
