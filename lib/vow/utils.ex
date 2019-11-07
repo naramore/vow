@@ -142,6 +142,8 @@ defmodule Vow.Utils do
 
     defp build(:many_passthrough) do
       quote do
+        alias Vow.Utils.AccessShortcut
+
         @impl Access
         def fetch(%{vows: vows}, key) do
           Enum.map(vows, &Access.fetch(&1, key))
@@ -161,7 +163,7 @@ defmodule Vow.Utils do
 
         @impl Access
         def get_and_update(%{vows: vows}, key, fun) do
-          Vow.Utils.AccessShortcut.get_and_update_all(vows, key, fun, &__MODULE__.new/1)
+          AccessShortcut.get_and_update_all(vows, key, fun, &__MODULE__.new/1)
         end
       end
     end

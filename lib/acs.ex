@@ -75,11 +75,9 @@ defmodule Acs do
   def get_and_update_in(data, [], fun), do: fun.(data)
 
   def get_and_update_in(data, keys, fun) do
-    try do
-      Kernel.get_and_update_in(data, lazify(keys), fun)
-    rescue
-      _ -> {nil, data}
-    end
+    Kernel.get_and_update_in(data, lazify(keys), fun)
+  rescue
+    _ -> {nil, data}
   end
 
   @doc """
@@ -88,11 +86,9 @@ defmodule Acs do
   def get_in(data, []), do: data
 
   def get_in(data, keys) do
-    try do
-      Kernel.get_in(data, lazify(keys))
-    rescue
-      _ -> nil
-    end
+    Kernel.get_in(data, lazify(keys))
+  rescue
+    _ -> nil
   end
 
   @doc """
@@ -101,22 +97,18 @@ defmodule Acs do
   def update_in(data, [], fun), do: fun.(data)
 
   def update_in(data, keys, fun) do
-    try do
-      Kernel.update_in(data, lazify(keys), fun)
-    rescue
-      _ -> data
-    end
+    Kernel.update_in(data, lazify(keys), fun)
+  rescue
+    _ -> data
   end
 
   @doc """
   """
   @spec put_in(Access.t(), keys :: [term], value :: term) :: Access.t()
   def put_in(data, keys, value) do
-    try do
-      Kernel.put_in(data, lazify(keys), value)
-    rescue
-      _ -> data
-    end
+    Kernel.put_in(data, lazify(keys), value)
+  rescue
+    _ -> data
   end
 
   @doc false

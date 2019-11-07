@@ -34,8 +34,7 @@ defmodule Vow.Cat do
     @moduledoc false
 
     import Acs.Improper, only: [proper_list?: 1]
-    import Vow.Utils, only: [append: 2]
-    alias Vow.{Conformable, ConformError, Utils, RegexOperator}
+    alias Vow.{Conformable, ConformError, RegexOperator, Utils}
 
     @type result ::
             {:ok, RegexOperator.conformed(), RegexOperator.rest()}
@@ -87,7 +86,7 @@ defmodule Vow.Cat do
           if Map.has_key?(value, k) do
             case Conformable.unform(v, Map.get(value, k)) do
               {:error, reason} -> {:error, reason}
-              {:ok, unformed} -> {:ok, append(acc, unformed)}
+              {:ok, unformed} -> {:ok, Utils.append(acc, unformed)}
             end
           else
             {:error, %Vow.UnformError{vow: vow, value: value}}

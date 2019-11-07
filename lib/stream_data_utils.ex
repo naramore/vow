@@ -115,14 +115,14 @@ if Code.ensure_loaded?(StreamData) do
     Equivalent to `StreamData.atom(:alphanumeric)`.
     """
     @spec atom() :: t(atom)
-    def atom(), do: atom(:alphanumeric)
+    def atom, do: atom(:alphanumeric)
 
     defdelegate pos_integer(), to: StreamData, as: :positive_integer
 
     @doc """
     """
     @spec non_neg_integer() :: t(non_neg_integer)
-    def non_neg_integer() do
+    def non_neg_integer do
       # NOTE: imperfect, should probably just Fork + PR StreamData better implement partially bounded integers
       frequency([
         {1, constant(0)},
@@ -133,7 +133,7 @@ if Code.ensure_loaded?(StreamData) do
     @doc """
     """
     @spec neg_integer() :: t(neg_integer)
-    def neg_integer(),
+    def neg_integer,
       do: map(pos_integer(), &(-&1))
 
     @doc """
@@ -235,7 +235,7 @@ if Code.ensure_loaded?(StreamData) do
     @doc """
     """
     @spec range() :: t(Range.t())
-    def range() do
+    def range do
       tuple({integer(), integer()})
       |> map(fn {i1, i2} -> i1..i2 end)
     end

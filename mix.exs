@@ -81,9 +81,7 @@ defmodule Vow.MixProject do
       {:excoveralls, "~> 0.12", only: :test},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
-      {:doctor, "~> 0.8", only: :docs},
-      {:inch_ex, ">= 0.0.0", only: :docs}
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
     ]
   end
 end

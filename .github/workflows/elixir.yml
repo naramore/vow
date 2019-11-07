@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        elixir: [1.9.2]
+        elixir: [1.9.4]
     container:
       image: elixir:${{ matrix.elixir }}-slim
     steps:
@@ -33,12 +33,6 @@ jobs:
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ./cover/excoveralls.json
-
-    - name: Documentation Coverage
-      if: always()
-      env:
-        MIX_ENV: docs
-      run: mix doctor
 
     - name: Check Formatting
       if: always()

@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - [codecov.io] support to CI
-- documentation coverage analysis via [doctor] to CI
-- documentation improvement analytics via [inch_ex] to CI
 - readme badges for hex version, github actions status, and codecov
 - credo default config file
 - dependabot badge
@@ -55,8 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed name from `ExSpec` to `Vow` (as the former was already taken)
 
 
-[doctor]: https://github.com/akoutmos/doctor
-[inch_ex]: https://hex.pm/packages/inch_ex
 [codecov.io]: https://codecov.io/
 [Library Guidelines - Anti-Patterns]: https://hexdocs.pm/elixir/library-guidelines.html#avoid-use-when-an-import-is-enough
 [Unreleased]: https://github.com/naramore/vow/compare/v0.0.2...HEAD
