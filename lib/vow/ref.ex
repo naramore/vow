@@ -6,6 +6,7 @@ defmodule Vow.Ref do
   @behaviour Access
 
   import Vow.FunctionWrapper, only: [wrap: 1]
+  alias Vow.ResolveError
 
   defstruct [:mod, :fun]
 
@@ -48,23 +49,26 @@ defmodule Vow.Ref do
   end
 
   @doc false
-  @spec resolve(t) :: {:ok, Vow.t()} | {:error, [{Vow.t(), String.t() | nil}]}
-  def resolve(%__MODULE__{mod: mod, fun: fun})
+  @spec resolve(t) :: {:ok, Vow.t()} | {:error, ResolveError.t()}
+  def resolve(%__MODULE__{mod: mod, fun: fun} = ref)
       when is_atom(mod) and is_atom(fun) do
     if function_exported?(mod, fun, 0) do
       {:ok, apply(mod, fun, [])}
     else
-      {:error, [{wrap(&function_exported?(&1.mod, &1.fun, 0)), nil}]}
+      {:error, ResolveError.new(ref, wrap(&function_exported?(&1.mod, &1.fun, 0)))}
     end
   rescue
-    reason -> {:error, [{nil, reason}]}
+    reason -> {:error, ResolveError.new(ref, nil, "#{inspect(reason)}")}
   catch
-    :exit, reason -> {:error, [{nil, "Vow reference exited: #{inspect(reason)}"}]}
-    caught -> {:error, [{nil, "Vow reference threw: #{inspect(caught)}"}]}
+    :exit, reason ->
+      {:error, ResolveError.new(ref, nil, "Vow reference exited: #{inspect(reason)}")}
+
+    caught ->
+      {:error, ResolveError.new(ref, nil, "Vow reference threw: #{inspect(caught)}")}
   end
 
-  def resolve(_ref) do
-    {:error, [{wrap(&(is_atom(&1.mod) and is_atom(&1.fun))), nil}]}
+  def resolve(ref) do
+    {:error, ResolveError.new(ref, wrap(&(is_atom(&1.mod) and is_atom(&1.fun))))}
   end
 
   @doc """
@@ -83,17 +87,13 @@ defmodule Vow.Ref do
 
   defimpl Vow.RegexOperator do
     @moduledoc false
-
-    alias Vow.ConformError
+    alias Vow.ConformError.Problem
 
     @impl Vow.RegexOperator
     def conform(ref, vow_path, via, value_path, value) do
       case @for.resolve(ref) do
-        {:error, reasons} ->
-          {:error,
-           Enum.map(reasons, fn {p, r} ->
-             ConformError.new_problem(p, vow_path, via ++ [ref], value_path, value, r)
-           end)}
+        {:error, error} ->
+          {:error, [Problem.from_resolve_error(error, vow_path, via, value_path, value)]}
 
         {:ok, vow} ->
           if Vow.regex?(vow) do
@@ -109,14 +109,13 @@ defmodule Vow.Ref do
 
     @impl Vow.RegexOperator
     def unform(vow, value) do
-      Vow.Conformable.unform(vow, value)
+      Vow.Conformable.Vow.Ref.unform(vow, value)
     end
   end
 
   defimpl Vow.Conformable do
     @moduledoc false
-
-    alias Vow.ConformError
+    alias Vow.ConformError.Problem
 
     @impl Vow.Conformable
     def conform(ref, vow_path, via, value_path, value) do
@@ -124,11 +123,8 @@ defmodule Vow.Ref do
         {:ok, vow} ->
           @protocol.conform(vow, vow_path, via ++ [ref], value_path, value)
 
-        {:error, reasons} ->
-          {:error,
-           Enum.map(reasons, fn r ->
-             ConformError.new_problem(r, vow_path, via ++ [ref], value_path, value)
-           end)}
+        {:error, error} ->
+          {:error, [Problem.from_resolve_error(error, vow_path, via, value_path, value)]}
       end
     end
 

@@ -35,7 +35,6 @@ end
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
   - [ ] and re-add dialyzer back to the action
 - [ ] 'figure out' inch-ci via `inch_ex`
-- [ ] add `Vow.{Conformable|Generatable}.with_gen/2` + have `Vow.Generatable.gen/2` prioritize 'with-gen's over default or overrides
 - [ ] implement `Vow.Generatable.gen/1` & `Access` for `Vow.Keys`
-- [ ] make `Vow.Ref.resolve/1` errors more usable by non-`Vow.Conformable.conform/5`
+- [ ] add `Vow.{Conformable|Generatable}.with_gen/2` + have `Vow.Generatable.gen/2` prioritize 'with-gen's over default or overrides
 - [ ] add 'ignore_warn?' option to `Vow.Generatable.gen/1`

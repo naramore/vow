@@ -59,6 +59,42 @@ defmodule Vow.UnformError do
   end
 end
 
+defmodule Vow.ResolveError do
+  @moduledoc false
+
+  defexception [:predicate, :reason, :ref]
+
+  @type t :: %__MODULE__{
+          predicate: Vow.t() | nil,
+          reason: String.t() | nil,
+          ref: Vow.Ref.t()
+        }
+
+  @impl Exception
+  def message(%__MODULE__{ref: ref, reason: nil, predicate: pred})
+      when not is_nil(pred) do
+    "#{ref} failed predicate #{pred}"
+  end
+
+  def message(%__MODULE__{ref: ref, reason: reason, predicate: nil})
+      when not is_nil(reason) do
+    "#{ref} failed with reason #{reason}"
+  end
+
+  def message(%__MODULE__{ref: ref, reason: reason, predicate: pred}) do
+    "#{ref} failed predicate #{pred} with reason #{reason}"
+  end
+
+  @spec new(Vow.Ref.t(), Vow.t() | nil, String.t() | nil) :: t
+  def new(ref, predicate, reason \\ nil) do
+    %__MODULE__{
+      predicate: predicate,
+      reason: reason,
+      ref: ref
+    }
+  end
+end
+
 defmodule Vow.ConformError do
   @moduledoc false
 
@@ -144,15 +180,15 @@ defmodule Vow.ConformError do
               reason: nil
 
     @type t :: %__MODULE__{
-            predicate: Vow.t(),
-            vow_path: [atom],
-            via: [{module, atom}],
+            predicate: Vow.t() | nil,
+            vow_path: [term],
+            via: [Vow.Ref.t()],
             value_path: [term],
             value: term,
             reason: String.t() | nil
           }
 
-    @spec new(Vow.t(), [atom], [module], [term], term, String.t() | nil) :: t
+    @spec new(Vow.t(), [term], [Vow.Ref.t()], [term], term, String.t() | nil) :: t
     def new(predicate, vow_path, via, value_path, value, reason \\ nil) do
       %__MODULE__{
         predicate: predicate,
@@ -175,6 +211,18 @@ defmodule Vow.ConformError do
           |> (&if(p.vow_path == [], do: &1, else: "#{&1} at: #{p.vow_path}")).()
           |> (&"#{&1} predicate: #{p.predicate}").()
           |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
+    end
+
+    @spec from_resolve_error(Vow.ResolveError.t(), [term], [Vow.Ref.t()], [term], term) :: t
+    def from_resolve_error(resolve_error, vow_path, via, value_path, value) do
+      new(
+        resolve_error.predicate,
+        vow_path,
+        via ++ [resolve_error.ref],
+        value_path,
+        value,
+        resolve_error.reason
+      )
     end
 
     # coveralls-ignore-start

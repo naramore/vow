@@ -13,12 +13,12 @@ defmodule Vow.RefTest do
 
     test "given non-atom(s) resolve errors" do
       ref = sref(VowRef, 42)
-      assert match?({:error, [{_, nil}]}, Vow.Ref.resolve(ref))
+      assert match?({:error, %Vow.ResolveError{reason: nil}}, Vow.Ref.resolve(ref))
     end
 
     test "fun does not exist -> error" do
       ref = sref(VowRef, :not_there)
-      assert match?({:error, [{_, nil}]}, Vow.Ref.resolve(ref))
+      assert match?({:error, %Vow.ResolveError{reason: nil}}, Vow.Ref.resolve(ref))
     end
 
     [:one_arity, :two_arity, :three_arity, :four_arity]
@@ -27,7 +27,7 @@ defmodule Vow.RefTest do
       @fun fun
       test "fun wrong arity [#{i}] -> error" do
         ref = sref(VowRef, @fun)
-        assert match?({:error, [{_, nil}]}, Vow.Ref.resolve(ref))
+        assert match?({:error, %Vow.ResolveError{reason: nil}}, Vow.Ref.resolve(ref))
       end
     end)
 
@@ -36,7 +36,7 @@ defmodule Vow.RefTest do
       @fun fun
       test "fun raises/exits/throws [#{fun}] -> error" do
         ref = sref(VowRef, @fun)
-        assert match?({:error, [{nil, _}]}, Vow.Ref.resolve(ref))
+        assert match?({:error, %Vow.ResolveError{predicate: nil}}, Vow.Ref.resolve(ref))
       end
     end)
 
