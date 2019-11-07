@@ -3,7 +3,7 @@ defmodule Vow do
   TODO
   """
 
-  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3]
+  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3, pop_in: 2]
   alias Vow.{Conformable, ConformError}
 
   @typedoc """
@@ -56,6 +56,7 @@ defmodule Vow do
   defdelegate get_and_update_in(data, keys, fun), to: Acs
   defdelegate update_in(data, keys, fun), to: Acs
   defdelegate put_in(data, keys, fun), to: Acs
+  defdelegate pop_in(data, keys), to: Acs
 
   @typedoc """
   """

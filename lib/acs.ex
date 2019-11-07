@@ -43,12 +43,12 @@ defmodule Acs do
   TODO
   """
 
-  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3]
+  import Kernel, except: [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3, pop_in: 2]
   alias Acs.Improper
 
   @doc false
   defmacro __using__(opts) do
-    default_opts = [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3]
+    default_opts = [get_in: 2, update_in: 3, put_in: 3, get_and_update_in: 3, pop_in: 2]
 
     opts =
       if Keyword.has_key?(opts, :only) do
@@ -109,6 +109,15 @@ defmodule Acs do
     Kernel.put_in(data, lazify(keys), value)
   rescue
     _ -> data
+  end
+
+  @doc """
+  """
+  @spec pop_in(Access.t(), keys :: [term]) :: {term, Access.t()}
+  def pop_in(data, keys) do
+    Kernel.pop_in(data, lazify(keys))
+  rescue
+    _ -> {nil, data}
   end
 
   @doc false

@@ -28,21 +28,28 @@ defmodule Vow.Keys do
   end
 
   @impl Access
-  def fetch(%__MODULE__{} = _vow, _key) do
-    :error
+  def fetch(%__MODULE__{} = vow, key) do
+    case find_key(vow, key) do
+      {ref, _, _} -> Access.fetch(ref, key)
+      _ -> :error
+    end
   end
 
   @impl Access
-  def get_and_update(%__MODULE__{} = vow, _key, _fun) do
-    {nil, vow}
+  def get_and_update(%__MODULE__{} = vow, key, fun) do
+    case find_key(vow, key) do
+      {_, k, path} -> Vow.get_and_update_in(vow, [k | path], fun)
+      _ -> {nil, vow}
+    end
   end
 
   @impl Access
-  def pop(%__MODULE__{} = vow, _key) do
-    {nil, vow}
+  def pop(%__MODULE__{} = vow, key) do
+    case find_key(vow, key) do
+      {_, k, path} -> Vow.pop_in(vow, [k | path])
+      _ -> {nil, vow}
+    end
   end
-
-  # NOTE: 'genericize' traversal of the expr tree/path?
 
   @spec check_keys([Vow.vow_ref_expr()] | Vow.vow_ref_expr(), {[atom], [atom]}) ::
           {[atom], [atom]}
@@ -98,6 +105,37 @@ defmodule Vow.Keys do
   defp update_key(%Vow.Ref{} = ref, _mod), do: ref
   defp update_key({_, _} = mf, _mod), do: mf
   defp update_key(f, m), do: {m, f}
+
+  @spec find_key(t | [Vow.vow_ref_expr()], atom, path) ::
+          {Vow.Ref.t(), :required | :optional | nil, path} | nil
+        when path: [term]
+  defp find_key(vow, key, path \\ [])
+
+  defp find_key(%__MODULE__{} = vow, key, _path) do
+    case find_key(vow.required, key, [0]) do
+      {ref, _, path} ->
+        {ref, :required, path}
+
+      _ ->
+        case find_key(vow.optional, key, [0]) do
+          {ref, _, path} -> {ref, :optional, path}
+          _ -> nil
+        end
+    end
+  end
+
+  defp find_key([%Vow.Ref{fun: key} = ref | _], key, path), do: {ref, nil, :lists.reverse(path)}
+  defp find_key([{m, key} | t], key, path), do: find_key([Vow.Ref.new(m, key) | t], key, path)
+
+  defp find_key([{op, keys} | t], key, [ph | pt] = path) when op in [:and, :or] do
+    case find_key(keys, key, [0, 1 | path]) do
+      {ref, _, path} -> {ref, nil, path}
+      _ -> find_key(t, key, [ph + 1 | pt])
+    end
+  end
+
+  defp find_key([_ | t], key, [ph | pt]), do: find_key(t, key, [ph + 1 | pt])
+  defp find_key(_, _, _), do: nil
 
   defimpl Vow.Conformable do
     @moduledoc false

@@ -14,21 +14,21 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Cache Elixir Deps
-      uses: actions/cache@v1
-      with:
-        path: deps
-        key: ${{ matrix.os }}-${{ matrix.elixir }}-deps-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.elixir }}-deps-
+    # - name: Cache Elixir Deps
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: deps
+    #     key: ${{ matrix.os }}-${{ matrix.elixir }}-deps-${{ hashFiles('**/mix.lock') }}
+    #     restore-keys: |
+    #       ${{ matrix.os }}-${{ matrix.elixir }}-deps-
 
-    - name: Cache Elixir Build
-      uses: actions/cache@v1
-      with:
-        path: _build
-        key: ${{ matrix.os }}-${{ matrix.elixir }}-build-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.elixir }}-build-
+    # - name: Cache Elixir Build
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: _build
+    #     key: ${{ matrix.os }}-${{ matrix.elixir }}-build-${{ hashFiles('**/*.ex') }}
+    #     restore-keys: |
+    #       ${{ matrix.os }}-${{ matrix.elixir }}-build-
 
     - name: Install Dependencies
       run: |
@@ -59,9 +59,9 @@ jobs:
       if: always()
       run: mix test
 
-    - name: Check for Code Discrepancies
-      if: always()
-      run: mix dialyzer
+    # - name: Check for Code Discrepancies
+    #   if: always()
+    #   run: mix dialyzer
 
   coverage:
     env:
@@ -72,21 +72,21 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Cache Elixir Deps
-      uses: actions/cache@v1
-      with:
-        path: deps
-        key: ${{ runner.os }}-1.9.4-deps-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-1.9.4-deps-
+    # - name: Cache Elixir Deps
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: deps
+    #     key: ${{ runner.os }}-1.9.4-deps-${{ hashFiles('**/mix.lock') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-1.9.4-deps-
 
-    - name: Cache Elixir Build
-      uses: actions/cache@v1
-      with:
-        path: _build
-        key: ${{ runner.os }}-1.9.4-build-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-1.9.4-build-
+    # - name: Cache Elixir Build
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: _build
+    #     key: ${{ runner.os }}-1.9.4-build-${{ hashFiles('**/*.ex') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-1.9.4-build-
 
     - name: Install Dependencies
       run: |

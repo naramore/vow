@@ -35,4 +35,3 @@ end
 - [ ] add caching for github actions (e.g. dialyzer, deps.get), once available
   - [ ] and re-add dialyzer back to the action
 - [ ] 'figure out' inch-ci via `inch_ex`
-- [ ] implement `Vow.Generatable.gen/1` & `Access` for `Vow.Keys`

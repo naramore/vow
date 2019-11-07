@@ -94,8 +94,8 @@ defmodule Vow.MixProject do
         "xref unreachable",
         "xref deprecated",
         "credo --strict",
-        "test --cover",
-        "dialyzer"
+        "dialyzer",
+        "test --cover"
       ]
     ]
   end
