@@ -158,13 +158,13 @@ defmodule Vow.Cat do
       import Vow.Utils, only: [append: 2]
 
       @impl Vow.Generatable
-      def gen(vow) do
+      def gen(vow, opts) do
         Enum.reduce(vow.vows, {:ok, []}, fn
           _, {:error, reason} ->
             {:error, reason}
 
           {k, v}, {:ok, acc} ->
-            case @protocol.gen(v) do
+            case @protocol.gen(v, opts) do
               {:error, reason} -> {:error, reason}
               {:ok, data} -> {:ok, acc ++ [StreamData.tuple({StreamData.constant(k), data})]}
             end

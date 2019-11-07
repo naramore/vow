@@ -133,8 +133,8 @@ defmodule Vow.List do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(vow) do
-        with {:ok, item_gen} <- @protocol.gen(vow.vow),
+      def gen(vow, opts) do
+        with {:ok, item_gen} <- @protocol.gen(vow.vow, opts),
              {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]),
              {false, _, _} <- {vow.distinct?, item_gen, opts} do
           {:ok, StreamData.list_of(item_gen, Enum.into(opts, []))}

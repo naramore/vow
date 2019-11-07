@@ -80,8 +80,8 @@ defmodule Vow.Maybe do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(vow) do
-        case @protocol.gen(vow.vow) do
+      def gen(vow, opts) do
+        case @protocol.gen(vow.vow, opts) do
           {:error, reason} ->
             {:error, reason}
 

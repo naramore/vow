@@ -56,13 +56,13 @@ defmodule Vow.Also do
       alias Vow.Utils
 
       @impl Vow.Generatable
-      def gen(vow) do
+      def gen(vow, opts) do
         Enum.reduce(vow.vows, {:ok, []}, fn
           _, {:error, reason} ->
             {:error, reason}
 
           v, {:ok, acc} ->
-            case @protocol.gen(v) do
+            case @protocol.gen(v, opts) do
               {:error, reason} -> {:error, reason}
               {:ok, data} -> {:ok, [data | acc]}
             end
@@ -72,7 +72,8 @@ defmodule Vow.Also do
             {:error, reason}
 
           {:ok, datas} ->
-            _ = Utils.no_override_warn(vow)
+            ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+            _ = Utils.no_override_warn(vow, ignore_warn?)
 
             datas
             |> Enum.reverse()

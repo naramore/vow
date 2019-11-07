@@ -111,8 +111,8 @@ defmodule Vow.Alt do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(vow) do
-        @protocol.Vow.OneOf.gen(Vow.one_of(vow.vows))
+      def gen(vow, opts) do
+        @protocol.Vow.OneOf.gen(Vow.one_of(vow.vows), opts)
       end
     end
   end

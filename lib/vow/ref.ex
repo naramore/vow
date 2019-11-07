@@ -161,11 +161,12 @@ defmodule Vow.Ref do
       alias Vow.Utils
 
       @impl Vow.Generatable
-      def gen(vow) do
+      def gen(vow, opts) do
         case @for.resolve(vow) do
           {:ok, vow} ->
-            _ = Utils.no_override_warn(vow)
-            @protocol.gen(vow)
+            ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+            _ = Utils.no_override_warn(vow, ignore_warn?)
+            @protocol.gen(vow, opts)
 
           {:error, reason} ->
             {:error, reason}

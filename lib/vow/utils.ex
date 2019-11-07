@@ -2,8 +2,11 @@ defmodule Vow.Utils do
   @moduledoc false
   require Logger
 
-  @spec no_override_warn(Vow.t()) :: :ok
-  def no_override_warn(vow) do
+  @spec no_override_warn(Vow.t(), boolean) :: :ok
+  def no_override_warn(vow, ignore_warn? \\ false)
+  def no_override_warn(_vow, true), do: :ok
+
+  def no_override_warn(vow, false) do
     Logger.warn(fn ->
       """
       The following vow:

@@ -37,4 +37,3 @@ end
 - [ ] 'figure out' inch-ci via `inch_ex`
 - [ ] implement `Vow.Generatable.gen/1` & `Access` for `Vow.Keys`
 - [ ] add `Vow.{Conformable|Generatable}.with_gen/2` + have `Vow.Generatable.gen/2` prioritize 'with-gen's over default or overrides
-- [ ] add 'ignore_warn?' option to `Vow.Generatable.gen/1`

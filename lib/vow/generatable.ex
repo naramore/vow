@@ -11,10 +11,14 @@ defprotocol Vow.Generatable do
     @type generator :: term
   end
 
+  @typedoc """
+  """
+  @type gen_opt :: {:ignore_warn?, boolean}
+
   @doc """
   """
-  @spec gen(t) :: {:ok, generator} | {:error, reason :: term}
-  def gen(vow)
+  @spec gen(t, [gen_opt]) :: {:ok, generator} | {:error, reason :: term}
+  def gen(vow, opts \\ [])
 end
 
 if Code.ensure_loaded?(StreamData) do
@@ -22,7 +26,7 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(stream_data), do: {:ok, stream_data}
+    def gen(stream_data, _opts), do: {:ok, stream_data}
   end
 
   defimpl Vow.Generatable, for: Function do
@@ -32,11 +36,12 @@ if Code.ensure_loaded?(StreamData) do
     import StreamDataUtils
 
     @impl Vow.Generatable
-    def gen(vow) when is_function(vow, 1) do
+    def gen(vow, opts) when is_function(vow, 1) do
       if Map.has_key?(supported_functions(), vow) do
         {:ok, Map.get(supported_functions(), vow)}
       else
-        _ = Utils.no_override_warn(vow)
+        ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+        _ = Utils.no_override_warn(vow, ignore_warn?)
 
         StreamData.string(:printable)
         |> StreamData.filter(vow)
@@ -44,7 +49,7 @@ if Code.ensure_loaded?(StreamData) do
       end
     end
 
-    def gen(vow) do
+    def gen(vow, _opts) do
       {:error, {:invalid_function_arity, vow}}
     end
 
@@ -70,13 +75,13 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(vow) do
+    def gen(vow, opts) do
       Enum.reduce(vow, {:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
 
         v, {:ok, acc} ->
-          case @protocol.gen(v) do
+          case @protocol.gen(v, opts) do
             {:error, reason} -> {:error, reason}
             {:ok, data} -> {:ok, [data | acc]}
           end
@@ -92,7 +97,7 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(vow) do
+    def gen(vow, opts) do
       vow
       |> Tuple.to_list()
       |> Enum.reduce({:ok, []}, fn
@@ -100,7 +105,7 @@ if Code.ensure_loaded?(StreamData) do
           {:error, reason}
 
         v, {:ok, acc} ->
-          case @protocol.gen(v) do
+          case @protocol.gen(v, opts) do
             {:error, reason} -> {:error, reason}
             {:ok, data} -> {:ok, [data | acc]}
           end
@@ -123,13 +128,13 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(vow) do
+    def gen(vow, opts) do
       Enum.reduce(vow, {:ok, %{}}, fn
         _, {:error, reason} ->
           {:error, reason}
 
         {k, v}, {:ok, acc} ->
-          case @protocol.gen(v) do
+          case @protocol.gen(v, opts) do
             {:error, reason} -> {:error, reason}
             {:ok, data} -> {:ok, Map.put(acc, k, data)}
           end
@@ -145,10 +150,10 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(%MapSet{map: %{}}),
+    def gen(%MapSet{map: %{}}, _opts),
       do: {:ok, StreamData.constant(MapSet.new([]))}
 
-    def gen(vow) do
+    def gen(vow, _opts) do
       {:ok,
        StreamData.one_of([
          StreamData.member_of(vow),
@@ -163,8 +168,9 @@ if Code.ensure_loaded?(StreamData) do
     alias Vow.Utils
 
     @impl Vow.Generatable
-    def gen(vow) do
-      _ = Utils.no_override_warn(vow)
+    def gen(vow, opts) do
+      ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+      _ = Utils.no_override_warn(vow, ignore_warn?)
 
       StreamData.string(:printable)
       |> StreamData.filter(&Regex.match?(vow, &1))
@@ -176,7 +182,7 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(min..max) do
+    def gen(min..max, _opts) do
       {:ok,
        StreamData.one_of([
          StreamData.integer(min..max),
@@ -189,7 +195,7 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(vow) do
+    def gen(vow, _opts) do
       {:ok,
        StreamData.one_of([
          StreamDataUtils.date(range: vow),
@@ -202,14 +208,14 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(%{__struct__: mod} = vow) do
-      case @protocol.Map.gen(Map.delete(vow, :__struct__)) do
+    def gen(%{__struct__: mod} = vow, opts) do
+      case @protocol.Map.gen(Map.delete(vow, :__struct__), opts) do
         {:error, reason} -> {:error, reason}
         {:ok, data} -> {:ok, StreamData.map(data, &Map.put(&1, :__struct__, mod))}
       end
     end
 
-    def gen(vow) do
+    def gen(vow, _opts) do
       StreamData.constant(vow)
     end
   end

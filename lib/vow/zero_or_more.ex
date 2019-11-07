@@ -143,8 +143,8 @@ defmodule Vow.ZeroOrMore do
       import Vow.Utils, only: [append: 2]
 
       @impl Vow.Generatable
-      def gen(vow) do
-        case @protocol.gen(vow.vow) do
+      def gen(vow, opts) do
+        case @protocol.gen(vow.vow, opts) do
           {:error, reason} ->
             {:error, reason}
 

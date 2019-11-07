@@ -72,8 +72,8 @@ defmodule Vow.Merge do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(vow) do
-        @protocol.Vow.Also.gen(Vow.also(vow.vows))
+      def gen(vow, opts) do
+        @protocol.gen(Vow.also(vow.vows), opts)
       end
     end
   end

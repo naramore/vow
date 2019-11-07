@@ -91,8 +91,8 @@ defmodule Vow.FunctionWrapper do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(vow) do
-        @protocol.Function.gen(vow)
+      def gen(%@for{function: fun}, opts) do
+        @protocol.Function.gen(fun, opts)
       end
     end
   end

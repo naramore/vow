@@ -285,7 +285,7 @@ defmodule Vow.Keys do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(_vow) do
+      def gen(_vow, _opts) do
         {:error, :not_implemented}
       end
     end

@@ -60,13 +60,13 @@ defmodule Vow.OneOf do
       @moduledoc false
 
       @impl Vow.Generatable
-      def gen(%@for{vows: vows}) do
+      def gen(%@for{vows: vows}, opts) do
         Enum.reduce(vows, {:ok, []}, fn
           _, {:error, reason} ->
             {:error, reason}
 
           {_, v}, {:ok, acc} ->
-            case @protocol.gen(v) do
+            case @protocol.gen(v, opts) do
               {:error, reason} -> {:error, reason}
               {:ok, data} -> {:ok, [data | acc]}
             end
