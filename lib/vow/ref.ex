@@ -158,14 +158,21 @@ defmodule Vow.Ref do
   if Code.ensure_loaded?(StreamData) do
     defimpl Vow.Generatable do
       @moduledoc false
+      import StreamDataUtils, only: [lazy: 1]
       alias Vow.Utils
 
       @impl Vow.Generatable
       def gen(vow, opts) do
+        ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+        _ = Utils.no_override_warn(vow, ignore_warn?)
+        {:ok, lazy(delayed_gen(vow, opts))}
+      end
+
+      @spec delayed_gen(Vow.t(), keyword) ::
+              {:ok, Vow.Generatable.generator()} | {:error, reason :: term}
+      defp delayed_gen(vow, opts) do
         case @for.resolve(vow) do
           {:ok, vow} ->
-            ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
-            _ = Utils.no_override_warn(vow, ignore_warn?)
             @protocol.gen(vow, opts)
 
           {:error, reason} ->
