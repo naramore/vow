@@ -34,12 +34,12 @@ defmodule Vow.List do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(vow, vow_path, via, value_path, value)
+    def conform(vow, path, via, route, value)
         when is_list(value) and length(value) >= 0 do
       value
       |> Enum.with_index()
       |> Enum.map(fn {e, i} ->
-        @protocol.conform(vow.vow, vow_path, via, value_path ++ [i], e)
+        @protocol.conform(vow.vow, path, via, [i|route], e)
       end)
       |> Enum.reduce({:ok, []}, fn
         {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}
@@ -47,9 +47,9 @@ defmodule Vow.List do
         {:ok, _}, {:error, ps} -> {:error, ps}
         {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
       end)
-      |> ConformError.add_problems(length_problems(vow, vow_path, via, value_path, value), true)
+      |> ConformError.add_problems(length_problems(vow, path, via, route, value), true)
       |> ConformError.add_problems(
-        distinct_problems(vow, vow_path, via, value_path, value),
+        distinct_problems(vow, path, via, route, value),
         true
       )
       |> case do
@@ -58,13 +58,13 @@ defmodule Vow.List do
       end
     end
 
-    def conform(_vow, vow_path, via, value_path, value)
+    def conform(_vow, path, via, route, value)
         when is_list(value) do
-      {:error, [ConformError.new_problem(&proper_list?/1, vow_path, via, value_path, value)]}
+      {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, value)]}
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
-      {:error, [ConformError.new_problem(&is_list/1, vow_path, via, value_path, value)]}
+    def conform(_vow, path, via, route, value) do
+      {:error, [ConformError.new_problem(&is_list/1, path, via, route, value)]}
     end
 
     @impl Vow.Conformable
@@ -76,9 +76,13 @@ defmodule Vow.List do
         item, {:ok, acc} ->
           case @protocol.unform(vow, item) do
             {:error, reason} -> {:error, reason}
-            {:ok, unformed} -> {:ok, acc ++ [unformed]}
+            {:ok, unformed} -> {:ok, [unformed | acc]}
           end
       end)
+      |> case do
+        {:error, reason} -> {:error, reason}
+        {:ok, unformed} -> {:ok, :lists.reverse(unformed)}
+      end
     end
 
     def unform(vow, value),
@@ -87,9 +91,9 @@ defmodule Vow.List do
     @spec distinct_problems(Vow.t(), [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    def distinct_problems(vow, vow_path, via, value_path, value) do
+    def distinct_problems(vow, path, via, route, value) do
       if vow.distinct? and not distinct?(value) do
-        [ConformError.new_problem(&distinct?/1, vow_path, via, value_path, value)]
+        [ConformError.new_problem(&distinct?/1, path, via, route, value)]
       else
         []
       end
@@ -98,15 +102,15 @@ defmodule Vow.List do
     @spec length_problems(@for.t, [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp length_problems(vow, vow_path, via, value_path, value) do
+    defp length_problems(vow, path, via, route, value) do
       case {vow.min_length, vow.max_length} do
         {min, _max} when length(value) < min ->
           [
             ConformError.new_problem(
               wrap(&(length(&1) >= min), min: min),
-              vow_path,
+              path,
               via,
-              value_path,
+              route,
               value
             )
           ]
@@ -115,9 +119,9 @@ defmodule Vow.List do
           [
             ConformError.new_problem(
               wrap(&(length(&1) <= max), max: max),
-              vow_path,
+              path,
               via,
-              value_path,
+              route,
               value
             )
           ]

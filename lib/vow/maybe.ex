@@ -21,43 +21,43 @@ defmodule Vow.Maybe do
     alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
-    def conform(_vow, _vow_path, _via, _value_path, []) do
+    def conform(_vow, _path, _via, _route, []) do
       {:ok, [], []}
     end
 
-    def conform(%@for{vow: vow}, vow_path, via, value_path, [h | t] = value)
+    def conform(%@for{vow: vow}, path, via, route, [h | t] = value)
         when is_list(value) and length(value) >= 0 do
       if Vow.regex?(vow) do
-        @protocol.conform(vow, vow_path, via, value_path, value)
+        @protocol.conform(vow, path, via, route, value)
       else
-        case Conformable.conform(vow, vow_path, via, value_path, h) do
+        case Conformable.conform(vow, path, via, route, h) do
           {:ok, conformable} -> {:ok, [conformable], t}
           {:error, _problems} -> {:ok, [], value}
         end
       end
     end
 
-    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, path, via, route, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
+    def conform(_vow, path, via, route, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}

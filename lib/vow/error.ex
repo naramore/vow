@@ -125,7 +125,7 @@ defmodule Vow.ConformError do
     }
   end
 
-  defdelegate new_problem(predicate, vow_path, via, value_path, value, reason \\ nil),
+  defdelegate new_problem(predicate, path, via, route, value, reason \\ nil),
     to: __MODULE__.Problem,
     as: :new
 
@@ -173,28 +173,28 @@ defmodule Vow.ConformError do
     @moduledoc false
 
     defstruct predicate: nil,
-              vow_path: [],
+              path: [],
               via: [],
-              value_path: [],
+              route: [],
               value: nil,
               reason: nil
 
     @type t :: %__MODULE__{
             predicate: Vow.t() | nil,
-            vow_path: [term],
+            path: [term],
             via: [Vow.Ref.t()],
-            value_path: [term],
+            route: [term],
             value: term,
             reason: String.t() | nil
           }
 
     @spec new(Vow.t(), [term], [Vow.Ref.t()], [term], term, String.t() | nil) :: t
-    def new(predicate, vow_path, via, value_path, value, reason \\ nil) do
+    def new(predicate, path, via, route, value, reason \\ nil) do
       %__MODULE__{
         predicate: predicate,
-        vow_path: vow_path,
-        via: via,
-        value_path: value_path,
+        path: :lists.reverse(path),
+        via: :lists.reverse(via),
+        route: :lists.reverse(route),
         value: value,
         reason: reason
       }
@@ -202,24 +202,21 @@ defmodule Vow.ConformError do
 
     @spec message(t) :: String.t()
     def message(p) do
-      if p.value_path == [],
-        do: "",
-        else:
-          "in: #{p.value_path}"
-          |> (&"#{&1} value: #{p.value} fails").()
-          |> (&if(p.via == [], do: &1, else: "#{&1} vow: #{List.last(p.via)}")).()
-          |> (&if(p.vow_path == [], do: &1, else: "#{&1} at: #{p.vow_path}")).()
-          |> (&"#{&1} predicate: #{p.predicate}").()
-          |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
+      (if p.route == [], do: "", else: "in: #{inspect(p.route)}")
+      |> (&"#{&1} value: #{inspect(p.value)} fails").()
+      |> (&if(p.via == [], do: &1, else: "#{&1} vow: #{List.last(p.via)}")).()
+      |> (&if(p.path == [], do: &1, else: "#{&1} at: #{inspect(p.path)}")).()
+      |> (&"#{&1} predicate: #{inspect(p.predicate)}").()
+      |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
     end
 
     @spec from_resolve_error(Vow.ResolveError.t(), [term], [Vow.Ref.t()], [term], term) :: t
-    def from_resolve_error(resolve_error, vow_path, via, value_path, value) do
+    def from_resolve_error(resolve_error, path, via, route, value) do
       new(
         resolve_error.predicate,
-        vow_path,
-        via ++ [resolve_error.ref],
-        value_path,
+        path,
+        [resolve_error.ref | via],
+        route,
         value,
         resolve_error.reason
       )
@@ -234,9 +231,9 @@ defmodule Vow.ConformError do
       def inspect(problem, opts) do
         coll = [
           {:pred, problem.predicate},
-          {:path, problem.vow_path},
+          {:path, problem.path},
           {:via, problem.via},
-          {:in, problem.value_path},
+          {:route, problem.route},
           {:value, problem.value},
           {:reason, problem.reason}
         ]

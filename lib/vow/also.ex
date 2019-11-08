@@ -17,21 +17,21 @@ defmodule Vow.Also do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{vows: []}, _vow_path, _via, _value_path, value) do
+    def conform(%@for{vows: []}, _path, _via, _route, value) do
       {:ok, value}
     end
 
-    def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) do
-      @protocol.conform(vow, vow_path ++ [k], via, value_path, value)
+    def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
+      @protocol.conform(vow, [k|path], via, route, value)
     end
 
-    def conform(%@for{vows: vows}, vow_path, via, value_path, value) when is_list(vows) do
+    def conform(%@for{vows: vows}, path, via, route, value) when is_list(vows) do
       Enum.reduce(vows, {:ok, value}, fn
         _, {:error, pblms} ->
           {:error, pblms}
 
         {k, v}, {:ok, c} ->
-          @protocol.conform(v, vow_path ++ [k], via, value_path, c)
+          @protocol.conform(v, [k|path], via, route, c)
       end)
     end
 

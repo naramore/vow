@@ -66,5 +66,4 @@ end
   - [ ] implement `Vow.Generatable.gen/2` for `Vow.Keys`
   - [ ] investigate the ignored dialyzer warnings for refactoring opportunities
   - [ ] more credo rules + refactoring
-    - [ ] refactor all paths to be 'backwards', and reverse them on problem creation?
 

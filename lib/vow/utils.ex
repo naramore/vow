@@ -29,18 +29,16 @@ defmodule Vow.Utils do
 
   @spec init_path([any]) :: [any, ...]
   def init_path(path) do
-    path ++ [0]
+    [0 | path]
   end
 
   @spec uninit_path([term]) :: [term]
-  def uninit_path(path) do
-    List.delete_at(path, length(path) - 1)
-  end
+  def uninit_path([]), do: []
+  def uninit_path([_|t]), do: t
 
   @spec inc_path([term]) :: [term]
-  def inc_path(path) do
-    List.update_at(path, length(path) - 1, fn i -> i + 1 end)
-  end
+  def inc_path([]), do: []
+  def inc_path([h|t]), do: [h + 1 | t]
 
   @spec append(list | term, list | term) :: list
   def append([], []), do: []
@@ -48,7 +46,7 @@ defmodule Vow.Utils do
   def append([], [_ | _] = r), do: r
   def append([_ | _] = l, [_ | _] = r), do: l ++ r
   def append(l, r) when is_list(r), do: [l | r]
-  def append(l, r) when is_list(l), do: l ++ [r]
+  def append(l, r) when is_list(l), do: Enum.concat(l, [r])
 
   @spec distinct?(Enum.t()) :: boolean
   def distinct?(enum) do
@@ -73,7 +71,7 @@ defmodule Vow.Utils do
   def improper_info(_, n), do: {true, n}
 
   @spec append_if(list, boolean, term) :: list
-  def append_if(list, true, item), do: list ++ [item]
+  def append_if(list, true, item), do: Enum.concat(list, [item])
   def append_if(list, false, _item), do: list
 
   @spec non_default_range(map) :: String.t() | nil

@@ -145,9 +145,9 @@ defmodule Vow.Keys do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(vow, vow_path, via, value_path, value)
+    def conform(vow, path, via, route, value)
         when is_map(value) do
-      context = {vow_path, via, value_path}
+      context = {path, via, route}
 
       case conform_impl(false, vow.optional, value, context) do
         {:error, problems} ->
@@ -158,8 +158,8 @@ defmodule Vow.Keys do
       end
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
-      {:error, [ConformError.new_problem(&is_map/1, vow_path, via, value_path, value)]}
+    def conform(_vow, path, via, route, value) do
+      {:error, [ConformError.new_problem(&is_map/1, path, via, route, value)]}
     end
 
     @impl Vow.Conformable
@@ -257,10 +257,10 @@ defmodule Vow.Keys do
       conform_impl(required?, sref(m, f), value, context)
     end
 
-    defp conform_impl(required?, %Vow.Ref{fun: f} = ref, value, {vow_path, via, value_path}) do
+    defp conform_impl(required?, %Vow.Ref{fun: f} = ref, value, {path, via, route}) do
       case {required?, Map.has_key?(value, f)} do
         {_, true} ->
-          case @protocol.conform(ref, vow_path, via, value_path ++ [f], Map.get(value, f)) do
+          case @protocol.conform(ref, path, via, [f | route], Map.get(value, f)) do
             {:ok, conformed} -> {:ok, Map.put(value, f, conformed)}
             {:error, problems} -> {:error, problems}
           end
@@ -270,9 +270,9 @@ defmodule Vow.Keys do
            [
              ConformError.new_problem(
                wrap(&Map.has_key?(&1, f), f: f),
-               vow_path,
+               path,
                via,
-               value_path,
+               route,
                value
              )
            ]}

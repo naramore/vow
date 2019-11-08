@@ -23,21 +23,21 @@ defmodule Vow.OneOf do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) do
-      case @protocol.conform(vow, vow_path ++ [k], via, value_path, value) do
+    def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
+      case @protocol.conform(vow, [k|path], via, route, value) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(%@for{vows: vows}, vow_path, via, value_path, value)
+    def conform(%@for{vows: vows}, path, via, route, value)
         when is_list(vows) and length(vows) > 0 do
       Enum.reduce(vows, {:error, []}, fn
         _, {:ok, c} ->
           {:ok, c}
 
         {k, s}, {:error, pblms} ->
-          case @protocol.conform(s, vow_path ++ [k], via, value_path, value) do
+          case @protocol.conform(s, [k|path], via, route, value) do
             {:ok, conformed} -> {:ok, %{k => conformed}}
             {:error, problems} -> {:error, pblms ++ problems}
           end

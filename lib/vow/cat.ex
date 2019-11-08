@@ -41,36 +41,36 @@ defmodule Vow.Cat do
             | {:error, [ConformError.Problem.t()]}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: vows} = vow, vow_path, via, value_path, value)
+    def conform(%@for{vows: vows} = vow, path, via, route, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(
         vows,
         {:ok, %{}, value},
-        conform_reducer(vow, vow_path, via, value_path)
+        conform_reducer(vow, path, via, route)
       )
     end
 
-    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, path, via, route, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
+    def conform(_vow, path, via, route, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
@@ -100,8 +100,8 @@ defmodule Vow.Cat do
 
     @spec conform_reducer(Vow.t(), [term], [Vow.Ref.t()], [term]) ::
             ({atom, Vow.t()}, result -> result)
-    defp conform_reducer(vow, vow_path, via, value_path) do
-      &conform_reducer(vow, vow_path, via, value_path, &1, &2)
+    defp conform_reducer(vow, path, via, route) do
+      &conform_reducer(vow, path, via, route, &1, &2)
     end
 
     @spec conform_reducer(
@@ -116,9 +116,9 @@ defmodule Vow.Cat do
       {:error, pblms}
     end
 
-    defp conform_reducer(vow, vow_path, via, value_path, {k, s}, {:ok, acc, []}) do
+    defp conform_reducer(vow, path, via, route, {k, s}, {:ok, acc, []}) do
       if Vow.regex?(s) do
-        case @protocol.conform(s, vow_path ++ [k], via, value_path, []) do
+        case @protocol.conform(s, [k|path], via, route, []) do
           {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
           {:error, problems} -> {:error, problems}
         end
@@ -127,9 +127,9 @@ defmodule Vow.Cat do
          [
            ConformError.new_problem(
              vow,
-             vow_path,
+             path,
              via,
-             Utils.uninit_path(value_path),
+             Utils.uninit_path(route),
              [],
              "Insufficient Data"
            )
@@ -137,14 +137,14 @@ defmodule Vow.Cat do
       end
     end
 
-    defp conform_reducer(_vow, vow_path, via, value_path, {k, s}, {:ok, acc, [h | t] = r}) do
+    defp conform_reducer(_vow, path, via, route, {k, s}, {:ok, acc, [h | t] = r}) do
       if Vow.regex?(s) do
-        case @protocol.conform(s, vow_path ++ [k], via, value_path, r) do
+        case @protocol.conform(s, [k | path], via, route, r) do
           {:ok, c, rest} -> {:ok, Map.put(acc, k, c), rest}
           {:error, problems} -> {:error, problems}
         end
       else
-        case Conformable.conform(s, vow_path ++ [k], via, Utils.uninit_path(value_path), h) do
+        case Conformable.conform(s, [k | path], via, Utils.uninit_path(route), h) do
           {:ok, c} -> {:ok, Map.put(acc, k, c), t}
           {:error, problems} -> {:error, problems}
         end
@@ -166,7 +166,7 @@ defmodule Vow.Cat do
           {k, v}, {:ok, acc} ->
             case @protocol.gen(v, opts) do
               {:error, reason} -> {:error, reason}
-              {:ok, data} -> {:ok, acc ++ [StreamData.tuple({StreamData.constant(k), data})]}
+              {:ok, data} -> {:ok, [StreamData.tuple({StreamData.constant(k), data}) | acc]}
             end
         end)
         |> case do
@@ -175,15 +175,20 @@ defmodule Vow.Cat do
 
           {:ok, datas} ->
             {:ok,
-             StreamData.map(
-               StreamData.fixed_list(datas),
-               &Enum.reduce(&1, [], fn {k, v}, acc ->
-                 if Vow.regex?(Keyword.get(&1, k)) do
-                   append(acc, v)
-                 else
-                   acc ++ [v]
-                 end
-               end)
+             datas
+             |> :lists.reverse()
+             |> StreamData.fixed_list()
+             |> StreamData.map(
+               fn ele ->
+                Enum.reduce(ele, [], fn {k, v}, acc ->
+                  if Vow.regex?(Keyword.get(ele, k)) do
+                    append(v, acc)
+                  else
+                    [v | acc]
+                  end
+                end)
+                |> :lists.reverse()
+               end
              )}
         end
       end

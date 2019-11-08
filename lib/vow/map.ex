@@ -64,10 +64,10 @@ defmodule Vow.Map do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(vow, vow_path, via, value_path, value) when is_map(value) do
+    def conform(vow, path, via, route, value) when is_map(value) do
       value
       |> Enum.map(fn {k, v} ->
-        conform_key_value(vow, vow_path, via, value_path, {k, v})
+        conform_key_value(vow, path, via, route, {k, v})
       end)
       |> Enum.reduce({:ok, []}, fn
         {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}
@@ -75,15 +75,15 @@ defmodule Vow.Map do
         {:ok, _}, {:error, ps} -> {:error, ps}
         {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
       end)
-      |> ConformError.add_problems(size_problems(vow, vow_path, via, value_path, value), true)
+      |> ConformError.add_problems(size_problems(vow, path, via, route, value), true)
       |> case do
         {:ok, conformed} -> {:ok, Enum.into(conformed, %{})}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
-      {:error, [ConformError.new_problem(&is_map/1, vow_path, via, value_path, value)]}
+    def conform(_vow, path, via, route, value) do
+      {:error, [ConformError.new_problem(&is_map/1, path, via, route, value)]}
     end
 
     @impl Vow.Conformable
@@ -113,14 +113,14 @@ defmodule Vow.Map do
             {:ok, term} | {:error, [ConformError.Problem.t()]}
     defp conform_key_value(
            %@for{conform_keys?: conform_keys?} = vow,
-           vow_path,
+           path,
            via,
-           value_path,
+           route,
            {k, v}
          ) do
       {
-        @protocol.conform(vow.key_vow, vow_path ++ [:key_vow], via, value_path, k),
-        @protocol.conform(vow.value_vow, vow_path ++ [:value_vow], via, value_path ++ [k], v)
+        @protocol.conform(vow.key_vow, [:key_vow|path], via, route, k),
+        @protocol.conform(vow.value_vow, [:value_vow|path], via, [k|route], v)
       }
       |> case do
         {{:ok, ck}, {:ok, cv}} ->
@@ -140,15 +140,15 @@ defmodule Vow.Map do
     @spec size_problems(@for.t, [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp size_problems(vow, vow_path, via, value_path, value) do
+    defp size_problems(vow, path, via, route, value) do
       case {vow.min_length, vow.max_length} do
         {min, _max} when map_size(value) < min ->
           [
             ConformError.new_problem(
               wrap(&(map_size(&1) >= min), min: min),
-              vow_path,
+              path,
               via,
-              value_path,
+              route,
               value
             )
           ]
@@ -157,9 +157,9 @@ defmodule Vow.Map do
           [
             ConformError.new_problem(
               wrap(&(map_size(&1) <= max), max: max),
-              vow_path,
+              path,
               via,
-              value_path,
+              route,
               value
             )
           ]

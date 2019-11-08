@@ -12,7 +12,7 @@ defprotocol Vow.RegexOperator do
   """
   @spec conform(t, [term], [Vow.Ref.t()], [term], term) ::
           {:ok, conformed, rest} | {:error, [ConformError.Problem.t()]}
-  def conform(vow, vow_path, via, value_path, value)
+  def conform(vow, path, via, route, value)
 
   @doc """
   """
@@ -29,9 +29,9 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
   alias Vow.{ConformError, Utils, RegexOperator}
 
   @impl Vow.Conformable
-  def conform(vow, vow_path, via, value_path, value)
+  def conform(vow, path, via, route, value)
       when is_list(value) and length(value) >= 0 do
-    case RegexOperator.conform(vow, vow_path, via, Utils.init_path(value_path), value) do
+    case RegexOperator.conform(vow, path, via, Utils.init_path(route), value) do
       {:ok, conformed, []} ->
         {:ok, conformed}
 
@@ -40,16 +40,16 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
 
       {:ok, _conformed, [_ | _]} ->
         {:error,
-         [ConformError.new_problem(vow, vow_path, via, value_path, value, "Insufficient Data")]}
+         [ConformError.new_problem(vow, path, via, route, value, "Insufficient Data")]}
     end
   end
 
-  def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
-    {:error, [ConformError.new_problem(&proper_list?/1, vow_path, via, value_path, value)]}
+  def conform(_vow, path, via, route, value) when is_list(value) do
+    {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, value)]}
   end
 
-  def conform(_vow, vow_path, via, value_path, value) do
-    {:error, [ConformError.new_problem(&is_list/1, vow_path, via, value_path, value)]}
+  def conform(_vow, path, via, route, value) do
+    {:error, [ConformError.new_problem(&is_list/1, path, via, route, value)]}
   end
 
   @impl Vow.Conformable

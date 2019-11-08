@@ -26,7 +26,7 @@ defmodule Vow.Alt do
     alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: vows}, vow_path, via, value_path, value)
+    def conform(%@for{vows: vows}, path, via, route, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(vows, {:error, []}, fn
         _, {:ok, c, r} ->
@@ -34,15 +34,15 @@ defmodule Vow.Alt do
 
         {k, s}, {:error, pblms} ->
           if Vow.regex?(s) do
-            case @protocol.conform(s, vow_path ++ [k], via, value_path, value) do
+            case @protocol.conform(s, [k|path], via, route, value) do
               {:ok, conformed, rest} -> {:ok, [%{k => conformed}], rest}
               {:error, problems} -> {:error, pblms ++ problems}
             end
           else
-            value_path = Utils.uninit_path(value_path)
+            route = Utils.uninit_path(route)
 
             with [h | t] <- value,
-                 {:ok, conformed} <- Conformable.conform(s, vow_path ++ [k], via, value_path, h) do
+                 {:ok, conformed} <- Conformable.conform(s, [k|path], via, route, h) do
               {:ok, [%{k => conformed}], t}
             else
               {:error, problems} ->
@@ -53,9 +53,9 @@ defmodule Vow.Alt do
                  [
                    ConformError.new_problem(
                      s,
-                     vow_path,
+                     path,
                      via,
-                     value_path,
+                     route,
                      [],
                      "Insufficient Data"
                    )
@@ -65,27 +65,27 @@ defmodule Vow.Alt do
       end)
     end
 
-    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, path, via, route, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
+    def conform(_vow, path, via, route, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}

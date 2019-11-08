@@ -18,12 +18,12 @@ defmodule Vow.Nilable do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(_vow, _vow_path, _via, _value_path, nil) do
+    def conform(_vow, _path, _via, _route, nil) do
       {:ok, nil}
     end
 
-    def conform(%@for{vow: vow}, vow_path, via, value_path, value) do
-      @protocol.conform(vow, vow_path, via, value_path, value)
+    def conform(%@for{vow: vow}, path, via, route, value) do
+      @protocol.conform(vow, path, via, route, value)
     end
 
     @impl Vow.Conformable

@@ -20,46 +20,46 @@ defmodule Vow.Amp do
     alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: []}, _vow_path, _via, _value_path, value)
+    def conform(%@for{vows: []}, _path, _via, _route, value)
         when is_list(value) and length(value) >= 0 do
       {:ok, value, []}
     end
 
-    def conform(%@for{vows: vows}, vow_path, via, value_path, value)
+    def conform(%@for{vows: vows}, path, via, route, value)
         when is_list(value) and length(value) >= 0 do
       Enum.reduce(vows, {:ok, value, []}, fn
         _, {:error, pblms} ->
           {:error, pblms}
 
         {k, v}, {:ok, c, rest} ->
-          case conform_impl(v, vow_path ++ [k], via, value_path, c) do
+          case conform_impl(v, [k|path], via, route, c) do
             {:ok, conformed, tail} -> {:ok, conformed, tail ++ rest}
             {:error, problems} -> {:error, problems}
           end
       end)
     end
 
-    def conform(_vow, vow_path, via, value_path, value) when is_list(value) do
+    def conform(_vow, path, via, route, value) when is_list(value) do
       {:error,
        [
          ConformError.new_problem(
            &proper_list?/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
     end
 
-    def conform(_vow, vow_path, via, value_path, value) do
+    def conform(_vow, path, via, route, value) do
       {:error,
        [
          ConformError.new_problem(
            &is_list/1,
-           vow_path,
+           path,
            via,
-           Utils.uninit_path(value_path),
+           Utils.uninit_path(route),
            value
          )
        ]}
@@ -86,11 +86,11 @@ defmodule Vow.Amp do
 
     @spec conform_impl(Vow.t(), [term], [Vow.Ref.t()], [term], term) ::
             {:ok, Conformable.conformed(), @protocol.rest} | {:error, [ConformError.Problem.t()]}
-    defp conform_impl(vow, vow_path, via, value_path, value) do
+    defp conform_impl(vow, path, via, route, value) do
       if Vow.regex?(vow) do
-        @protocol.conform(vow, vow_path, via, value_path, value)
+        @protocol.conform(vow, path, via, route, value)
       else
-        case Conformable.conform(vow, vow_path, via, Utils.uninit_path(value_path), value) do
+        case Conformable.conform(vow, path, via, Utils.uninit_path(route), value) do
           {:ok, conformed} -> {:ok, [conformed], []}
           {:error, problems} -> {:error, problems}
         end

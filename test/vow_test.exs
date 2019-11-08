@@ -76,8 +76,8 @@ defmodule VowTest do
     property "given one vow should conform to the same value as that vow" do
       check all {ivow, vow} <- map(VowData.non_recur_vow(), &{&1, Vow.also(i: &1)}),
                 value <- term() do
-        result = Vow.conform(vow, value) |> VTU.strip_vow() |> VTU.strip_vow_path()
-        iresult = Vow.conform(ivow, value) |> VTU.strip_vow() |> VTU.strip_vow_path()
+        result = Vow.conform(vow, value) |> VTU.strip_vow() |> VTU.strip_path()
+        iresult = Vow.conform(ivow, value) |> VTU.strip_vow() |> VTU.strip_path()
         assert result == iresult
       end
     end

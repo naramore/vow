@@ -90,16 +90,16 @@ defmodule Vow.Ref do
     alias Vow.ConformError.Problem
 
     @impl Vow.RegexOperator
-    def conform(ref, vow_path, via, value_path, value) do
+    def conform(ref, path, via, route, value) do
       case @for.resolve(ref) do
         {:error, error} ->
-          {:error, [Problem.from_resolve_error(error, vow_path, via, value_path, value)]}
+          {:error, [Problem.from_resolve_error(error, path, via, route, value)]}
 
         {:ok, vow} ->
           if Vow.regex?(vow) do
-            @protocol.conform(vow, vow_path, via ++ [ref], value_path, value)
+            @protocol.conform(vow, path, [ref|via], route, value)
           else
-            case Vow.Conformable.conform(vow, vow_path, via, value_path, value) do
+            case Vow.Conformable.conform(vow, path, via, route, value) do
               {:ok, conformed} -> {:ok, conformed, []}
               {:error, problems} -> {:error, problems}
             end
@@ -118,13 +118,13 @@ defmodule Vow.Ref do
     alias Vow.ConformError.Problem
 
     @impl Vow.Conformable
-    def conform(ref, vow_path, via, value_path, value) do
+    def conform(ref, path, via, route, value) do
       case @for.resolve(ref) do
         {:ok, vow} ->
-          @protocol.conform(vow, vow_path, via ++ [ref], value_path, value)
+          @protocol.conform(vow, path, [ref|via], route, value)
 
         {:error, error} ->
-          {:error, [Problem.from_resolve_error(error, vow_path, via, value_path, value)]}
+          {:error, [Problem.from_resolve_error(error, path, via, route, value)]}
       end
     end
 
