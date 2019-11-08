@@ -24,6 +24,7 @@ end
 
 ## Roadmap
 
+- [ ] re-enable caching in CI once [this issue](https://github.com/actions/cache/issues/12) is fixed
 - [ ] v0.1.0
   - [ ] documentation
     - [ ] README.md
@@ -35,13 +36,6 @@ end
     - [ ] `Vow.RegexOperator`
     - [ ] `StreamDataUtils`
     - [ ] `Acs`
-- [ ] v0.0.5 (pre-release)
-  - [ ] investigate the ignored dialyzer warnings for refactoring opportunities
-  - [ ] more credo rules + refactoring
-    - [ ] refactor all paths to be 'backwards', and reverse them on problem creation?
-  - [ ] replace all instances of `value` w/ `val`?
-  - [ ] add `mix doctor` to CI
-  - [ ] refactor CI to be `test` (matrix w/ compile, test, dialyzer, credo) and `check` (format, report, doctor, xref)
 - [ ] v0.0.4 (pre-release)
   - [ ] more tests!
     - [ ] `Vow.Conformable.**.unform/2`
@@ -68,11 +62,9 @@ end
   - [ ] test for nested lists conforming with expected behavior... (especially the regex operators)
   - [ ] add many *specific* compound vow examples (look at `clojure.spec` docs / guides for inspiration)
 - [ ] v0.0.3 (pre-release)
+  - [ ] replace all instances of `value` w/ `val`?
   - [ ] implement `Vow.Generatable.gen/2` for `Vow.Keys`
-  - [ ] re-implement `Access` for `Vow.Map` to not 'passthrough' and instead be key-based on `key_vow | value_vow`
-  - [ ] remove 'multi-passthrough' implementation of `Access` for `Vow.{Alt, Amp, Merge}`
-    - [ ] decide whether to use index-based access (as the current implementation of these involve lists)
-      - this could be infuriatingly undescriptive (i.e. just an integer)
-    - [x] or key-based access (now requiring 'union'-based vows to name their sub-vows like cat|alt|one_of)
-      - this could be 'confusing' as the names are used in conforming for alt|cat|one_of, whereas they would not be for
-    - [ ] or all at once (what is 'implemented' now)
+  - [ ] investigate the ignored dialyzer warnings for refactoring opportunities
+  - [ ] more credo rules + refactoring
+    - [ ] refactor all paths to be 'backwards', and reverse them on problem creation?
+
