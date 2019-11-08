@@ -55,6 +55,7 @@ defmodule Vow.WithGen do
     end
   end
 
+  # coveralls-ignore-start
   defimpl Inspect do
     @moduledoc false
 
@@ -63,4 +64,6 @@ defmodule Vow.WithGen do
       @protocol.inspect(vow, opts)
     end
   end
+
+  # coveralls-ignore-stop
 end

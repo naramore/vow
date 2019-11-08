@@ -90,28 +90,6 @@ defmodule Vow.Utils do
   defmodule AccessShortcut do
     @moduledoc false
 
-    @spec get_and_update_all(
-            [Vow.t()],
-            Access.key(),
-            (value -> {get_value, value} | :pop),
-            ([value] -> Vow.t())[get_value],
-            [value]
-          ) ::
-            {get_value, Vow.t()}
-          when get_value: var, value: Access.value()
-    def get_and_update_all(vows, key, fun, new, gets \\ [], updates \\ [])
-
-    def get_and_update_all([], _key, _fun, new, gets, updates) do
-      {:lists.reverse(gets), new.(:lists.reverse(updates))}
-    end
-
-    def get_and_update_all([vow | rest], key, fun, new, gets, updates) do
-      case Access.get_and_update(vow, key, fun) do
-        {nil, _} -> get_and_update_all(rest, key, fun, new, gets, updates)
-        {get, update} -> get_and_update_all(rest, key, fun, new, [get | gets], [update | updates])
-      end
-    end
-
     defmacro __using__(opts) do
       type = Keyword.get(opts, :type, :key_based)
 
@@ -124,7 +102,7 @@ defmodule Vow.Utils do
     end
 
     @spec build(atom) :: Macro.t()
-    defp build(:single_passthrough) do
+    defp build(:passthrough) do
       quote do
         @impl Access
         def fetch(%{vow: vow}, key) do
@@ -139,34 +117,6 @@ defmodule Vow.Utils do
         @impl Access
         def get_and_update(%{vow: vow}, key, fun) do
           Access.get_and_update(vow, key, fun)
-        end
-      end
-    end
-
-    defp build(:many_passthrough) do
-      quote do
-        alias Vow.Utils.AccessShortcut
-
-        @impl Access
-        def fetch(%{vows: vows}, key) do
-          Enum.map(vows, &Access.fetch(&1, key))
-          |> Enum.reject(&match?(:error, &1))
-          |> Enum.map(&elem(&1, 1))
-          |> (&{:ok, &1}).()
-        end
-
-        @impl Access
-        def pop(%{vows: vows}, key) do
-          {values, data} =
-            Enum.map(vows, &Access.pop(&1, key))
-            |> Enum.unzip()
-
-          {Enum.reject(values, &is_nil/1), __MODULE__.new(data)}
-        end
-
-        @impl Access
-        def get_and_update(%{vows: vows}, key, fun) do
-          AccessShortcut.get_and_update_all(vows, key, fun, &__MODULE__.new/1)
         end
       end
     end

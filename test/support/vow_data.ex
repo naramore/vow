@@ -179,7 +179,7 @@ defmodule VowData do
   def also(child_data \\ nil, opts \\ []) do
     child_data
     |> process(opts)
-    |> StreamData.list_of(opts)
+    |> named_vows(opts)
     |> StreamData.map(&Vow.also/1)
   end
 
@@ -187,7 +187,7 @@ defmodule VowData do
   def amp(child_data \\ nil, opts \\ []) do
     child_data
     |> process(opts)
-    |> StreamData.list_of(opts)
+    |> named_vows(opts)
     |> StreamData.map(&Vow.amp/1)
   end
 
@@ -237,7 +237,7 @@ defmodule VowData do
       process(child_data, opts)
       |> merged(opts)
 
-    StreamData.list_of(child_data, opts)
+    named_vows(child_data, opts)
     |> StreamData.map(&Vow.merge/1)
   end
 

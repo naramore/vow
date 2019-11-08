@@ -1,10 +1,15 @@
 defmodule Acs.Improper do
-  @moduledoc false
+  @moduledoc """
+  """
 
+  @doc """
+  """
   @spec to_proper(nonempty_maybe_improper_list()) :: [any, ...]
   def to_proper([h | t]) when is_list(t), do: [h | to_proper(t)]
   def to_proper([h | t]), do: [h | [t]]
 
+  @doc """
+  """
   @spec improper_get(nonempty_improper_list(term, term) | term, integer) :: term | nil
   def improper_get([h | _], 0), do: h
   def improper_get([_ | t], 1) when not is_list(t), do: t
@@ -24,6 +29,8 @@ defmodule Acs.Improper do
 
   def improper_get(_, _), do: nil
 
+  @doc """
+  """
   @spec improper_length(nonempty_improper_list(term, term), non_neg_integer) :: non_neg_integer
   def improper_length(list, len \\ 0)
 
@@ -32,6 +39,8 @@ defmodule Acs.Improper do
 
   def improper_length(_, len), do: len + 2
 
+  @doc """
+  """
   @spec proper_list?(term) :: boolean
   def proper_list?([]), do: true
   def proper_list?([_ | t]) when is_list(t), do: proper_list?(t)

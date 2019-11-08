@@ -1,15 +1,14 @@
 defmodule Vow.Amp do
   @moduledoc false
-  use Vow.Utils.AccessShortcut,
-    type: :many_passthrough
+  use Vow.Utils.AccessShortcut
 
-  defstruct [:vows]
+  defstruct vows: []
 
   @type t :: %__MODULE__{
-          vows: [Vow.t()]
+          vows: [{atom, Vow.t()}]
         }
 
-  @spec new([Vow.t()]) :: t
+  @spec new([{atom, Vow.t()}]) :: t
   def new(vows) do
     %__MODULE__{vows: vows}
   end
@@ -32,8 +31,8 @@ defmodule Vow.Amp do
         _, {:error, pblms} ->
           {:error, pblms}
 
-        s, {:ok, c, rest} ->
-          case conform_impl(s, vow_path, via, value_path, c) do
+        {k, v}, {:ok, c, rest} ->
+          case conform_impl(v, vow_path ++ [k], via, value_path, c) do
             {:ok, conformed, tail} -> {:ok, conformed, tail ++ rest}
             {:error, problems} -> {:error, problems}
           end
@@ -70,6 +69,7 @@ defmodule Vow.Amp do
     def unform(%@for{vows: vows}, value)
         when is_list(value) and length(value) >= 0 do
       vows
+      |> Keyword.values()
       |> Enum.reverse()
       |> Enum.reduce({:ok, value}, fn
         _, {:error, reason} ->
@@ -104,7 +104,7 @@ defmodule Vow.Amp do
 
       @impl Vow.Generatable
       def gen(vow, opts) do
-        @protocol.Vow.Also.gen(Vow.also(vow.vows), opts)
+        @protocol.gen(Vow.also(vow.vows), opts)
       end
     end
   end

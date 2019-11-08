@@ -324,6 +324,13 @@ defmodule Vow.Keys do
 
       @impl Vow.Generatable
       def gen(_vow, _opts) do
+        # traverse tree, accumulate all combinations of keys for required and optional
+
+        # combinations -> [[{atom, generator}]] -> [%{atom => generator}]
+        # [{m, f} | Ref] |> Enum.map(fn -> {f, gen(ref, opts)} end) |> Enum.into(%{})
+
+        # tuple({fixed_map(one_of(potential_required)), fixed_map(one_of([potential_optional]))})
+        # |> map(fn {req_map, opt_map} -> Map.merge(opt_map, req_map) end)
         {:error, :not_implemented}
       end
     end

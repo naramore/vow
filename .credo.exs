@@ -27,7 +27,7 @@
       #
       # Load and configure plugins here:
       #
-      plugins: [],
+      plugins: [{CredoContrib, []}],
       #
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
@@ -37,7 +37,7 @@
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
       #
-      strict: false,
+      strict: true,
       #
       # If you want to use uncolored output by default, you can change `color`
       # to `false` below:
@@ -98,7 +98,7 @@
         {Credo.Check.Readability.TrailingBlankLine, []},
         {Credo.Check.Readability.TrailingWhiteSpace, []},
         # TODO: enable by default in Credo 1.1
-        {Credo.Check.Readability.UnnecessaryAliasExpansion, false},
+        {Credo.Check.Readability.UnnecessaryAliasExpansion, []},
         {Credo.Check.Readability.VariableNames, []},
 
         #
@@ -141,19 +141,19 @@
         #
         {Credo.Check.Consistency.MultiAliasImportRequireUse, false},
         {Credo.Check.Consistency.UnusedVariableNames, false},
-        {Credo.Check.Design.DuplicatedCode, false},
-        {Credo.Check.Readability.AliasAs, false},
-        {Credo.Check.Readability.MultiAlias, false},
-        {Credo.Check.Readability.Specs, false},
-        {Credo.Check.Readability.SinglePipe, false},
-        {Credo.Check.Refactor.ABCSize, false},
-        {Credo.Check.Refactor.AppendSingleItem, false},
-        {Credo.Check.Refactor.DoubleBooleanNegation, false},
-        {Credo.Check.Refactor.ModuleDependencies, false},
-        {Credo.Check.Refactor.PipeChainStart, false},
-        {Credo.Check.Refactor.VariableRebinding, false},
-        {Credo.Check.Warning.MapGetUnsafePass, false},
-        {Credo.Check.Warning.UnsafeToAtom, false}
+        {Credo.Check.Design.DuplicatedCode, []},
+        {Credo.Check.Readability.AliasAs, []},
+        {Credo.Check.Readability.MultiAlias, []},
+        {Credo.Check.Readability.Specs, []},
+        {Credo.Check.Readability.SinglePipe, []},
+        {Credo.Check.Refactor.ABCSize, []},
+        {Credo.Check.Refactor.AppendSingleItem, []},
+        {Credo.Check.Refactor.DoubleBooleanNegation, []},
+        {Credo.Check.Refactor.ModuleDependencies, []},
+        {Credo.Check.Refactor.PipeChainStart, []},
+        {Credo.Check.Refactor.VariableRebinding, []},
+        {Credo.Check.Warning.MapGetUnsafePass, []},
+        {Credo.Check.Warning.UnsafeToAtom, []}
 
         #
         # Custom checks can be created using `mix credo.gen.check`.

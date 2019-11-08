@@ -101,16 +101,9 @@ defmodule Vow do
 
   @doc """
   """
-  @spec also([t]) :: t
-  def also(vows) do
-    Vow.Also.new(vows)
-  end
-
-  @doc """
-  """
-  @spec also(t, t) :: t
-  def also(vow1, vow2) do
-    also([vow1, vow2])
+  @spec also([{atom, t}]) :: t
+  def also(named_vows) do
+    Vow.Also.new(named_vows)
   end
 
   @doc """
@@ -198,9 +191,9 @@ defmodule Vow do
 
   @doc """
   """
-  @spec merge([merged]) :: t
-  def merge(vows) do
-    Vow.Merge.new(vows)
+  @spec merge([{atom, merged}]) :: t
+  def merge(named_vows) do
+    Vow.Merge.new(named_vows)
   end
 
   @typedoc """
@@ -257,16 +250,9 @@ defmodule Vow do
 
   @doc """
   """
-  @spec amp([t]) :: t
-  def amp(vows) do
-    Vow.Amp.new(vows)
-  end
-
-  @doc """
-  """
-  @spec amp(t, t) :: t
-  def amp(vow1, vow2) do
-    amp([vow1, vow2])
+  @spec amp([{atom, t}]) :: t
+  def amp(named_vows) do
+    Vow.Amp.new(named_vows)
   end
 
   @doc """

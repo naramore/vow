@@ -140,7 +140,6 @@ defmodule Vow.Ref do
     end
   end
 
-  # coveralls-ignore-start
   defimpl Inspect do
     @moduledoc false
 
@@ -152,8 +151,6 @@ defmodule Vow.Ref do
       "#SRef<#{mod}.#{fun}>"
     end
   end
-
-  # coveralls-ignore-stop
 
   if Code.ensure_loaded?(StreamData) do
     defimpl Vow.Generatable do

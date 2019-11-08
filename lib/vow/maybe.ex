@@ -1,7 +1,7 @@
 defmodule Vow.Maybe do
   @moduledoc false
   use Vow.Utils.AccessShortcut,
-    type: :single_passthrough
+    type: :passthrough
 
   defstruct vow: nil
 

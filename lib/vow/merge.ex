@@ -1,15 +1,14 @@
 defmodule Vow.Merge do
   @moduledoc false
-  use Vow.Utils.AccessShortcut,
-    type: :many_passthrough
+  use Vow.Utils.AccessShortcut
 
   defstruct vows: []
 
   @type t :: %__MODULE__{
-          vows: [Vow.merged()]
+          vows: [{atom, Vow.merged()}]
         }
 
-  @spec new([Vow.merged()]) :: t
+  @spec new([{atom, Vow.merged()}]) :: t
   def new(vows) do
     %__MODULE__{
       vows: vows
@@ -26,14 +25,14 @@ defmodule Vow.Merge do
       {:ok, value}
     end
 
-    def conform(%@for{vows: [vow]}, vow_path, via, value_path, value) when is_map(value) do
-      @protocol.conform(vow, vow_path, via, value_path, value)
+    def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) when is_map(value) do
+      @protocol.conform(vow, vow_path ++ [k], via, value_path, value)
     end
 
     def conform(%@for{vows: [_ | _] = vows}, vow_path, via, value_path, value)
         when is_map(value) do
-      Enum.map(vows, fn s ->
-        @protocol.conform(s, vow_path, via, value_path, value)
+      Enum.map(vows, fn {k, v} ->
+        @protocol.conform(v, vow_path ++ [k], via, value_path, value)
       end)
       |> Enum.reduce({:ok, %{}}, fn
         {:ok, conformed}, {:ok, merged} -> {:ok, Map.merge(merged, conformed)}
@@ -50,6 +49,7 @@ defmodule Vow.Merge do
     @impl Vow.Conformable
     def unform(%@for{vows: vows}, value) when is_map(value) do
       vows
+      |> Keyword.values()
       |> Enum.reverse()
       |> Enum.reduce({:ok, %{}}, fn
         _, {:error, reason} ->

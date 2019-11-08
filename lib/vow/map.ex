@@ -1,6 +1,6 @@
 defmodule Vow.Map do
   @moduledoc false
-  @behaviour Access
+  use Vow.Utils.AccessShortcut
 
   defstruct key_vow: nil,
             value_vow: nil,
@@ -34,51 +34,28 @@ defmodule Vow.Map do
   end
 
   @impl Access
-  def fetch(%__MODULE__{} = vow, key) do
-    case {Access.fetch(vow.key_value, key), Access.fetch(vow.value_vow, key)} do
-      {{:ok, kval}, {:ok, vval}} -> {:ok, [kval, vval]}
-      {:error, :error} -> :error
-      {{:ok, val}, _} -> {:ok, val}
-      {_, {:ok, val}} -> {:ok, val}
-    end
+  def fetch(%__MODULE__{} = vow, key)
+      when key in [:key_vow, :value_vow] do
+    Map.fetch(vow, key)
   end
+
+  def fetch(%__MODULE__{}, _), do: :error
 
   @impl Access
-  def pop(%__MODULE__{} = vow, key) do
-    case {Access.pop(vow.key_value, key), Access.pop(vow.value_vow, key)} do
-      {{nil, _}, {nil, _}} ->
-        {nil, vow}
-
-      {{nil, _}, {val, data}} ->
-        {val, Map.put(vow, :value_vow, data)}
-
-      {{val, data}, {nil, _}} ->
-        {val, Map.put(vow, :key_vow, data)}
-
-      {{kval, kdata}, {vval, vdata}} ->
-        {[kval, vval], Map.merge(vow, %{key_vow: kdata, value_vow: vdata})}
-    end
+  def pop(%__MODULE__{} = vow, key)
+      when key in [:key_vow, :value_vow] do
+    Map.pop(vow, key)
   end
+
+  def pop(%__MODULE__{} = vow, _), do: {nil, vow}
 
   @impl Access
-  def get_and_update(%__MODULE__{} = vow, key, fun) do
-    case Access.get_and_update(vow.key_vow, key, fun) do
-      {nil, _} ->
-        case Access.get_and_update(vow.value_vow, key, fun) do
-          {nil, _} -> {nil, vow}
-          {vget, vupdate} -> {vget, Map.put(vow, :value_vow, vupdate)}
-        end
-
-      {kget, kupdate} ->
-        case Access.get_and_update(vow.value_vow, key, fun) do
-          {nil, _} ->
-            {kget, Map.put(vow, :key_vow, kupdate)}
-
-          {vget, vupdate} ->
-            {[kget, vget], Map.merge(vow, %{key_vow: kupdate, value_vow: vupdate})}
-        end
-    end
+  def get_and_update(%__MODULE__{} = vow, key, fun)
+      when key in [:key_vow, :value_vow] do
+    Map.get_and_update(vow, key, fun)
   end
+
+  def get_and_update(%__MODULE__{} = vow, _key, _fun), do: {nil, vow}
 
   defimpl Vow.Conformable do
     @moduledoc false
@@ -142,8 +119,8 @@ defmodule Vow.Map do
            {k, v}
          ) do
       {
-        @protocol.conform(vow.key_vow, vow_path, via, value_path, k),
-        @protocol.conform(vow.value_vow, vow_path, via, value_path ++ [k], v)
+        @protocol.conform(vow.key_vow, vow_path ++ [:key_vow], via, value_path, k),
+        @protocol.conform(vow.value_vow, vow_path ++ [:value_vow], via, value_path ++ [k], v)
       }
       |> case do
         {{:ok, ck}, {:ok, cv}} ->

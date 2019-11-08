@@ -13,7 +13,8 @@ defmodule Vow.Function do
           fun: Vow.t() | nil
         }
 
-  @doc false
+  @doc """
+  """
   @spec new([Vow.t()] | nil, Vow.t() | nil, Vow.t() | nil) :: t
   def new(args, ret, fun) do
     %__MODULE__{
@@ -23,9 +24,12 @@ defmodule Vow.Function do
     }
   end
 
+  @typedoc """
+  """
   @type fun_value :: %{args: [term], ret: term}
 
-  @doc false
+  @doc """
+  """
   @spec fun_value(conformed_args :: [term], conformed_ret :: term) :: fun_value
   def fun_value(conformed_args, conformed_ret) do
     %{
@@ -34,7 +38,12 @@ defmodule Vow.Function do
     }
   end
 
+  @typedoc """
+  """
   @type f :: (... -> any) | mfa | {module, atom}
+
+  @typedoc """
+  """
   @type conformed_function :: %{
           args: [conformed_arg :: term] | nil,
           ret: conformed_ret :: term | nil,

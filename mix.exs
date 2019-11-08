@@ -82,7 +82,9 @@ defmodule Vow.MixProject do
       {:excoveralls, "~> 0.12", only: :test},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
+      {:credo_contrib, "~> 0.2", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
+      {:doctor, "~> 0.8", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -91,10 +93,8 @@ defmodule Vow.MixProject do
       "test.check": [
         "compile --warnings-as-errors",
         "format --check-formatted",
-        "xref unreachable",
-        "xref deprecated",
-        "credo --strict",
         "dialyzer",
+        "credo",
         "test --cover"
       ]
     ]

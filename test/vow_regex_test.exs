@@ -31,8 +31,8 @@ defmodule VowRegexTest do
                     tuple({
                       constant(
                         Vow.amp(
-                          Vow.maybe(&is_integer/1),
-                          &(List.first(&1) > 42)
+                          mi: Vow.maybe(&is_integer/1),
+                          gta: &(List.first(&1) > 42)
                         )
                       ),
                       list_of(integer(43..100), min_length: 2)
@@ -72,8 +72,8 @@ defmodule VowRegexTest do
                     tuple({
                       constant(
                         Vow.amp(
-                          &Enum.all?(&1, fn x -> is_number(x) end),
-                          &Enum.all?(&1, fn x -> x > 42 end)
+                          an: &Enum.all?(&1, fn x -> is_number(x) end),
+                          gta: &Enum.all?(&1, fn x -> x > 42 end)
                         )
                       ),
                       list_of(integer(43..100), length: 1)
@@ -162,8 +162,8 @@ defmodule VowRegexTest do
       check all value <- list_of(integer(1..1000), min_length: 1) do
         vow =
           Vow.amp(
-            &Enum.all?(&1, fn i -> is_integer(i) end),
-            &Enum.all?(&1, fn i -> i > 0 end)
+            i: &Enum.all?(&1, fn i -> is_integer(i) end),
+            gtz: &Enum.all?(&1, fn i -> i > 0 end)
           )
 
         assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
@@ -174,8 +174,8 @@ defmodule VowRegexTest do
       check all value <- list_of(integer(1..1000), min_length: 1) do
         vow =
           Vow.amp(
-            &Enum.all?(&1, fn i -> is_integer(i) end),
-            &Enum.all?(&1, fn i -> i < 0 end)
+            i: &Enum.all?(&1, fn i -> is_integer(i) end),
+            ltz: &Enum.all?(&1, fn i -> i < 0 end)
           )
 
         assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
@@ -193,7 +193,12 @@ defmodule VowRegexTest do
       check all booleans <- list_of(boolean(), min_length: 1),
                 strings <- list_of(string(:ascii, min_length: 1), min_length: 1),
                 value = strings ++ booleans do
-        vow = Vow.amp(Vow.oom(&is_bitstring/1), &Enum.all?(&1, fn s -> String.length(s) > 0 end))
+        vow =
+          Vow.amp(
+            oombs: Vow.oom(&is_bitstring/1),
+            algtz: &Enum.all?(&1, fn s -> String.length(s) > 0 end)
+          )
+
         assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
       end
     end

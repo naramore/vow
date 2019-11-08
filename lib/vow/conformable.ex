@@ -432,11 +432,7 @@ defimpl Vow.Conformable, for: Range do
 
   @impl Vow.Conformable
   def conform(vow, vow_path, via, value_path, _.._ = value) do
-    {
-      Enum.member?(vow, value.first),
-      Enum.member?(vow, value.last)
-    }
-    |> case do
+    case {Enum.member?(vow, value.first), Enum.member?(vow, value.last)} do
       {true, true} ->
         {:ok, value}
 
@@ -518,11 +514,7 @@ defimpl Vow.Conformable, for: Date.Range do
 
   @impl Vow.Conformable
   def conform(vow, vow_path, via, value_path, %Date.Range{} = value) do
-    {
-      Enum.member?(vow, value.first),
-      Enum.member?(vow, value.last)
-    }
-    |> case do
+    case {Enum.member?(vow, value.first), Enum.member?(vow, value.last)} do
       {true, true} ->
         {:ok, value}
 

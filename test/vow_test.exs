@@ -66,17 +66,6 @@ defmodule VowTest do
   end
 
   describe "Vow.also/1" do
-    property "w/ 2 vows behaves identically to Vow.also/2" do
-      check all vow1 <- VowData.also(VowData.non_recur_vow()),
-                vow2 <- VowData.also(VowData.non_recur_vow()),
-                value <- one_of([integer(), float(), boolean(), string(:ascii)]),
-                max_runs: 25 do
-        also1 = Vow.also(vow1, vow2)
-        also2 = Vow.also([vow1, vow2])
-        assert Vow.conform(also1, value) == Vow.conform(also2, value)
-      end
-    end
-
     property "should always conform given zero vows" do
       check all value <- term() do
         vow = Vow.also([])
@@ -85,10 +74,10 @@ defmodule VowTest do
     end
 
     property "given one vow should conform to the same value as that vow" do
-      check all {ivow, vow} <- map(VowData.non_recur_vow(), &{&1, Vow.also([&1])}),
+      check all {ivow, vow} <- map(VowData.non_recur_vow(), &{&1, Vow.also(i: &1)}),
                 value <- term() do
-        result = Vow.conform(vow, value) |> VTU.strip_vow()
-        iresult = Vow.conform(ivow, value) |> VTU.strip_vow()
+        result = Vow.conform(vow, value) |> VTU.strip_vow() |> VTU.strip_vow_path()
+        iresult = Vow.conform(ivow, value) |> VTU.strip_vow() |> VTU.strip_vow_path()
         assert result == iresult
       end
     end
@@ -96,7 +85,7 @@ defmodule VowTest do
     property "if all vows conform -> also conforms (numbers)" do
       check all {min, max} <- tuple({integer(0..100), integer(101..200)}),
                 value <- one_of([integer(min..max), float(min: min, max: max)]) do
-        vow = Vow.also([&is_number/1, &(&1 >= min), &(&1 <= max)])
+        vow = Vow.also(n: &is_number/1, gt: &(&1 >= min), lt: &(&1 <= max))
         assert match?({:ok, ^value}, Vow.conform(vow, value))
       end
     end
@@ -104,10 +93,10 @@ defmodule VowTest do
     property "if all vows conform -> also conforms (lists)" do
       check all value <- list_of(string(:ascii, min_length: 1)) do
         vow =
-          Vow.also([
-            Vow.list_of(&is_bitstring/1),
-            &Enum.all?(&1, fn x -> String.length(x) > 0 end)
-          ])
+          Vow.also(
+            l: Vow.list_of(&is_bitstring/1),
+            a: &Enum.all?(&1, fn x -> String.length(x) > 0 end)
+          )
 
         assert match?({:ok, ^value}, Vow.conform(vow, value))
       end
@@ -115,7 +104,7 @@ defmodule VowTest do
 
     property "if any vows fail to conform -> also fails" do
       check all value <- one_of([integer(), float()]) do
-        vow = Vow.also([&is_number/1, &(not is_number(&1))])
+        vow = Vow.also(n: &is_number/1, nn: &(not is_number(&1)))
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
@@ -123,15 +112,16 @@ defmodule VowTest do
     property "recursively feeds 'conformed' values into the next vows" do
       check all value <- one_of([integer(), float(), boolean(), atom(:alphanumeric)]) do
         vow =
-          Vow.also([
-            Vow.one_of(
-              i: &is_integer/1,
-              b: &is_boolean/1,
-              a: &is_atom/1,
-              f: &is_float/1
-            ),
-            Vow.map_of(&is_atom/1, fn _ -> true end)
-          ])
+          Vow.also(
+            s:
+              Vow.one_of(
+                i: &is_integer/1,
+                b: &is_boolean/1,
+                a: &is_atom/1,
+                f: &is_float/1
+              ),
+            m: Vow.map_of(&is_atom/1, fn _ -> true end)
+          )
 
         assert match?({:ok, _}, Vow.conform(vow, value))
       end
@@ -419,28 +409,16 @@ defmodule VowTest do
       end
     end
 
-    property "of 1 vow is equivalent to the inner vow itself" do
-      check all value <- map_of(atom(:alphanumeric), constant(nil)),
-                vow <-
-                  map_of(atom(:alphanumeric), VowData.pred_fun())
-                  |> list_of(length: 2..5)
-                  |> map(&Vow.merge(&1)) do
-        vow_result = Vow.conform(vow, value) |> VTU.strip_vow()
-        merge_result = Vow.conform(Vow.merge([vow]), value) |> VTU.strip_vow()
-        assert vow_result == merge_result
-      end
-    end
-
     property "if any of the inner vows fail -> the merge vow fails" do
       check all others <- map_of(atom(:alphanumeric), one_of([boolean(), atom(:alphanumeric)])),
                 {a, b} <- tuple({atom(:alphanumeric), boolean()}),
                 value = Map.merge(others, %{a: a, b: b}) do
         vow =
-          Vow.merge([
-            %{a: &is_atom/1, b: &is_boolean/1},
-            Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1)),
-            %{a: &is_integer/1}
-          ])
+          Vow.merge(
+            fm1: %{a: &is_atom/1, b: &is_boolean/1},
+            mo: Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1)),
+            fm2: %{a: &is_integer/1}
+          )
 
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -451,10 +429,10 @@ defmodule VowTest do
                 {a, b} <- tuple({atom(:alphanumeric), boolean()}),
                 value = Map.merge(others, %{a: a, b: b}) do
         vow =
-          Vow.merge([
-            %{a: &is_atom/1, b: &is_boolean/1},
-            Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1))
-          ])
+          Vow.merge(
+            fm: %{a: &is_atom/1, b: &is_boolean/1},
+            mo: Vow.map_of(&is_atom/1, Vow.one_of(b: &is_boolean/1, a: &is_atom/1))
+          )
 
         assert match?({:ok, _}, Vow.conform(vow, value))
       end
@@ -468,8 +446,8 @@ defmodule VowTest do
         b = %{c: &is_bitstring/1, d: &is_number/1}
         c = %{d: Vow.one_of(i: &is_integer/1, f: &is_float/1)}
 
-        refute Vow.conform(Vow.merge([a, b, c]), value) ==
-                 Vow.conform(Vow.merge([a, c, b]), value)
+        refute Vow.conform(Vow.merge(a: a, b: b, c: c), value) ==
+                 Vow.conform(Vow.merge(a: a, c: c, b: b), value)
       end
     end
   end

@@ -234,9 +234,9 @@ defmodule Vow.ConformError do
       def inspect(problem, opts) do
         coll = [
           {:pred, problem.predicate},
-          {:spath, problem.vow_path},
+          {:path, problem.vow_path},
           {:via, problem.via},
-          {:vpath, problem.value_path},
+          {:in, problem.value_path},
           {:value, problem.value},
           {:reason, problem.reason}
         ]

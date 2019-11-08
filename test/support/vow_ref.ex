@@ -32,10 +32,10 @@ defmodule VowRef do
       Vow.alt(
         n: &is_number/1,
         s:
-          Vow.also([
-            Vow.oom(&is_bitstring/1),
-            wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
-          ])
+          Vow.also(
+            bs: Vow.oom(&is_bitstring/1),
+            ne: wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
+          )
       )
     )
   end
@@ -55,10 +55,10 @@ defmodule VowRef do
       Vow.alt(
         n: &is_number/1,
         s:
-          Vow.amp([
-            Vow.oom(&is_bitstring/1),
-            wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
-          ])
+          Vow.amp(
+            bs: Vow.oom(&is_bitstring/1),
+            ne: wrap(&Enum.all?(&1, fn s -> String.length(s) > 0 end))
+          )
       )
     )
   end

@@ -18,6 +18,14 @@ defmodule VowTestUtils do
     {:error, %{error | problems: problems}}
   end
 
+  @spec strip_vow_path(conform_result) :: conform_result
+  def strip_vow_path({:ok, _} = result), do: result
+
+  def strip_vow_path({:error, error}) do
+    problems = Enum.map(error.problems, &%{&1 | vow_path: []})
+    {:error, %{error | problems: problems}}
+  end
+
   @spec strip_via_and_vow(conform_result) :: conform_result
   def strip_via_and_vow(result) do
     result

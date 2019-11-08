@@ -53,7 +53,7 @@ jobs:
 
     - name: Check Code Consistency
       if: always()
-      run: mix credo --strict
+      run: mix credo
 
     - name: Run Tests
       if: always()

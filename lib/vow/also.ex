@@ -1,15 +1,14 @@
 defmodule Vow.Also do
   @moduledoc false
-  use Vow.Utils.AccessShortcut,
-    type: :many_passthrough
+  use Vow.Utils.AccessShortcut
 
   defstruct vows: []
 
   @type t :: %__MODULE__{
-          vows: [Vow.t()]
+          vows: [{atom, Vow.t()}]
         }
 
-  @spec new([Vow.t()]) :: t
+  @spec new([{atom, Vow.t()}]) :: t
   def new(vows) do
     %__MODULE__{vows: vows}
   end
@@ -22,8 +21,8 @@ defmodule Vow.Also do
       {:ok, value}
     end
 
-    def conform(%@for{vows: [vow]}, vow_path, via, value_path, value) do
-      @protocol.conform(vow, vow_path, via, value_path, value)
+    def conform(%@for{vows: [{k, vow}]}, vow_path, via, value_path, value) do
+      @protocol.conform(vow, vow_path ++ [k], via, value_path, value)
     end
 
     def conform(%@for{vows: vows}, vow_path, via, value_path, value) when is_list(vows) do
@@ -31,14 +30,15 @@ defmodule Vow.Also do
         _, {:error, pblms} ->
           {:error, pblms}
 
-        s, {:ok, c} ->
-          @protocol.conform(s, vow_path, via, value_path, c)
+        {k, v}, {:ok, c} ->
+          @protocol.conform(v, vow_path ++ [k], via, value_path, c)
       end)
     end
 
     @impl Vow.Conformable
     def unform(%@for{vows: vows}, value) do
       vows
+      |> Keyword.values()
       |> Enum.reverse()
       |> Enum.reduce({:ok, value}, fn
         _, {:error, reason} ->
@@ -57,7 +57,9 @@ defmodule Vow.Also do
 
       @impl Vow.Generatable
       def gen(vow, opts) do
-        Enum.reduce(vow.vows, {:ok, []}, fn
+        vow.vows
+        |> Keyword.values()
+        |> Enum.reduce({:ok, []}, fn
           _, {:error, reason} ->
             {:error, reason}
 
