@@ -234,10 +234,12 @@ defmodule VowData do
   @spec merge(stream_data | nil, keyword) :: stream_data(Vow.Merge.t())
   def merge(child_data \\ nil, opts \\ []) do
     child_data =
-      process(child_data, opts)
+      child_data
+      |> process(opts)
       |> merged(opts)
 
-    named_vows(child_data, opts)
+    child_data
+    |> named_vows(opts)
     |> StreamData.map(&Vow.merge/1)
   end
 

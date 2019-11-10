@@ -83,7 +83,8 @@ defimpl Vow.Conformable, for: List do
   @impl Vow.Conformable
   def conform(vow, path, via, route, value)
       when is_list(value) and length(vow) == length(value) do
-    Enum.zip(vow, value)
+    vow
+    |> Enum.zip(value)
     |> Enum.reduce({:ok, [], [], 0}, fn
       {s, v}, {:ok, t, _, i} ->
         case @protocol.conform(s, [i|path], via, [i|route], v) do
@@ -141,8 +142,7 @@ defimpl Vow.Conformable, for: List do
   @impl Vow.Conformable
   def unform(vow, value)
       when is_list(value) and length(vow) == length(value) do
-    Enum.zip(vow, value)
-    |> Enum.reduce({:ok, []}, fn
+    Enum.reduce(Enum.zip(vow, value), {:ok, []}, fn
       _, {:error, reason} ->
         {:error, reason}
 

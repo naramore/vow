@@ -62,7 +62,8 @@ defmodule Acs do
     opts =
       if Keyword.has_key?(opts, :only) do
         {keep, _} =
-          Keyword.get(opts, :only)
+          opts
+          |> Keyword.get(:only)
           |> (&Keyword.split(default_opts, &1)).()
 
         keep

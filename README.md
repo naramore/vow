@@ -66,4 +66,5 @@ end
   - [ ] implement `Vow.Generatable.gen/2` for `Vow.Keys`
   - [ ] investigate the ignored dialyzer warnings for refactoring opportunities
   - [ ] more credo rules + refactoring
+    - [ ] move all `Vow.Generatable` implementations to lib/vow/generatable.ex in order to better manage deps?
 

@@ -47,9 +47,7 @@ if Code.ensure_loaded?(StreamData) do
         ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
         _ = Utils.no_override_warn(vow, ignore_warn?)
 
-        StreamData.string(:printable)
-        |> StreamData.filter(vow)
-        |> (&{:ok, &1}).()
+        {:ok, filter(string(:printable), vow)}
       end
     end
 
@@ -80,7 +78,8 @@ if Code.ensure_loaded?(StreamData) do
 
     @impl Vow.Generatable
     def gen(vow, opts) do
-      Enum.reduce(vow, {:ok, []}, fn
+      vow
+      |> Enum.reduce({:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
 
@@ -133,7 +132,8 @@ if Code.ensure_loaded?(StreamData) do
 
     @impl Vow.Generatable
     def gen(vow, opts) do
-      Enum.reduce(vow, {:ok, %{}}, fn
+      vow
+      |> Enum.reduce({:ok, %{}}, fn
         _, {:error, reason} ->
           {:error, reason}
 
@@ -161,8 +161,10 @@ if Code.ensure_loaded?(StreamData) do
       {:ok,
        StreamData.one_of([
          StreamData.member_of(vow),
-         StreamData.uniq_list_of(StreamData.member_of(vow))
-         |> StreamData.map(&MapSet.new/1)
+         StreamData.map(
+          StreamData.uniq_list_of(StreamData.member_of(vow)),
+          &MapSet.new/1
+         )
        ])}
     end
   end
@@ -170,15 +172,14 @@ if Code.ensure_loaded?(StreamData) do
   defimpl Vow.Generatable, for: Regex do
     @moduledoc false
     alias Vow.Utils
+    import StreamData
 
     @impl Vow.Generatable
     def gen(vow, opts) do
       ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
       _ = Utils.no_override_warn(vow, ignore_warn?)
 
-      StreamData.string(:printable)
-      |> StreamData.filter(&Regex.match?(vow, &1))
-      |> (&{:ok, &1}).()
+      {:ok, filter(string(:printable), &Regex.match?(vow, &1))}
     end
   end
 

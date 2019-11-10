@@ -35,9 +35,7 @@ defmodule Vow.ConformableTest do
 
   describe "Conformable.MapSet.conform/5" do
     property "if MapSet value is a subset of vow MapSet -> value" do
-      check all {set, subset} <-
-                  VowData.mapset(min_length: 1)
-                  |> bind(&{constant(&1), VowData.subset(&1, min_length: 1)}) do
+      check all {set, subset} <- bind(VowData.mapset(min_length: 1), &{constant(&1), VowData.subset(&1, min_length: 1)}) do
         assert match?({:ok, ^subset}, Vow.conform(set, subset))
       end
     end
@@ -50,9 +48,7 @@ defmodule Vow.ConformableTest do
     end
 
     property "if MapSet value is not a subset of vow MapSet -> error" do
-      check all {set, subset} <-
-                  VowData.mapset(min_length: 1)
-                  |> bind(&{constant(&1), VowData.subset(&1)}) do
+      check all {set, subset} <- bind(VowData.mapset(min_length: 1), &{constant(&1), VowData.subset(&1)}) do
         non_subset = MapSet.put(subset, :foo)
         assert match?({:error, _}, Vow.conform(set, non_subset))
       end
@@ -65,9 +61,7 @@ defmodule Vow.ConformableTest do
     end
 
     property "if value member_of vow -> value" do
-      check all {set, value} <-
-                  VowData.mapset(min_length: 1)
-                  |> bind(&{constant(&1), member_of(&1)}) do
+      check all {set, value} <- bind(VowData.mapset(min_length: 1), &{constant(&1), member_of(&1)}) do
         assert match?({:ok, ^value}, Vow.conform(set, value))
       end
     end
@@ -251,16 +245,14 @@ defmodule Vow.ConformableTest do
     end
 
     property "invalid list vow -> continues to look for problems" do
-      check all value <- tuple({integer(), float(), boolean()}) |> map(&Tuple.to_list/1) do
+      check all value <- map(tuple({integer(), float(), boolean()}), &Tuple.to_list/1) do
         vow = [&is_integer/1, &is_bitstring/1, &is_boolean/1]
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "valid (simple) improper vow succeeds" do
-      check all value <-
-                  tuple({integer(), string(:ascii), boolean()})
-                  |> map(fn {i, s, b} -> [i, s | b] end) do
+      check all value <- map(tuple({integer(), string(:ascii), boolean()}), fn {i, s, b} -> [i, s | b] end) do
         vow = [&is_integer/1, (&is_bitstring/1) | &is_boolean/1]
         assert match?({:ok, _}, Vow.conform(vow, value))
       end
@@ -300,7 +292,9 @@ defmodule Vow.ConformableTest do
                 vs <- list_of(integer(), length: map_size(vow)),
                 key <- member_of(Map.keys(vow)),
                 value =
-                  Enum.zip(Map.keys(vow), vs)
+                  vow
+                  |> Map.keys()
+                  |> Enum.zip(vs)
                   |> Enum.into(%{})
                   |> Map.delete(key),
                 max_runs: 25 do
@@ -313,7 +307,9 @@ defmodule Vow.ConformableTest do
                 vs <- list_of(integer(), length: map_size(vow)),
                 extra_values <- map_of(string(:ascii), float()),
                 value =
-                  Enum.zip(Map.keys(vow), vs)
+                  vow
+                  |> Map.keys()
+                  |> Enum.zip(vs)
                   |> Enum.into(%{})
                   |> Map.merge(extra_values),
                 max_runs: 25 do
@@ -324,7 +320,7 @@ defmodule Vow.ConformableTest do
     property "valid map vow -> conformed value as map w/ same keys" do
       check all vow <- map_of(atom(:alphanumeric), constant(&is_float/1), min_length: 1),
                 vs <- list_of(float(), length: map_size(vow)),
-                value = Enum.zip(Map.keys(vow), vs) |> Enum.into(%{}),
+                value = Enum.into(Enum.zip(Map.keys(vow), vs), %{}),
                 max_runs: 25 do
         assert match?({:ok, ^value}, Vow.conform(vow, value))
       end

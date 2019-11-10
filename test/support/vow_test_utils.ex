@@ -33,6 +33,13 @@ defmodule VowTestUtils do
     |> strip_vow()
   end
 
+  @spec strip_vow_and_path(conform_result) :: conform_result
+  def strip_vow_and_path(result) do
+    result
+    |> strip_vow()
+    |> strip_path()
+  end
+
   @spec to_improper([term, ...]) :: maybe_improper_list(term, term) | nil
   def to_improper([]), do: nil
   def to_improper([h | t]), do: [h | to_improper(t)]

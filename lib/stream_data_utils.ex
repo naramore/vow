@@ -33,11 +33,13 @@ if Code.ensure_loaded?(StreamData) do
 
     @spec build_arity(arity, module) :: [Macro.t()]
     def build_arity(arity, mod) do
-      Stream.repeatedly(fn -> Macro.var(:_, mod) end)
+      fn -> Macro.var(:_, mod) end
+      |> Stream.repeatedly()
       |> Enum.take(arity)
     end
   end
 
+  # credo:disable-for-next-line Credo.Check.Refactor.ModuleDependencies
   defmodule StreamDataUtils do
     @moduledoc """
     TODO
@@ -99,7 +101,8 @@ if Code.ensure_loaded?(StreamData) do
     """
     @spec struct(module, map | keyword) :: t(struct)
     def struct(module, data) do
-      fixed_map(data)
+      data
+      |> fixed_map()
       |> map(&Kernel.struct(module, &1))
     end
 
@@ -107,7 +110,8 @@ if Code.ensure_loaded?(StreamData) do
     """
     @spec tuple_of(t, [list_opt]) :: t(tuple)
     def tuple_of(data, opts \\ []) do
-      list_of(data, opts)
+      data
+      |> list_of(opts)
       |> map(&List.to_tuple/1)
     end
 

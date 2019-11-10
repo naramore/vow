@@ -14,9 +14,8 @@ defmodule VowRegexTest do
     end
 
     property "given an improper list should fail to conform" do
-      check all value <- list_of(constant(nil), min_length: 1) |> map(&VTU.to_improper/1),
-                vow <- VowData.regex_vow(),
-                max_runs: 40 do
+      check all value <- map(list_of(constant(nil), min_length: 1), &VTU.to_improper/1),
+                vow <- VowData.regex_vow(), max_runs: 40 do
         assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
       end
     end
@@ -39,7 +38,7 @@ defmodule VowRegexTest do
                     }),
                     tuple({
                       constant(Vow.cat(n: &is_number/1, s: &is_bitstring/1)),
-                      tuple({integer(), string(:ascii)}) |> map(fn {i, s} -> [i, s, nil] end)
+                      map(tuple({integer(), string(:ascii)}), fn {i, s} -> [i, s, nil] end)
                     }),
                     tuple({
                       constant(Vow.maybe(&is_integer/1)),
@@ -47,11 +46,10 @@ defmodule VowRegexTest do
                     }),
                     tuple({
                       constant(Vow.oom(&is_integer/1)),
-                      tuple(
+                      map(tuple(
                         {list_of(integer(), min_length: 1),
                          list_of(string(:ascii), min_length: 1)}
-                      )
-                      |> map(fn {xs, ys} -> xs ++ ys end)
+                      ), fn {xs, ys} -> xs ++ ys end)
                     }),
                     tuple({
                       constant(Vow.zom(&is_integer/1)),
@@ -80,7 +78,7 @@ defmodule VowRegexTest do
                     }),
                     tuple({
                       constant(Vow.cat(n: &is_number/1, s: &is_bitstring/1)),
-                      tuple({integer(), string(:ascii)}) |> map(fn {i, s} -> [i, s] end)
+                      map(tuple({integer(), string(:ascii)}), fn {i, s} -> [i, s] end)
                     }),
                     tuple({
                       constant(Vow.maybe(&is_integer/1)),

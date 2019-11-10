@@ -65,9 +65,9 @@ defmodule Vow.RefTest do
       check all data <- VowRef.clj_vow_gen(),
                 max_runs: 25 do
         ref = sref(VowRef, :clj_vow)
-        yay_ref = Vow.conform(ref, data) |> strip_via_and_vow()
-        nay_ref = Vow.conform(VowRef.clj_vow(), data) |> strip_via_and_vow()
-        assert yay_ref == nay_ref
+        yay_ref = Vow.conform(ref, data)
+        nay_ref = Vow.conform(VowRef.clj_vow(), data)
+        assert strip_via_and_vow(yay_ref) == strip_via_and_vow(nay_ref)
       end
     end
   end
@@ -77,9 +77,9 @@ defmodule Vow.RefTest do
       check all data <- VowRef.clj_regexop_gen(),
                 max_runs: 25 do
         ref = sref(VowRef, :clj_regexop)
-        yay_ref = Vow.conform(ref, data) |> strip_via_and_vow()
-        nay_ref = Vow.conform(VowRef.clj_regexop(), data) |> strip_via_and_vow()
-        assert yay_ref == nay_ref
+        yay_ref = Vow.conform(ref, data)
+        nay_ref = Vow.conform(VowRef.clj_regexop(), data)
+        assert strip_via_and_vow(yay_ref) == strip_via_and_vow(nay_ref)
       end
     end
   end

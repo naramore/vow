@@ -78,7 +78,8 @@ defimpl Inspect,
 
   @spec suffix(module) :: String.t()
   defp suffix(module) do
-    to_string(module)
+    module
+    |> to_string()
     |> String.split(".")
     |> List.last()
   end

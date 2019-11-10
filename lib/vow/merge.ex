@@ -31,7 +31,8 @@ defmodule Vow.Merge do
 
     def conform(%@for{vows: [_ | _] = vows}, path, via, route, value)
         when is_map(value) do
-      Enum.map(vows, fn {k, v} ->
+      vows
+      |> Enum.map(fn {k, v} ->
         @protocol.conform(v, [k|path], via, route, value)
       end)
       |> Enum.reduce({:ok, %{}}, fn

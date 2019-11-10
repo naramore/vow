@@ -76,9 +76,9 @@ defmodule VowTest do
     property "given one vow should conform to the same value as that vow" do
       check all {ivow, vow} <- map(VowData.non_recur_vow(), &{&1, Vow.also(i: &1)}),
                 value <- term() do
-        result = Vow.conform(vow, value) |> VTU.strip_vow() |> VTU.strip_path()
-        iresult = Vow.conform(ivow, value) |> VTU.strip_vow() |> VTU.strip_path()
-        assert result == iresult
+        result = Vow.conform(vow, value)
+        iresult = Vow.conform(ivow, value)
+        assert VTU.strip_vow_and_path(result) == VTU.strip_vow_and_path(iresult)
       end
     end
 
@@ -147,7 +147,7 @@ defmodule VowTest do
 
     property "duplicate keys -> raise Vow.DuplicateNameError" do
       check all ks <- uniq_list_of(atom(:alphanumeric), min_length: 2),
-                keys <- member_of(ks) |> map(fn k -> [k | ks] end) do
+                keys <- map(member_of(ks), fn k -> [k | ks] end) do
         vows = Enum.zip(keys, Stream.repeatedly(fn -> nil end))
 
         assert_raise(Vow.DuplicateNameError, fn ->
@@ -215,9 +215,9 @@ defmodule VowTest do
     property "conform on the nilable is equivalent to conform of subvow otherwise" do
       check all vow <- VowData.nilable(VowData.non_recur_vow()),
                 value <- one_of([boolean(), integer(), float(), string(:ascii)]) do
-        nilable = Vow.conform(vow, value) |> VTU.strip_vow()
-        subvow = Vow.conform(vow.vow, value) |> VTU.strip_vow()
-        assert nilable == subvow
+        nilable = Vow.conform(vow, value)
+        subvow = Vow.conform(vow.vow, value)
+        assert VTU.strip_vow(nilable) == VTU.strip_vow(subvow)
       end
     end
 
@@ -245,25 +245,21 @@ defmodule VowTest do
     end
 
     property "if value is improper list -> error" do
-      check all value <-
-                  list_of(constant(nil), min_length: 1)
-                  |> map(&VTU.to_improper/1),
+      check all value <- map(list_of(constant(nil), min_length: 1), &VTU.to_improper/1),
                 vow <- VowData.list_of() do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "if value is larger then max length -> error" do
-      check all {max, vow} <-
-                  integer(0..20) |> map(fn x -> {x, Vow.list_of(&Vow.any?/1, max_length: x)} end),
+      check all {max, vow} <- map(integer(0..20), fn x -> {x, Vow.list_of(&Vow.any?/1, max_length: x)} end),
                 value <- list_of(constant(nil), min_length: max + 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "if value is smaller then min length -> error" do
-      check all {min, vow} <-
-                  integer(5..20) |> map(fn x -> {x, Vow.list_of(&Vow.any?/1, min_length: x)} end),
+      check all {min, vow} <- map(integer(5..20), fn x -> {x, Vow.list_of(&Vow.any?/1, min_length: x)} end),
                 value <- list_of(constant(nil), max_length: min - 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -367,18 +363,14 @@ defmodule VowTest do
     end
 
     property "if value is larger then max length -> error" do
-      check all {max, vow} <-
-                  integer(0..20)
-                  |> map(fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, max_length: x)} end),
+      check all {max, vow} <- map(integer(0..20), fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, max_length: x)} end),
                 value <- map_of(atom(:alphanumeric), constant(nil), min_length: max + 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "if value is smaller then min length -> error" do
-      check all {min, vow} <-
-                  integer(5..20)
-                  |> map(fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, min_length: x)} end),
+      check all {min, vow} <- map(integer(5..20), fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, min_length: x)} end),
                 value <- map_of(atom(:alphanumeric), constant(nil), max_length: min - 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -440,7 +432,8 @@ defmodule VowTest do
 
     property "the order of merges can effect the result" do
       check all value <-
-                  tuple({integer(), boolean(), string(:ascii), one_of([integer(), float()])})
+                  {integer(), boolean(), string(:ascii), one_of([integer(), float()])}
+                  |> tuple()
                   |> map(fn {w, x, y, z} -> %{a: w, b: x, c: y, d: z} end) do
         a = %{a: &is_integer/1, b: &is_boolean/1}
         b = %{c: &is_bitstring/1, d: &is_number/1}
@@ -513,7 +506,8 @@ defmodule VowTest do
 
     property "{:or, [...]} will match the 1st key that exists and conforms" do
       check all value <-
-                  tuple({integer(), one_of([float(), string(:ascii)])})
+                  {integer(), one_of([float(), string(:ascii)])}
+                  |> tuple()
                   |> map(fn
                     {i, f} when is_float(f) -> %{i: i, f: f}
                     {i, s} -> %{i: i, s: s}
@@ -525,7 +519,8 @@ defmodule VowTest do
 
     property "{:and, [...]} will match only if all keys exist and conform" do
       check all value <-
-                  tuple({integer(), one_of([string(:ascii), tuple({boolean(), float()})])})
+                  {integer(), one_of([string(:ascii), tuple({boolean(), float()})])}
+                  |> tuple()
                   |> map(fn
                     {i, {b, f}} -> %{i: i, b: b, f: f}
                     {i, s} -> %{i: i, s: s}
