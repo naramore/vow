@@ -84,6 +84,9 @@ defmodule Vow.FunctionWrapper do
 
     @impl Vow.Conformable
     def unform(_vow, value), do: {:ok, value}
+
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
   end
 
   if Code.ensure_loaded?(StreamData) do

@@ -5,6 +5,8 @@ defprotocol Vow.RegexOperator do
 
   alias Vow.{Conformable, ConformError}
 
+  @fallback_to_any true
+
   @type conformed :: Conformable.conformed()
   @type rest :: maybe_improper_list(term, term) | term
 
@@ -18,6 +20,28 @@ defprotocol Vow.RegexOperator do
   """
   @spec unform(t, conformed) :: {:ok, value :: term} | {:error, Vow.UnformError.t()}
   def unform(vow, conformed_value)
+end
+
+defimpl Vow.RegexOperator, for: Any do
+  @moduledoc false
+  alias Vow.{Conformable, ConformError.Problem}
+
+  @impl Vow.RegexOperator
+  def conform(vow, path, via, [_ | route], []) do
+    {:error, [Problem.new(vow, path, via, route, [], "Insufficient Data")]}
+  end
+
+  def conform(vow, path, via, route, [h | t]) do
+    case Conformable.conform(vow, path, via, route, h) do
+      {:error, problems} -> {:error, problems}
+      {:ok, conformed} -> {:ok, conformed, t}
+    end
+  end
+
+  @impl Vow.RegexOperator
+  def unform(vow, value) do
+    Conformable.unform(vow, value)
+  end
 end
 
 alias Vow.{Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore}
@@ -39,8 +63,7 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
         {:error, problems}
 
       {:ok, _conformed, [_ | _]} ->
-        {:error,
-         [ConformError.new_problem(vow, path, via, route, value, "Insufficient Data")]}
+        {:error, [ConformError.new_problem(vow, path, via, route, value, "Insufficient Data")]}
     end
   end
 
@@ -56,4 +79,7 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
   def unform(vow, value) do
     RegexOperator.unform(vow, value)
   end
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: true
 end

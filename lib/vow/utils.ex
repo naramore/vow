@@ -34,11 +34,11 @@ defmodule Vow.Utils do
 
   @spec uninit_path([term]) :: [term]
   def uninit_path([]), do: []
-  def uninit_path([_|t]), do: t
+  def uninit_path([_ | t]), do: t
 
   @spec inc_path([term]) :: [term]
   def inc_path([]), do: []
-  def inc_path([h|t]), do: [h + 1 | t]
+  def inc_path([h | t]), do: [h + 1 | t]
 
   @spec append(list | term, list | term) :: list
   def append([], []), do: []

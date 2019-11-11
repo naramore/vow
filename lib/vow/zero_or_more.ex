@@ -17,7 +17,6 @@ defmodule Vow.ZeroOrMore do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Acs.Improper, only: [proper_list?: 1]
     import Vow.Utils, only: [append: 2]
     alias Vow.{Conformable, ConformError, Utils}
 
@@ -26,39 +25,8 @@ defmodule Vow.ZeroOrMore do
       {:ok, [], []}
     end
 
-    def conform(%@for{vow: vow}, path, via, route, value)
-        when is_list(value) and length(value) >= 0 do
-      if Vow.regex?(vow) do
-        conform_regex(vow, path, via, route, value)
-      else
-        conform_non_regex(vow, path, via, Utils.uninit_path(route), value)
-      end
-    end
-
-    def conform(_vow, path, via, route, value) when is_list(value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &proper_list?/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
-    end
-
-    def conform(_vow, path, via, route, value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &is_list/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
+    def conform(%@for{vow: vow}, path, via, route, value) do
+      conform_impl(vow, path, via, route, value)
     end
 
     @impl Vow.RegexOperator
@@ -84,59 +52,18 @@ defmodule Vow.ZeroOrMore do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
-    @spec conform_regex(
-            Vow.t(),
-            [term],
-            [Vow.Ref.t()],
-            [term],
-            maybe_improper_list(term, term) | term,
-            [term]
-          ) ::
-            {:ok, conformed :: term, rest :: term}
-    defp conform_regex(vow, path, via, route, rest, acc \\ [])
+    @spec conform_impl(Vow.t(), [term], [Vow.Ref.t()], [term], [term], [term]) ::
+            {:ok, @protocol.conformed, @protocol.rest} | {:error, [ConformError.Problem.t()]}
+    defp conform_impl(vow, path, via, route, rest, acc \\ [])
 
-    defp conform_regex(_vow, _path, _via, _route, [], acc) do
-      {:ok, acc, []}
-    end
-
-    defp conform_regex(vow, path, via, route, [_ | _] = rest, acc) do
+    defp conform_impl(vow, path, via, route, rest, acc) do
       case @protocol.conform(vow, path, via, route, rest) do
         {:error, _problems} ->
           {:ok, acc, rest}
 
         {:ok, conformed, rest} ->
-          conform_regex(
-            vow,
-            path,
-            via,
-            Utils.inc_path(route),
-            rest,
-            append(acc, conformed)
-          )
-      end
-    end
-
-    defp conform_regex(_vow, _path, _via, _route, improper, acc) do
-      {:ok, acc, improper}
-    end
-
-    @spec conform_non_regex(Vow.t(), [term], [Vow.Ref.t()], [term], term, non_neg_integer, [
-            term
-          ]) ::
-            {:ok, conformed :: term, rest :: [term]} | {:error, [ConformError.Problem.t()]}
-    defp conform_non_regex(vow, path, via, route, value, pos \\ 0, acc \\ [])
-
-    defp conform_non_regex(_vow, _path, _via, _route, [], _pos, acc) do
-      {:ok, Enum.reverse(acc), []}
-    end
-
-    defp conform_non_regex(vow, path, via, route, [h | t] = value, pos, acc) do
-      case Conformable.conform(vow, path, via, [pos|route], h) do
-        {:error, _problems} ->
-          {:ok, Enum.reverse(acc), value}
-
-        {:ok, c} ->
-          conform_non_regex(vow, path, via, route, t, pos + 1, [c | acc])
+          route = Utils.inc_path(route)
+          conform_impl(vow, path, via, route, rest, append(acc, conformed))
       end
     end
   end

@@ -252,14 +252,16 @@ defmodule VowTest do
     end
 
     property "if value is larger then max length -> error" do
-      check all {max, vow} <- map(integer(0..20), fn x -> {x, Vow.list_of(&Vow.any?/1, max_length: x)} end),
+      check all {max, vow} <-
+                  map(integer(0..20), fn x -> {x, Vow.list_of(&Vow.any?/1, max_length: x)} end),
                 value <- list_of(constant(nil), min_length: max + 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "if value is smaller then min length -> error" do
-      check all {min, vow} <- map(integer(5..20), fn x -> {x, Vow.list_of(&Vow.any?/1, min_length: x)} end),
+      check all {min, vow} <-
+                  map(integer(5..20), fn x -> {x, Vow.list_of(&Vow.any?/1, min_length: x)} end),
                 value <- list_of(constant(nil), max_length: min - 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -363,14 +365,20 @@ defmodule VowTest do
     end
 
     property "if value is larger then max length -> error" do
-      check all {max, vow} <- map(integer(0..20), fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, max_length: x)} end),
+      check all {max, vow} <-
+                  map(integer(0..20), fn x ->
+                    {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, max_length: x)}
+                  end),
                 value <- map_of(atom(:alphanumeric), constant(nil), min_length: max + 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "if value is smaller then min length -> error" do
-      check all {min, vow} <- map(integer(5..20), fn x -> {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, min_length: x)} end),
+      check all {min, vow} <-
+                  map(integer(5..20), fn x ->
+                    {x, Vow.map_of(&Vow.any?/1, &Vow.any?/1, min_length: x)}
+                  end),
                 value <- map_of(atom(:alphanumeric), constant(nil), max_length: min - 1) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end

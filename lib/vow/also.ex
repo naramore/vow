@@ -22,7 +22,7 @@ defmodule Vow.Also do
     end
 
     def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
-      @protocol.conform(vow, [k|path], via, route, value)
+      @protocol.conform(vow, [k | path], via, route, value)
     end
 
     def conform(%@for{vows: vows}, path, via, route, value) when is_list(vows) do
@@ -31,7 +31,7 @@ defmodule Vow.Also do
           {:error, pblms}
 
         {k, v}, {:ok, c} ->
-          @protocol.conform(v, [k|path], via, route, c)
+          @protocol.conform(v, [k | path], via, route, c)
       end)
     end
 
@@ -48,6 +48,9 @@ defmodule Vow.Also do
           @protocol.unform(vow, unformed)
       end)
     end
+
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
   end
 
   if Code.ensure_loaded?(StreamData) do
@@ -59,30 +62,38 @@ defmodule Vow.Also do
       def gen(vow, opts) do
         vow.vows
         |> Keyword.values()
-        |> Enum.reduce({:ok, []}, fn
-          _, {:error, reason} ->
-            {:error, reason}
+        |> Enum.reduce({:ok, []}, &reducer(&1, &2, opts))
+        |> to_one_of(vow, opts)
+      end
 
-          v, {:ok, acc} ->
-            case @protocol.gen(v, opts) do
-              {:error, reason} -> {:error, reason}
-              {:ok, data} -> {:ok, [data | acc]}
-            end
-        end)
-        |> case do
-          {:error, reason} ->
-            {:error, reason}
+      @spec reducer(Vow.t(), @protocol.result, keyword) :: @protocol.result
+      defp reducer(_, {:error, reason}, _opts) do
+        {:error, reason}
+      end
 
-          {:ok, datas} ->
-            ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
-            _ = Utils.no_override_warn(vow, ignore_warn?)
-
-            datas
-            |> Enum.reverse()
-            |> StreamData.one_of()
-            |> StreamData.filter(&Vow.valid?(vow, &1))
-            |> (&{:ok, &1}).()
+      defp reducer(vow, {:ok, acc}, opts) do
+        case @protocol.gen(vow, opts) do
+          {:error, reason} -> {:error, reason}
+          {:ok, data} -> {:ok, [data | acc]}
         end
+      end
+
+      @spec to_one_of(@protocol.result, Vow.t(), keyword) :: @protocol.result
+      defp to_one_of({:error, reason}, _vow, _opts) do
+        {:error, reason}
+      end
+
+      defp to_one_of({:ok, datas}, vow, opts) do
+        ignore_warn? = Keyword.get(opts, :ignore_warn?, false)
+        _ = Utils.no_override_warn(vow, ignore_warn?)
+        {:ok, to_one_of(Enum.reverse(datas), vow)}
+      end
+
+      @spec to_one_of([@protocol.generator], Vow.t()) :: @protocol.generator
+      defp to_one_of(datas, vow) do
+        datas
+        |> StreamData.one_of()
+        |> StreamData.filter(&Vow.valid?(vow, &1))
       end
     end
   end

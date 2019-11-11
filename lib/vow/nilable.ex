@@ -29,6 +29,9 @@ defmodule Vow.Nilable do
     @impl Vow.Conformable
     def unform(_vow, nil), do: {:ok, nil}
     def unform(%@for{vow: vow}, value), do: @protocol.unform(vow, value)
+
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
   end
 
   if Code.ensure_loaded?(StreamData) do

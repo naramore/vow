@@ -203,7 +203,7 @@ defmodule Vow.ConformError do
     @spec message(t) :: String.t()
     def message(p) do
       p.route
-      |> (&if &1 == [], do: "", else: "in: #{inspect(&1)}").()
+      |> (&if(&1 == [], do: "", else: "in: #{inspect(&1)}")).()
       |> (&"#{&1} value: #{inspect(p.value)} fails").()
       |> (&if(p.via == [], do: &1, else: "#{&1} vow: #{List.last(p.via)}")).()
       |> (&if(p.path == [], do: &1, else: "#{&1} at: #{inspect(p.path)}")).()

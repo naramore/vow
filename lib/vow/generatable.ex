@@ -19,9 +19,13 @@ defprotocol Vow.Generatable do
   """
   @type gen_opt :: {:ignore_warn?, boolean}
 
+  @typedoc """
+  """
+  @type result :: {:ok, generator} | {:error, reason :: term}
+
   @doc """
   """
-  @spec gen(t, [gen_opt]) :: {:ok, generator} | {:error, reason :: term}
+  @spec gen(t, [gen_opt]) :: result
   def gen(generatable, opts \\ [])
 end
 
@@ -57,6 +61,7 @@ if Code.ensure_loaded?(StreamData) do
 
     @spec supported_functions() :: %{optional((term -> boolean)) => StreamData.t(term)}
     defp supported_functions do
+      # credo:disable-for-previous-line Credo.Check.Refactor.ABCSize
       %{
         &is_boolean/1 => boolean(),
         &is_atom/1 => atom(:alphanumeric),
@@ -103,27 +108,34 @@ if Code.ensure_loaded?(StreamData) do
     def gen(vow, opts) do
       vow
       |> Tuple.to_list()
-      |> Enum.reduce({:ok, []}, fn
-        _, {:error, reason} ->
-          {:error, reason}
+      |> Enum.reduce({:ok, []}, &reducer(&1, &2, opts))
+      |> to_tuple()
+    end
 
-        v, {:ok, acc} ->
-          case @protocol.gen(v, opts) do
-            {:error, reason} -> {:error, reason}
-            {:ok, data} -> {:ok, [data | acc]}
-          end
-      end)
-      |> case do
-        {:error, reason} ->
-          {:error, reason}
+    @spec reducer(Vow.t(), {:ok, [Vow.t()]} | {:error, reason}, keyword) ::
+            {:ok, [Vow.t()]} | {:error, reason}
+          when reason: term
+    defp reducer(_, {:error, reason}, _opts) do
+      {:error, reason}
+    end
 
-        {:ok, data} ->
-          data
-          |> Enum.reverse()
-          |> List.to_tuple()
-          |> StreamData.tuple()
-          |> (&{:ok, &1}).()
+    defp reducer(vow, {:ok, acc}, opts) do
+      case @protocol.gen(vow, opts) do
+        {:error, reason} -> {:error, reason}
+        {:ok, data} -> {:ok, [data | acc]}
       end
+    end
+
+    @spec to_tuple({:ok, [Vow.t()]} | {:error, reason}) ::
+            {:ok, StreamData.t(tuple)} | {:error, reason}
+          when reason: term
+    defp to_tuple({:error, reason}) do
+      {:error, reason}
+    end
+
+    defp to_tuple({:ok, data}) do
+      tuple = List.to_tuple(Enum.reverse(data))
+      {:ok, StreamData.tuple(tuple)}
     end
   end
 
@@ -162,8 +174,8 @@ if Code.ensure_loaded?(StreamData) do
        StreamData.one_of([
          StreamData.member_of(vow),
          StreamData.map(
-          StreamData.uniq_list_of(StreamData.member_of(vow)),
-          &MapSet.new/1
+           StreamData.uniq_list_of(StreamData.member_of(vow)),
+           &MapSet.new/1
          )
        ])}
     end

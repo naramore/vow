@@ -26,21 +26,16 @@ defmodule Vow.Merge do
     end
 
     def conform(%@for{vows: [{k, vow}]}, path, via, route, value) when is_map(value) do
-      @protocol.conform(vow, [k|path], via, route, value)
+      @protocol.conform(vow, [k | path], via, route, value)
     end
 
     def conform(%@for{vows: [_ | _] = vows}, path, via, route, value)
         when is_map(value) do
       vows
       |> Enum.map(fn {k, v} ->
-        @protocol.conform(v, [k|path], via, route, value)
+        @protocol.conform(v, [k | path], via, route, value)
       end)
-      |> Enum.reduce({:ok, %{}}, fn
-        {:ok, conformed}, {:ok, merged} -> {:ok, Map.merge(merged, conformed)}
-        {:error, ps}, {:ok, _} -> {:error, ps}
-        {:ok, _}, {:error, ps} -> {:error, ps}
-        {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
-      end)
+      |> Enum.reduce({:ok, %{}}, &conform_reducer/2)
     end
 
     def conform(_vow, path, via, route, value) do
@@ -66,6 +61,15 @@ defmodule Vow.Merge do
 
     def unform(vow, value),
       do: {:error, %Vow.UnformError{vow: vow, value: value}}
+
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
+
+    @spec conform_reducer(@protocol.result, @protocol.result) :: @protocol.result
+    defp conform_reducer({:ok, conformed}, {:ok, merged}), do: {:ok, Map.merge(merged, conformed)}
+    defp conform_reducer({:error, ps}, {:ok, _}), do: {:error, ps}
+    defp conform_reducer({:ok, _}, {:error, ps}), do: {:error, ps}
+    defp conform_reducer({:error, ps}, {:error, pblms}), do: {:error, pblms ++ ps}
   end
 
   if Code.ensure_loaded?(StreamData) do

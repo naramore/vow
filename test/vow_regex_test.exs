@@ -9,14 +9,15 @@ defmodule VowRegexTest do
       check all value <- one_of([boolean(), integer(), float(), string(:ascii)]),
                 vow <- VowData.regex_vow(),
                 max_runs: 40 do
-        assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "given an improper list should fail to conform" do
       check all value <- map(list_of(constant(nil), min_length: 1), &VTU.to_improper/1),
-                vow <- VowData.regex_vow(), max_runs: 40 do
-        assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+                vow <- VowData.regex_vow(),
+                max_runs: 40 do
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -46,17 +47,20 @@ defmodule VowRegexTest do
                     }),
                     tuple({
                       constant(Vow.oom(&is_integer/1)),
-                      map(tuple(
-                        {list_of(integer(), min_length: 1),
-                         list_of(string(:ascii), min_length: 1)}
-                      ), fn {xs, ys} -> xs ++ ys end)
+                      map(
+                        tuple(
+                          {list_of(integer(), min_length: 1),
+                           list_of(string(:ascii), min_length: 1)}
+                        ),
+                        fn {xs, ys} -> xs ++ ys end
+                      )
                     }),
                     tuple({
                       constant(Vow.zom(&is_integer/1)),
                       list_of(string(:ascii), min_length: 1)
                     })
                   ]) do
-        assert match?({:ok, _, [_ | _]}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, [_ | _]}, Vow.RegexOperator.conform(vow, [], [], [0], value))
       end
     end
 
@@ -93,7 +97,7 @@ defmodule VowRegexTest do
                       list_of(integer())
                     })
                   ]) do
-        assert match?({:ok, _, []}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, []}, Vow.RegexOperator.conform(vow, [], [], [0], value))
       end
     end
   end
@@ -110,9 +114,9 @@ defmodule VowRegexTest do
     end
 
     property "should succeed on matching at least one of the given vows" do
-      check all value <- list_of(one_of([integer(), float()]), min_length: 1) do
+      check all value <- list_of(one_of([integer(), float()]), length: 1) do
         vow = Vow.alt(i: &is_integer/1, f: &is_float/1)
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -126,7 +130,7 @@ defmodule VowRegexTest do
     property "given no matching vows, should fail to conform" do
       check all value <- list_of(one_of([integer(), float()]), min_length: 1) do
         vow = Vow.alt(b: &is_boolean/1, s: &is_bitstring/1, a: &is_atom/1)
-        assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
@@ -150,7 +154,7 @@ defmodule VowRegexTest do
             ss: Vow.oom(&is_bitstring/1)
           )
 
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], value))
       end
     end
   end
@@ -164,7 +168,7 @@ defmodule VowRegexTest do
             gtz: &Enum.all?(&1, fn i -> i > 0 end)
           )
 
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -176,14 +180,14 @@ defmodule VowRegexTest do
             ltz: &Enum.all?(&1, fn i -> i < 0 end)
           )
 
-        assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
 
     property "should succeed given any proper list with zero vows" do
       check all value <- list_of(constant(nil)) do
         vow = Vow.amp([])
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -197,7 +201,7 @@ defmodule VowRegexTest do
             algtz: &Enum.all?(&1, fn s -> String.length(s) > 0 end)
           )
 
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], value))
       end
     end
   end
@@ -221,8 +225,8 @@ defmodule VowRegexTest do
         )
 
       assert match?(
-               {:error, [%{reason: "Insufficient Data"}]},
-               Vow.RegexOperator.conform(vow, [], [], [], [])
+               {:error, %{problems: [%{reason: "Insufficient Data"}]}},
+               Vow.conform(vow, [])
              )
     end
 
@@ -233,7 +237,7 @@ defmodule VowRegexTest do
           s: Vow.zom(nil)
         )
 
-      assert match?({:ok, %{m: [], s: []}, []}, Vow.RegexOperator.conform(vow, [], [], [], []))
+      assert match?({:ok, %{m: [], s: []}}, Vow.conform(vow, []))
     end
 
     property "if cat contains non-regex and empty-list-accepting-regex -> failure" do
@@ -243,7 +247,7 @@ defmodule VowRegexTest do
           s: Vow.oom(&is_integer/1)
         )
 
-      assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], []))
+      assert match?({:error, _}, Vow.conform(vow, []))
     end
 
     property "should throw given duplicate keys on cat declaration" do
@@ -268,8 +272,8 @@ defmodule VowRegexTest do
           )
 
         assert match?(
-                 {:ok, %{i: _, n: _, ns: _}, []},
-                 Vow.RegexOperator.conform(vow, [], [], [], value)
+                 {:ok, %{i: _, n: _, ns: _}},
+                 Vow.conform(vow, value)
                )
       end
     end
@@ -278,14 +282,14 @@ defmodule VowRegexTest do
   describe "Vow.maybe/1" do
     property "should succeed if given empty list" do
       check all vow <- VowData.maybe(), max_runs: 25 do
-        assert match?({:ok, [], []}, Vow.RegexOperator.conform(vow, [], [], [], []))
+        assert match?({:ok, []}, Vow.conform(vow, []))
       end
     end
 
     property "should succeed if given proper list" do
-      check all value <- list_of(term()), max_runs: 25 do
+      check all value <- integer() do
         vow = Vow.maybe(&is_integer/1)
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], [value]))
       end
     end
 
@@ -319,16 +323,16 @@ defmodule VowRegexTest do
                 tail <- list_of(float()),
                 value = [head | tail] do
         vow = Vow.oom(&is_float/1)
-        assert match?({:error, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:error, _}, Vow.conform(vow, value))
       end
     end
   end
 
   describe "Vow.zom/1" do
     property "should succeed given proper list" do
-      check all value <- list_of(string(:ascii)),
-                vow <- VowData.zom(member_of([&is_integer/1, &is_bitstring/1])) do
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+      check all value <- list_of(string(:ascii)) do
+        vow = Vow.zom(&is_bitstring/1)
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
 
@@ -361,7 +365,7 @@ defmodule VowRegexTest do
     property "should succeed with nested regex operator" do
       check all value <- list_of(one_of([integer(), float(), boolean()])) do
         vow = Vow.zom(Vow.alt(n: &is_number/1, b: &is_boolean/1))
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _}, Vow.conform(vow, value))
       end
     end
   end

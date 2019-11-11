@@ -97,7 +97,7 @@ defmodule Vow.Ref do
 
         {:ok, vow} ->
           if Vow.regex?(vow) do
-            @protocol.conform(vow, path, [ref|via], route, value)
+            @protocol.conform(vow, path, [ref | via], route, value)
           else
             case Vow.Conformable.conform(vow, path, via, route, value) do
               {:ok, conformed} -> {:ok, conformed, []}
@@ -121,7 +121,7 @@ defmodule Vow.Ref do
     def conform(ref, path, via, route, value) do
       case @for.resolve(ref) do
         {:ok, vow} ->
-          @protocol.conform(vow, path, [ref|via], route, value)
+          @protocol.conform(vow, path, [ref | via], route, value)
 
         {:error, error} ->
           {:error, [Problem.from_resolve_error(error, path, via, route, value)]}
@@ -136,6 +136,14 @@ defmodule Vow.Ref do
 
         {:error, _} ->
           {:error, %Vow.UnformError{vow: vow, value: value}}
+      end
+    end
+
+    @impl Vow.Conformable
+    def regex?(vow) do
+      case @for.resolve(vow) do
+        {:ok, vow} -> @protocol.regex?(vow)
+        {:error, _} -> false
       end
     end
   end
@@ -165,8 +173,7 @@ defmodule Vow.Ref do
         {:ok, lazy(delayed_gen(vow, opts))}
       end
 
-      @spec delayed_gen(Vow.t(), keyword) ::
-              {:ok, Vow.Generatable.generator()} | {:error, reason :: term}
+      @spec delayed_gen(Vow.t(), keyword) :: @protocol.result
       defp delayed_gen(vow, opts) do
         case @for.resolve(vow) do
           {:ok, vow} ->

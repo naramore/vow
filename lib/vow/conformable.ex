@@ -7,18 +7,28 @@ defprotocol Vow.Conformable do
 
   @fallback_to_any true
 
+  @typedoc """
+  """
   @type conformed :: term
+
+  @typedoc """
+  """
+  @type result :: {:ok, conformed} | {:error, [ConformError.Problem.t()]}
 
   @doc """
   """
-  @spec conform(t, [term], [Vow.Ref.t()], [term], term) ::
-          {:ok, conformed} | {:error, [ConformError.Problem.t()]}
+  @spec conform(t, [term], [Vow.Ref.t()], [term], term) :: result
   def conform(vow, path, via, route, value)
 
   @doc """
   """
   @spec unform(t, conformed) :: {:ok, value :: term} | {:error, Vow.UnformError.t()}
   def unform(vow, conformed_value)
+
+  @doc """
+  """
+  @spec regex?(t) :: boolean
+  def regex?(vow)
 end
 
 defimpl Vow.Conformable, for: Function do
@@ -55,12 +65,14 @@ defimpl Vow.Conformable, for: Function do
   end
 
   def conform(_vow, path, via, route, value) do
-    {:error,
-     [ConformError.new_problem(wrap(&is_function(&1, 1)), path, via, route, value)]}
+    {:error, [ConformError.new_problem(wrap(&is_function(&1, 1)), path, via, route, value)]}
   end
 
   @impl Vow.Conformable
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 
   @spec safe_execute((term -> term), term) :: {:ok, term} | {:error, term}
   defp safe_execute(fun, value) do
@@ -87,13 +99,13 @@ defimpl Vow.Conformable, for: List do
     |> Enum.zip(value)
     |> Enum.reduce({:ok, [], [], 0}, fn
       {s, v}, {:ok, t, _, i} ->
-        case @protocol.conform(s, [i|path], via, [i|route], v) do
+        case @protocol.conform(s, [i | path], via, [i | route], v) do
           {:ok, h} -> {:ok, [h | t], [], i + 1}
           {:error, ps} -> {:error, nil, ps, i + 1}
         end
 
       {s, v}, {:error, _, pblms, i} ->
-        case @protocol.conform(s, [i|path], via, [i|route], v) do
+        case @protocol.conform(s, [i | path], via, [i | route], v) do
           {:ok, _} -> {:error, nil, pblms, i + 1}
           {:error, ps} -> {:error, nil, pblms ++ ps, i + 1}
         end
@@ -148,7 +160,7 @@ defimpl Vow.Conformable, for: List do
 
       {v, val}, {:ok, acc} ->
         case @protocol.unform(v, val) do
-          {:ok, unformed} -> {:ok, [unformed|acc]}
+          {:ok, unformed} -> {:ok, [unformed | acc]}
           {:error, reason} -> {:error, reason}
         end
     end)
@@ -167,6 +179,9 @@ defimpl Vow.Conformable, for: List do
   def unform(vow, value) do
     {:error, %Vow.UnformError{vow: vow, value: value}}
   end
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 
   @spec unform_improper_impl(
           nonempty_improper_list(Vow.t(), Vow.t()),
@@ -198,7 +213,7 @@ defimpl Vow.Conformable, for: List do
         ) ::
           {:ok, term} | {:error, [ConformError.Problem.t()]}
   defp conform_improper([sh | st], path, via, route, [vh | vt], pos) do
-    head = @protocol.conform(sh, [pos|path], via, [pos|route], vh)
+    head = @protocol.conform(sh, [pos | path], via, [pos | route], vh)
 
     case {head, conform_improper(st, path, via, route, vt, pos + 1)} do
       {{:ok, ch}, {:ok, ct}} -> {:ok, [ch | ct]}
@@ -211,9 +226,9 @@ defimpl Vow.Conformable, for: List do
   defp conform_improper(vow, path, via, route, value, pos) do
     @protocol.conform(
       vow,
-      [pos|path],
+      [pos | path],
       via,
-      [pos|route],
+      [pos | route],
       value
     )
   end
@@ -251,6 +266,9 @@ defimpl Vow.Conformable, for: Tuple do
   def unform(vow, value) do
     {:error, %Vow.UnformError{vow: vow, value: value}}
   end
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end
 
 defimpl Vow.Conformable, for: Map do
@@ -283,6 +301,9 @@ defimpl Vow.Conformable, for: Map do
     {:error, %Vow.UnformError{vow: vow, value: value}}
   end
 
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
+
   @spec conform_reducer([term], [Vow.Ref.t()], [term], map) :: ({term, Vow.t()}, result -> result)
   defp conform_reducer(path, via, route, value) do
     &conform_reducer(path, via, route, value, &1, &2)
@@ -291,7 +312,7 @@ defimpl Vow.Conformable, for: Map do
   @spec conform_reducer([term], [Vow.Ref.t()], [term], map, {term, Vow.t()}, result) :: result
   defp conform_reducer(path, via, route, value, {k, s}, {:ok, c}) do
     if Map.has_key?(value, k) do
-      case @protocol.conform(s, [k|path], via, [k|route], Map.get(value, k)) do
+      case @protocol.conform(s, [k | path], via, [k | route], Map.get(value, k)) do
         {:ok, conformed} -> {:ok, Map.put(c, k, conformed)}
         {:error, problems} -> {:error, problems}
       end
@@ -390,6 +411,9 @@ defimpl Vow.Conformable, for: MapSet do
 
   @impl Vow.Conformable
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end
 
 defimpl Vow.Conformable, for: Regex do
@@ -422,6 +446,9 @@ defimpl Vow.Conformable, for: Regex do
 
   @impl Vow.Conformable
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end
 
 defimpl Vow.Conformable, for: Range do
@@ -504,6 +531,9 @@ defimpl Vow.Conformable, for: Range do
 
   @impl Vow.Conformable
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end
 
 defimpl Vow.Conformable, for: Date.Range do
@@ -581,12 +611,14 @@ defimpl Vow.Conformable, for: Date.Range do
   end
 
   def conform(_vow, path, via, route, value) do
-    {:error,
-     [ConformError.new_problem(wrap(&match?(%Date{}, &1)), path, via, route, value)]}
+    {:error, [ConformError.new_problem(wrap(&match?(%Date{}, &1)), path, via, route, value)]}
   end
 
   @impl Vow.Conformable
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end
 
 defimpl Vow.Conformable, for: Any do
@@ -665,4 +697,7 @@ defimpl Vow.Conformable, for: Any do
   end
 
   def unform(_vow, value), do: {:ok, value}
+
+  @impl Vow.Conformable
+  def regex?(_vow), do: false
 end

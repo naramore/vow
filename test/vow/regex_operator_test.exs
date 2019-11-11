@@ -6,7 +6,7 @@ defmodule Vow.RegexOperatorTest do
 
   describe "Vow.Conformable.conform/5 for: RegexOperators" do
     property "will error if given value is an improper list" do
-      check all value <-  map(list_of(boolean(), min_length: 1), &VTU.to_improper/1),
+      check all value <- map(list_of(boolean(), min_length: 1), &VTU.to_improper/1),
                 vow <- VowData.regex_vow(constant(nil)) do
         assert match?({:error, _}, Vow.conform(vow, value))
       end
@@ -21,7 +21,13 @@ defmodule Vow.RegexOperatorTest do
     end
 
     property "will error if Vow.RegexOperator.conform/5 returns partial match" do
-      check all value <- map(tuple({list_of(integer(), min_length: 1), list_of(string(:ascii), min_length: 1)}), fn {is, ss} -> is ++ ss end) do
+      check all value <-
+                  map(
+                    tuple(
+                      {list_of(integer(), min_length: 1), list_of(string(:ascii), min_length: 1)}
+                    ),
+                    fn {is, ss} -> is ++ ss end
+                  ) do
         vow = Vow.oom(&is_integer/1)
         assert match?({:error, _}, Vow.conform(vow, value))
       end

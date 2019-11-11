@@ -242,10 +242,7 @@ defmodule Vow do
   """
   @spec regex?(t) :: boolean
   def regex?(vow) do
-    case Vow.RegexOperator.impl_for(vow) do
-      nil -> false
-      _ -> true
-    end
+    Conformable.regex?(vow)
   end
 
   @doc """

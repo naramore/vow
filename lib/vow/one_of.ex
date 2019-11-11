@@ -24,7 +24,7 @@ defmodule Vow.OneOf do
 
     @impl Vow.Conformable
     def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
-      case @protocol.conform(vow, [k|path], via, route, value) do
+      case @protocol.conform(vow, [k | path], via, route, value) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
         {:error, problems} -> {:error, problems}
       end
@@ -37,7 +37,7 @@ defmodule Vow.OneOf do
           {:ok, c}
 
         {k, s}, {:error, pblms} ->
-          case @protocol.conform(s, [k|path], via, route, value) do
+          case @protocol.conform(s, [k | path], via, route, value) do
             {:ok, conformed} -> {:ok, %{k => conformed}}
             {:error, problems} -> {:error, pblms ++ problems}
           end
@@ -53,6 +53,9 @@ defmodule Vow.OneOf do
         _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
       end
     end
+
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
   end
 
   if Code.ensure_loaded?(StreamData) do

@@ -16,53 +16,24 @@ defmodule Vow.Amp do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Acs.Improper, only: [proper_list?: 1]
     alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: []}, _path, _via, _route, value)
-        when is_list(value) and length(value) >= 0 do
+    def conform(%@for{vows: []}, _path, _via, _route, value) do
       {:ok, value, []}
     end
 
-    def conform(%@for{vows: vows}, path, via, route, value)
-        when is_list(value) and length(value) >= 0 do
+    def conform(%@for{vows: vows}, path, via, route, value) do
       Enum.reduce(vows, {:ok, value, []}, fn
         _, {:error, pblms} ->
           {:error, pblms}
 
         {k, v}, {:ok, c, rest} ->
-          case conform_impl(v, [k|path], via, route, c) do
+          case conform_impl(v, [k | path], via, route, c) do
             {:ok, conformed, tail} -> {:ok, conformed, tail ++ rest}
             {:error, problems} -> {:error, problems}
           end
       end)
-    end
-
-    def conform(_vow, path, via, route, value) when is_list(value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &proper_list?/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
-    end
-
-    def conform(_vow, path, via, route, value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &is_list/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
     end
 
     @impl Vow.RegexOperator

@@ -31,27 +31,15 @@ defmodule Vow.List do
     import Vow.FunctionWrapper
     import Acs.Improper, only: [proper_list?: 1]
     import Vow.Utils, only: [distinct?: 1]
-    alias Vow.ConformError
+    alias Vow.{ConformError, ConformError.Problem}
 
     @impl Vow.Conformable
     def conform(vow, path, via, route, value)
         when is_list(value) and length(value) >= 0 do
       value
-      |> Enum.with_index()
-      |> Enum.map(fn {e, i} ->
-        @protocol.conform(vow.vow, path, via, [i|route], e)
-      end)
-      |> Enum.reduce({:ok, []}, fn
-        {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}
-        {:error, ps}, {:ok, _} -> {:error, ps}
-        {:ok, _}, {:error, ps} -> {:error, ps}
-        {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
-      end)
-      |> ConformError.add_problems(length_problems(vow, path, via, route, value), true)
-      |> ConformError.add_problems(
-        distinct_problems(vow, path, via, route, value),
-        true
-      )
+      |> map(vow, path, via, route)
+      |> Enum.reduce({:ok, []}, &conform_reducer/2)
+      |> add_problems(vow, path, via, route, value)
       |> case do
         {:ok, conformed} -> {:ok, Enum.reverse(conformed)}
         {:error, problems} -> {:error, problems}
@@ -88,10 +76,39 @@ defmodule Vow.List do
     def unform(vow, value),
       do: {:error, %Vow.UnformError{vow: vow, value: value}}
 
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
+
+    @spec map([term], Vow.t(), [term], [Vow.Ref.t()], [term]) :: [@protocol.result]
+    defp map(value, vow, path, via, route) do
+      value
+      |> Enum.with_index()
+      |> Enum.map(fn {e, i} ->
+        @protocol.conform(vow.vow, path, via, [i | route], e)
+      end)
+    end
+
+    @spec conform_reducer(@protocol.result, @protocol.result) :: @protocol.result
+    defp conform_reducer({:ok, c}, {:ok, cs}), do: {:ok, [c | cs]}
+    defp conform_reducer({:error, ps}, {:ok, _}), do: {:error, ps}
+    defp conform_reducer({:ok, _}, {:error, ps}), do: {:error, ps}
+    defp conform_reducer({:error, ps}, {:error, pblms}), do: {:error, pblms ++ ps}
+
+    @spec add_problems(@protocol.result, Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::
+            @protocol.result
+    defp add_problems(result, vow, path, via, route, value) do
+      lps = length_problems(vow, path, via, route, value)
+      dps = distinct_problems(vow, path, via, route, value)
+
+      result
+      |> ConformError.add_problems(lps, true)
+      |> ConformError.add_problems(dps, true)
+    end
+
     @spec distinct_problems(Vow.t(), [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    def distinct_problems(vow, path, via, route, value) do
+    defp distinct_problems(vow, path, via, route, value) do
       if vow.distinct? and not distinct?(value) do
         [ConformError.new_problem(&distinct?/1, path, via, route, value)]
       else
@@ -102,33 +119,20 @@ defmodule Vow.List do
     @spec length_problems(@for.t, [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp length_problems(vow, path, via, route, value) do
-      case {vow.min_length, vow.max_length} do
-        {min, _max} when length(value) < min ->
-          [
-            ConformError.new_problem(
-              wrap(&(length(&1) >= min), min: min),
-              path,
-              via,
-              route,
-              value
-            )
-          ]
+    defp length_problems(%{min_length: min}, path, via, route, val)
+         when length(val) < min do
+      pred = wrap(&(length(&1) >= min), min: min)
+      [Problem.new(pred, path, via, route, val)]
+    end
 
-        {_min, max} when not is_nil(max) and length(value) > max ->
-          [
-            ConformError.new_problem(
-              wrap(&(length(&1) <= max), max: max),
-              path,
-              via,
-              route,
-              value
-            )
-          ]
+    defp length_problems(%{max_length: max}, path, via, route, val)
+         when not is_nil(max) and length(val) > max do
+      pred = wrap(&(length(&1) <= max), max: max)
+      [Problem.new(pred, path, via, route, val)]
+    end
 
-        _ ->
-          []
-      end
+    defp length_problems(_vow, _path, _via, _route, _val) do
+      []
     end
   end
 

@@ -17,50 +17,18 @@ defmodule Vow.Maybe do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Acs.Improper, only: [proper_list?: 1]
-    alias Vow.{Conformable, ConformError, Utils}
+    alias Vow.Conformable
 
     @impl Vow.RegexOperator
     def conform(_vow, _path, _via, _route, []) do
       {:ok, [], []}
     end
 
-    def conform(%@for{vow: vow}, path, via, route, [h | t] = value)
-        when is_list(value) and length(value) >= 0 do
-      if Vow.regex?(vow) do
-        @protocol.conform(vow, path, via, route, value)
-      else
-        case Conformable.conform(vow, path, via, route, h) do
-          {:ok, conformable} -> {:ok, [conformable], t}
-          {:error, _problems} -> {:ok, [], value}
-        end
+    def conform(%@for{vow: vow}, path, via, route, value) do
+      case @protocol.conform(vow, path, via, route, value) do
+        {:error, _problems} -> {:ok, [], value}
+        {:ok, conformed, rest} -> {:ok, [conformed], rest}
       end
-    end
-
-    def conform(_vow, path, via, route, value) when is_list(value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &proper_list?/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
-    end
-
-    def conform(_vow, path, via, route, value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &is_list/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
     end
 
     @impl Vow.RegexOperator

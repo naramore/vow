@@ -17,58 +17,18 @@ defmodule Vow.OneOrMore do
   defimpl Vow.RegexOperator do
     @moduledoc false
 
-    import Acs.Improper, only: [proper_list?: 1]
     import Vow.Utils, only: [append: 2]
-    alias Vow.{Conformable, ConformError, Utils}
+    alias Vow.Utils
 
     @impl Vow.RegexOperator
-    def conform(%@for{vow: vow}, path, via, route, value)
-        when is_list(value) and length(value) >= 0 do
-      case conform_first(vow, path, via, route, value) do
+    def conform(%@for{vow: vow}, path, via, route, value) do
+      case @protocol.conform(vow, path, via, route, value) do
         {:error, problems} ->
           {:error, problems}
 
         {:ok, ch, rest} ->
-          case @protocol.conform(
-                 Vow.zom(vow),
-                 path,
-                 via,
-                 Utils.inc_path(route),
-                 rest
-               ) do
-            {:ok, ct, rest} ->
-              {:ok, append(ch, ct), rest}
-
-            {:error, _problems} ->
-              {:ok, ch, rest}
-          end
+          conform_rest(vow, path, via, route, rest, ch)
       end
-    end
-
-    def conform(_vow, path, via, route, value) when is_list(value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &proper_list?/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
-    end
-
-    def conform(_vow, path, via, route, value) do
-      {:error,
-       [
-         ConformError.new_problem(
-           &is_list/1,
-           path,
-           via,
-           Utils.uninit_path(route),
-           value
-         )
-       ]}
     end
 
     @impl Vow.RegexOperator
@@ -80,30 +40,18 @@ defmodule Vow.OneOrMore do
       @protocol.Vow.ZeroOrMore.unform(vow, value)
     end
 
-    @spec conform_first(Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::
-            {:ok, conformed :: [term], rest :: [term]} | {:error, [ConformError.Problem.t()]}
-    defp conform_first(vow, path, via, route, []) do
-      {:error,
-       [
-         ConformError.new_problem(
-           vow,
-           path,
-           via,
-           Utils.uninit_path(route),
-           [],
-           "Insufficient Data"
-         )
-       ]}
-    end
+    @spec conform_rest(Vow.t(), [term], [Vow.Ref.t()], [term], [term], term) ::
+            {:ok, @protocol.conformed, @protocol.rest} | {:error, reason :: term}
+    defp conform_rest(vow, path, via, route, rest, conformed_head) do
+      zom = Vow.zom(vow)
+      route = Utils.inc_path(route)
 
-    defp conform_first(vow, path, via, route, [h | t] = value) do
-      if Vow.regex?(vow) do
-        @protocol.conform(vow, path, via, route, value)
-      else
-        case Conformable.conform(vow, path, via, route, h) do
-          {:ok, conformed} -> {:ok, [conformed], t}
-          {:error, problems} -> {:error, problems}
-        end
+      case @protocol.conform(zom, path, via, route, rest) do
+        {:ok, ct, rest} ->
+          {:ok, append(conformed_head, ct), rest}
+
+        {:error, _problems} ->
+          {:ok, conformed_head, rest}
       end
     end
   end

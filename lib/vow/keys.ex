@@ -174,6 +174,9 @@ defmodule Vow.Keys do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
+
     @spec unform_impl(boolean, [Vow.vow_ref_expr()] | Vow.vow_ref_expr(), map) ::
             {:ok, map} | {:error, Vow.UnformError.t()}
     defp unform_impl(required?, keys, val) when is_list(keys) do

@@ -66,15 +66,8 @@ defmodule Vow.Map do
     @impl Vow.Conformable
     def conform(vow, path, via, route, value) when is_map(value) do
       value
-      |> Enum.map(fn {k, v} ->
-        conform_key_value(vow, path, via, route, {k, v})
-      end)
-      |> Enum.reduce({:ok, []}, fn
-        {:ok, c}, {:ok, cs} -> {:ok, [c | cs]}
-        {:error, ps}, {:ok, _} -> {:error, ps}
-        {:ok, _}, {:error, ps} -> {:error, ps}
-        {:error, ps}, {:error, pblms} -> {:error, pblms ++ ps}
-      end)
+      |> Enum.map(&conform_key_value(vow, path, via, route, &1))
+      |> Enum.reduce({:ok, []}, &conform_reducer/2)
       |> ConformError.add_problems(size_problems(vow, path, via, route, value), true)
       |> case do
         {:ok, conformed} -> {:ok, Enum.into(conformed, %{})}
@@ -87,44 +80,23 @@ defmodule Vow.Map do
     end
 
     @impl Vow.Conformable
-    def unform(%@for{key_vow: kv, value_vow: vv} = vow, value)
-        when is_map(value) do
-      Enum.reduce(value, {:ok, %{}}, fn
-        _, {:error, reason} ->
-          {:error, reason}
-
-        {k, v}, {:ok, acc} ->
-          with {:ok, uv} <- @protocol.unform(vv, v),
-               {true, _} <- {vow.conform_keys?, uv},
-               {:ok, uk} <- @protocol.unform(kv, v) do
-            {:ok, Map.put(acc, uk, uv)}
-          else
-            {false, uv} -> {:ok, Map.put(acc, k, uv)}
-            {:error, reason} -> {:error, reason}
-          end
-      end)
+    def unform(vow, value) when is_map(value) do
+      Enum.reduce(value, {:ok, %{}}, &unform_reducer(&1, &2, vow))
     end
 
     def unform(vow, value) do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
+    @impl Vow.Conformable
+    def regex?(_vow), do: false
+
     @spec conform_key_value(@for.t, [term], [Vow.Ref.t()], [term], {term, term}) ::
             {:ok, term} | {:error, [ConformError.Problem.t()]}
-    defp conform_key_value(
-           %@for{conform_keys?: conform_keys?} = vow,
-           path,
-           via,
-           route,
-           {k, v}
-         ) do
-      {
-        @protocol.conform(vow.key_vow, [:key_vow|path], via, route, k),
-        @protocol.conform(vow.value_vow, [:value_vow|path], via, [k|route], v)
-      }
-      |> case do
+    defp conform_key_value(vow, path, via, route, {k, v}) do
+      case conform_kv(vow, path, via, route, {k, v}) do
         {{:ok, ck}, {:ok, cv}} ->
-          {:ok, {if(conform_keys?, do: ck, else: k), cv}}
+          {:ok, {if(vow.conform_keys?, do: ck, else: k), cv}}
 
         {{:error, kps}, {:error, vps}} ->
           {:error, vps ++ kps}
@@ -137,35 +109,64 @@ defmodule Vow.Map do
       end
     end
 
+    @spec conform_kv(type, Vow.t(), [term], [Vow.Ref.t()], [term], {term, term}) ::
+            @protocol.result | {@protocol.result, @protocol.result}
+          when type: :key | :value | :both
+    defp conform_kv(type \\ :both, vow, path, via, route, kv)
+
+    defp conform_kv(:both, vow, path, via, route, kv) do
+      {
+        conform_kv(:key, vow, path, via, route, kv),
+        conform_kv(:value, vow, path, via, route, kv)
+      }
+    end
+
+    defp conform_kv(:key, vow, path, via, route, {k, _}) do
+      @protocol.conform(vow.key_vow, [:key_vow | path], via, route, k)
+    end
+
+    defp conform_kv(:value, vow, path, via, route, {k, v}) do
+      @protocol.conform(vow.value_vow, [:value_vow | path], via, [k | route], v)
+    end
+
+    @spec conform_reducer(@protocol.result, @protocol.result) :: @protocol.result
+    defp conform_reducer({:ok, c}, {:ok, cs}), do: {:ok, [c | cs]}
+    defp conform_reducer({:error, ps}, {:ok, _}), do: {:error, ps}
+    defp conform_reducer({:ok, _}, {:error, ps}), do: {:error, ps}
+    defp conform_reducer({:error, ps}, {:error, pblms}), do: {:error, pblms ++ ps}
+
     @spec size_problems(@for.t, [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp size_problems(vow, path, via, route, value) do
-      case {vow.min_length, vow.max_length} do
-        {min, _max} when map_size(value) < min ->
-          [
-            ConformError.new_problem(
-              wrap(&(map_size(&1) >= min), min: min),
-              path,
-              via,
-              route,
-              value
-            )
-          ]
+    defp size_problems(%{min_length: min}, path, via, route, val)
+         when map_size(val) < min do
+      pred = wrap(&(map_size(&1) >= min), min: min)
+      [ConformError.new_problem(pred, path, via, route, val)]
+    end
 
-        {_min, max} when not is_nil(max) and map_size(value) > max ->
-          [
-            ConformError.new_problem(
-              wrap(&(map_size(&1) <= max), max: max),
-              path,
-              via,
-              route,
-              value
-            )
-          ]
+    defp size_problems(%{max_length: max}, path, via, route, val)
+         when not is_nil(max) and map_size(val) > max do
+      pred = wrap(&(map_size(&1) <= max), max: max)
+      [ConformError.new_problem(pred, path, via, route, val)]
+    end
 
-        _ ->
-          []
+    defp size_problems(_vow, _path, _via, _route, _value) do
+      []
+    end
+
+    @spec unform_reducer({term, term}, @protocol.result, Vow.t()) :: @protocol.result
+    defp unform_reducer(_, {:error, reason}, _vow) do
+      {:error, reason}
+    end
+
+    defp unform_reducer({key, value}, {:ok, acc}, vow) do
+      with {:ok, uv} <- @protocol.unform(vow.value_vow, value),
+           {true, _} <- {vow.conform_keys?, uv},
+           {:ok, uk} <- @protocol.unform(vow.key_vow, key) do
+        {:ok, Map.put(acc, uk, uv)}
+      else
+        {false, uv} -> {:ok, Map.put(acc, key, uv)}
+        {:error, reason} -> {:error, reason}
       end
     end
   end

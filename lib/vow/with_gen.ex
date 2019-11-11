@@ -28,6 +28,11 @@ defmodule Vow.WithGen do
     def unform(%@for{vow: vow}, value) do
       @protocol.unform(vow, value)
     end
+
+    @impl Vow.Conformable
+    def regex?(%@for{vow: vow}) do
+      @protocol.regex?(vow)
+    end
   end
 
   defimpl Vow.RegexOperator do
