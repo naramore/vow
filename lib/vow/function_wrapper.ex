@@ -72,8 +72,8 @@ defmodule Vow.FunctionWrapper do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{function: fun} = func, path, via, route, value) do
-      case @protocol.Function.conform(fun, path, via, route, value) do
+    def conform(%@for{function: fun} = func, path, via, route, val) do
+      case @protocol.Function.conform(fun, path, via, route, val) do
         {:ok, conformed} ->
           {:ok, conformed}
 
@@ -86,8 +86,8 @@ defmodule Vow.FunctionWrapper do
     end
 
     @impl Vow.Conformable
-    def unform(_vow, value) do
-      {:ok, value}
+    def unform(_vow, val) do
+      {:ok, val}
     end
 
     @impl Vow.Conformable

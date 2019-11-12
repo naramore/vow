@@ -3,14 +3,14 @@ defmodule Vow.Map do
   use Vow.Utils.AccessShortcut
 
   defstruct key_vow: nil,
-            value_vow: nil,
+            val_vow: nil,
             min_length: 0,
             max_length: nil,
             conform_keys?: false
 
   @type t :: %__MODULE__{
           key_vow: Vow.t(),
-          value_vow: Vow.t(),
+          val_vow: Vow.t(),
           min_length: non_neg_integer,
           max_length: non_neg_integer | nil,
           conform_keys?: boolean
@@ -19,14 +19,14 @@ defmodule Vow.Map do
   @spec new(Vow.t(), Vow.t(), non_neg_integer, non_neg_integer | nil, boolean) :: t
   def new(
         key_vow,
-        value_vow,
+        val_vow,
         min_length,
         max_length,
         conform_keys?
       ) do
     %__MODULE__{
       key_vow: key_vow,
-      value_vow: value_vow,
+      val_vow: val_vow,
       min_length: min_length,
       max_length: max_length,
       conform_keys?: conform_keys?
@@ -35,7 +35,7 @@ defmodule Vow.Map do
 
   @impl Access
   def fetch(%__MODULE__{} = vow, key)
-      when key in [:key_vow, :value_vow] do
+      when key in [:key_vow, :val_vow] do
     Map.fetch(vow, key)
   end
 
@@ -43,7 +43,7 @@ defmodule Vow.Map do
 
   @impl Access
   def pop(%__MODULE__{} = vow, key)
-      when key in [:key_vow, :value_vow] do
+      when key in [:key_vow, :val_vow] do
     Map.pop(vow, key)
   end
 
@@ -51,7 +51,7 @@ defmodule Vow.Map do
 
   @impl Access
   def get_and_update(%__MODULE__{} = vow, key, fun)
-      when key in [:key_vow, :value_vow] do
+      when key in [:key_vow, :val_vow] do
     Map.get_and_update(vow, key, fun)
   end
 
@@ -64,28 +64,28 @@ defmodule Vow.Map do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(vow, path, via, route, value) when is_map(value) do
-      value
+    def conform(vow, path, via, route, val) when is_map(val) do
+      val
       |> Enum.map(&conform_key_value(vow, path, via, route, &1))
       |> Enum.reduce({:ok, []}, &conform_reducer/2)
-      |> ConformError.add_problems(size_problems(vow, path, via, route, value), true)
+      |> ConformError.add_problems(size_problems(vow, path, via, route, val), true)
       |> case do
         {:ok, conformed} -> {:ok, Enum.into(conformed, %{})}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(_vow, path, via, route, value) do
-      {:error, [ConformError.new_problem(&is_map/1, path, via, route, value)]}
+    def conform(_vow, path, via, route, val) do
+      {:error, [ConformError.new_problem(&is_map/1, path, via, route, val)]}
     end
 
     @impl Vow.Conformable
-    def unform(vow, value) when is_map(value) do
-      Enum.reduce(value, {:ok, %{}}, &unform_reducer(&1, &2, vow))
+    def unform(vow, val) when is_map(val) do
+      Enum.reduce(val, {:ok, %{}}, &unform_reducer(&1, &2, vow))
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @impl Vow.Conformable
@@ -111,13 +111,13 @@ defmodule Vow.Map do
 
     @spec conform_kv(type, Vow.t(), [term], [Vow.Ref.t()], [term], {term, term}) ::
             @protocol.result | {@protocol.result, @protocol.result}
-          when type: :key | :value | :both
+          when type: :key | :val | :both
     defp conform_kv(type \\ :both, vow, path, via, route, kv)
 
     defp conform_kv(:both, vow, path, via, route, kv) do
       {
         conform_kv(:key, vow, path, via, route, kv),
-        conform_kv(:value, vow, path, via, route, kv)
+        conform_kv(:val, vow, path, via, route, kv)
       }
     end
 
@@ -125,8 +125,8 @@ defmodule Vow.Map do
       @protocol.conform(vow.key_vow, [:key_vow | path], via, route, k)
     end
 
-    defp conform_kv(:value, vow, path, via, route, {k, v}) do
-      @protocol.conform(vow.value_vow, [:value_vow | path], via, [k | route], v)
+    defp conform_kv(:val, vow, path, via, route, {k, v}) do
+      @protocol.conform(vow.val_vow, [:val_vow | path], via, [k | route], v)
     end
 
     @spec conform_reducer(@protocol.result, @protocol.result) :: @protocol.result
@@ -159,8 +159,8 @@ defmodule Vow.Map do
       {:error, reason}
     end
 
-    defp unform_reducer({key, value}, {:ok, acc}, vow) do
-      with {:ok, uv} <- @protocol.unform(vow.value_vow, value),
+    defp unform_reducer({key, val}, {:ok, acc}, vow) do
+      with {:ok, uv} <- @protocol.unform(vow.val_vow, val),
            {true, _} <- {vow.conform_keys?, uv},
            {:ok, uk} <- @protocol.unform(vow.key_vow, key) do
         {:ok, Map.put(acc, uk, uv)}
@@ -178,12 +178,12 @@ defmodule Vow.Map do
       @impl Vow.Generatable
       def gen(vow, opts) do
         with {:ok, key_gen} <- @protocol.gen(vow.key_vow, opts),
-             {:ok, value_gen} <- @protocol.gen(vow.value_vow, opts),
+             {:ok, val_gen} <- @protocol.gen(vow.val_vow, opts),
              {opts, _} <- Map.split(Map.from_struct(vow), [:min_length, :max_length]) do
           {:ok,
            StreamData.map_of(
              key_gen,
-             value_gen,
+             val_gen,
              Enum.into(opts, [])
            )}
         else

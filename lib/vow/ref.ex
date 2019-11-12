@@ -90,16 +90,16 @@ defmodule Vow.Ref do
     alias Vow.ConformError.Problem
 
     @impl Vow.RegexOperator
-    def conform(ref, path, via, route, value) do
+    def conform(ref, path, via, route, val) do
       case @for.resolve(ref) do
         {:error, error} ->
-          {:error, [Problem.from_resolve_error(error, path, via, route, value)]}
+          {:error, [Problem.from_resolve_error(error, path, via, route, val)]}
 
         {:ok, vow} ->
           if Vow.regex?(vow) do
-            @protocol.conform(vow, path, [ref | via], route, value)
+            @protocol.conform(vow, path, [ref | via], route, val)
           else
-            case Vow.Conformable.conform(vow, path, via, route, value) do
+            case Vow.Conformable.conform(vow, path, via, route, val) do
               {:ok, conformed} -> {:ok, conformed, []}
               {:error, problems} -> {:error, problems}
             end
@@ -108,8 +108,8 @@ defmodule Vow.Ref do
     end
 
     @impl Vow.RegexOperator
-    def unform(vow, value) do
-      Vow.Conformable.Vow.Ref.unform(vow, value)
+    def unform(vow, val) do
+      Vow.Conformable.Vow.Ref.unform(vow, val)
     end
   end
 
@@ -118,24 +118,24 @@ defmodule Vow.Ref do
     alias Vow.ConformError.Problem
 
     @impl Vow.Conformable
-    def conform(ref, path, via, route, value) do
+    def conform(ref, path, via, route, val) do
       case @for.resolve(ref) do
         {:ok, vow} ->
-          @protocol.conform(vow, path, [ref | via], route, value)
+          @protocol.conform(vow, path, [ref | via], route, val)
 
         {:error, error} ->
-          {:error, [Problem.from_resolve_error(error, path, via, route, value)]}
+          {:error, [Problem.from_resolve_error(error, path, via, route, val)]}
       end
     end
 
     @impl Vow.Conformable
-    def unform(vow, value) do
+    def unform(vow, val) do
       case @for.resolve(vow) do
         {:ok, vow} ->
-          @protocol.unform(vow, value)
+          @protocol.unform(vow, val)
 
         {:error, _} ->
-          {:error, %Vow.UnformError{vow: vow, value: value}}
+          {:error, %Vow.UnformError{vow: vow, val: val}}
       end
     end
 

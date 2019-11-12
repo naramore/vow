@@ -19,12 +19,12 @@ defmodule Vow.Amp do
     alias Vow.{Conformable, ConformError, Utils}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: []}, _path, _via, _route, value) do
-      {:ok, value, []}
+    def conform(%@for{vows: []}, _path, _via, _route, val) do
+      {:ok, val, []}
     end
 
-    def conform(%@for{vows: vows}, path, via, route, value) do
-      Enum.reduce(vows, {:ok, value, []}, fn
+    def conform(%@for{vows: vows}, path, via, route, val) do
+      Enum.reduce(vows, {:ok, val, []}, fn
         _, {:error, pblms} ->
           {:error, pblms}
 
@@ -37,12 +37,12 @@ defmodule Vow.Amp do
     end
 
     @impl Vow.RegexOperator
-    def unform(%@for{vows: vows}, value)
-        when is_list(value) and length(value) >= 0 do
+    def unform(%@for{vows: vows}, val)
+        when is_list(val) and length(val) >= 0 do
       vows
       |> Keyword.values()
       |> Enum.reverse()
-      |> Enum.reduce({:ok, value}, fn
+      |> Enum.reduce({:ok, val}, fn
         _, {:error, reason} ->
           {:error, reason}
 
@@ -51,17 +51,17 @@ defmodule Vow.Amp do
       end)
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @spec conform_impl(Vow.t(), [term], [Vow.Ref.t()], [term], term) ::
             {:ok, Conformable.conformed(), @protocol.rest} | {:error, [ConformError.Problem.t()]}
-    defp conform_impl(vow, path, via, route, value) do
+    defp conform_impl(vow, path, via, route, val) do
       if Vow.regex?(vow) do
-        @protocol.conform(vow, path, via, route, value)
+        @protocol.conform(vow, path, via, route, val)
       else
-        case Conformable.conform(vow, path, via, Utils.uninit_path(route), value) do
+        case Conformable.conform(vow, path, via, Utils.uninit_path(route), val) do
           {:ok, conformed} -> {:ok, [conformed], []}
           {:error, problems} -> {:error, problems}
         end

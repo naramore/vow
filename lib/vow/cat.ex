@@ -40,34 +40,34 @@ defmodule Vow.Cat do
             | {:error, [ConformError.Problem.t()]}
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: vows}, path, via, route, value) do
+    def conform(%@for{vows: vows}, path, via, route, val) do
       Enum.reduce(
         vows,
-        {:ok, %{}, value},
+        {:ok, %{}, val},
         &conform_reducer(path, via, route, &1, &2)
       )
     end
 
     @impl Vow.RegexOperator
-    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
+    def unform(%@for{vows: vows} = vow, val) when is_map(val) do
       Enum.reduce(vows, {:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
 
         {k, v}, {:ok, acc} ->
-          if Map.has_key?(value, k) do
-            case Conformable.unform(v, Map.get(value, k)) do
+          if Map.has_key?(val, k) do
+            case Conformable.unform(v, Map.get(val, k)) do
               {:error, reason} -> {:error, reason}
               {:ok, unformed} -> {:ok, Utils.append(acc, unformed)}
             end
           else
-            {:error, %Vow.UnformError{vow: vow, value: value}}
+            {:error, %Vow.UnformError{vow: vow, val: val}}
           end
       end)
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @spec conform_reducer(

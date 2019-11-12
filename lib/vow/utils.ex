@@ -56,8 +56,8 @@ defmodule Vow.Utils do
   end
 
   @spec compatible_form?([any], [any]) :: boolean
-  def compatible_form?(list, value) do
-    case {improper_info(list), improper_info(value)} do
+  def compatible_form?(list, val) do
+    case {improper_info(list), improper_info(val)} do
       {{true, n}, {true, n}} -> true
       {{false, n}, {false, n}} -> true
       _ -> false

@@ -25,14 +25,14 @@ defmodule Vow.ZeroOrMore do
       {:ok, [], []}
     end
 
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      conform_impl(vow, path, via, route, value)
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      conform_impl(vow, path, via, route, val)
     end
 
     @impl Vow.RegexOperator
-    def unform(%@for{vow: vow}, value)
-        when is_list(value) and length(value) >= 0 do
-      value
+    def unform(%@for{vow: vow}, val)
+        when is_list(val) and length(val) >= 0 do
+      val
       |> Enum.reduce({:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
@@ -49,8 +49,8 @@ defmodule Vow.ZeroOrMore do
       end
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @spec conform_impl(Vow.t(), [term], [Vow.Ref.t()], [term], [term], [term]) ::

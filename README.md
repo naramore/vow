@@ -62,8 +62,5 @@ end
   - [ ] test for nested lists conforming with expected behavior... (especially the regex operators)
   - [ ] add many *specific* compound vow examples (look at `clojure.spec` docs / guides for inspiration)
 - [ ] v0.0.3 (pre-release)
-  - [ ] replace all instances of `value` w/ `val`?
   - [ ] implement `Vow.Generatable.gen/2` for `Vow.Keys`
-  - [ ] investigate the ignored dialyzer warnings for refactoring opportunities
   - [ ] more credo rules + refactoring
-  - [ ] add `Vow.Conformable.regex?/1` (otherwise 'transparent' wrappers like `Vow.{FunctionWrapper, WithGen, Ref}` won't work as expected...)

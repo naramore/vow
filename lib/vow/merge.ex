@@ -21,29 +21,29 @@ defmodule Vow.Merge do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(%@for{vows: []}, _path, _via, _route, value) when is_map(value) do
-      {:ok, value}
+    def conform(%@for{vows: []}, _path, _via, _route, val) when is_map(val) do
+      {:ok, val}
     end
 
-    def conform(%@for{vows: [{k, vow}]}, path, via, route, value) when is_map(value) do
-      @protocol.conform(vow, [k | path], via, route, value)
+    def conform(%@for{vows: [{k, vow}]}, path, via, route, val) when is_map(val) do
+      @protocol.conform(vow, [k | path], via, route, val)
     end
 
-    def conform(%@for{vows: [_ | _] = vows}, path, via, route, value)
-        when is_map(value) do
+    def conform(%@for{vows: [_ | _] = vows}, path, via, route, val)
+        when is_map(val) do
       vows
       |> Enum.map(fn {k, v} ->
-        @protocol.conform(v, [k | path], via, route, value)
+        @protocol.conform(v, [k | path], via, route, val)
       end)
       |> Enum.reduce({:ok, %{}}, &conform_reducer/2)
     end
 
-    def conform(_vow, path, via, route, value) do
-      {:error, [ConformError.new_problem(&is_map/1, path, via, route, value)]}
+    def conform(_vow, path, via, route, val) do
+      {:error, [ConformError.new_problem(&is_map/1, path, via, route, val)]}
     end
 
     @impl Vow.Conformable
-    def unform(%@for{vows: vows}, value) when is_map(value) do
+    def unform(%@for{vows: vows}, val) when is_map(val) do
       vows
       |> Keyword.values()
       |> Enum.reverse()
@@ -52,15 +52,15 @@ defmodule Vow.Merge do
           {:error, reason}
 
         vow, {:ok, acc} ->
-          case @protocol.unform(vow, value) do
+          case @protocol.unform(vow, val) do
             {:ok, unformed} -> {:ok, Map.merge(acc, unformed)}
             {:error, reason} -> {:error, reason}
           end
       end)
     end
 
-    def unform(vow, value),
-      do: {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val),
+      do: {:error, %Vow.UnformError{vow: vow, val: val}}
 
     @impl Vow.Conformable
     def regex?(_vow), do: false

@@ -17,16 +17,16 @@ defmodule Vow.Also do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{vows: []}, _path, _via, _route, value) do
-      {:ok, value}
+    def conform(%@for{vows: []}, _path, _via, _route, val) do
+      {:ok, val}
     end
 
-    def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
-      @protocol.conform(vow, [k | path], via, route, value)
+    def conform(%@for{vows: [{k, vow}]}, path, via, route, val) do
+      @protocol.conform(vow, [k | path], via, route, val)
     end
 
-    def conform(%@for{vows: vows}, path, via, route, value) when is_list(vows) do
-      Enum.reduce(vows, {:ok, value}, fn
+    def conform(%@for{vows: vows}, path, via, route, val) when is_list(vows) do
+      Enum.reduce(vows, {:ok, val}, fn
         _, {:error, pblms} ->
           {:error, pblms}
 
@@ -36,11 +36,11 @@ defmodule Vow.Also do
     end
 
     @impl Vow.Conformable
-    def unform(%@for{vows: vows}, value) do
+    def unform(%@for{vows: vows}, val) do
       vows
       |> Keyword.values()
       |> Enum.reverse()
-      |> Enum.reduce({:ok, value}, fn
+      |> Enum.reduce({:ok, val}, fn
         _, {:error, reason} ->
           {:error, reason}
 

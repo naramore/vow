@@ -21,8 +21,8 @@ defmodule Vow.OneOrMore do
     alias Vow.Utils
 
     @impl Vow.RegexOperator
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      case @protocol.conform(vow, path, via, route, value) do
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      case @protocol.conform(vow, path, via, route, val) do
         {:error, problems} ->
           {:error, problems}
 
@@ -33,11 +33,11 @@ defmodule Vow.OneOrMore do
 
     @impl Vow.RegexOperator
     def unform(vow, []) do
-      {:error, %Vow.UnformError{vow: vow, value: []}}
+      {:error, %Vow.UnformError{vow: vow, val: []}}
     end
 
-    def unform(vow, value) do
-      @protocol.Vow.ZeroOrMore.unform(vow, value)
+    def unform(vow, val) do
+      @protocol.Vow.ZeroOrMore.unform(vow, val)
     end
 
     @spec conform_rest(Vow.t(), [term], [Vow.Ref.t()], [term], [term], term) ::

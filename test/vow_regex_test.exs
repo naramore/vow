@@ -6,23 +6,23 @@ defmodule VowRegexTest do
 
   describe "All RegexOperators" do
     property "given a non-list should fail to conform" do
-      check all value <- one_of([boolean(), integer(), float(), string(:ascii)]),
+      check all val <- one_of([boolean(), integer(), float(), string(:ascii)]),
                 vow <- VowData.regex_vow(),
                 max_runs: 40 do
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
 
     property "given an improper list should fail to conform" do
-      check all value <- map(list_of(constant(nil), min_length: 1), &VTU.to_improper/1),
+      check all val <- map(list_of(constant(nil), min_length: 1), &VTU.to_improper/1),
                 vow <- VowData.regex_vow(),
                 max_runs: 40 do
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
 
     property "given a partial match will conform and return non-matching part" do
-      check all {vow, value} <-
+      check all {vow, val} <-
                   one_of([
                     tuple({
                       constant(Vow.alt(n: &is_number/1, s: &is_bitstring/1)),
@@ -60,12 +60,12 @@ defmodule VowRegexTest do
                       list_of(string(:ascii), min_length: 1)
                     })
                   ]) do
-        assert match?({:ok, _, [_ | _]}, Vow.RegexOperator.conform(vow, [], [], [0], value))
+        assert match?({:ok, _, [_ | _]}, Vow.RegexOperator.conform(vow, [], [], [0], val))
       end
     end
 
     property "given a full match will conform and return []" do
-      check all {vow, value} <-
+      check all {vow, val} <-
                   one_of([
                     tuple({
                       constant(Vow.alt(n: &is_number/1, s: &is_bitstring/1)),
@@ -97,7 +97,7 @@ defmodule VowRegexTest do
                       list_of(integer())
                     })
                   ]) do
-        assert match?({:ok, _, []}, Vow.RegexOperator.conform(vow, [], [], [0], value))
+        assert match?({:ok, _, []}, Vow.RegexOperator.conform(vow, [], [], [0], val))
       end
     end
   end
@@ -114,23 +114,23 @@ defmodule VowRegexTest do
     end
 
     property "should succeed on matching at least one of the given vows" do
-      check all value <- list_of(one_of([integer(), float()]), length: 1) do
+      check all val <- list_of(one_of([integer(), float()]), length: 1) do
         vow = Vow.alt(i: &is_integer/1, f: &is_float/1)
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
 
     property "given multiple matching vows, will succeed on the first one to match" do
-      check all value <- list_of(one_of([integer(), float()]), min_length: 1) do
+      check all val <- list_of(one_of([integer(), float()]), min_length: 1) do
         vow = Vow.alt(n: &is_number/1, i: &is_integer/1, f: &is_float/1)
-        assert match?({:ok, [%{n: _}], _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, [%{n: _}], _}, Vow.RegexOperator.conform(vow, [], [], [], val))
       end
     end
 
     property "given no matching vows, should fail to conform" do
-      check all value <- list_of(one_of([integer(), float()]), min_length: 1) do
+      check all val <- list_of(one_of([integer(), float()]), min_length: 1) do
         vow = Vow.alt(b: &is_boolean/1, s: &is_bitstring/1, a: &is_atom/1)
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
 
@@ -147,61 +147,61 @@ defmodule VowRegexTest do
     end
 
     property "should succeed with nested regex operators" do
-      check all value <- list_of(one_of([string(:ascii), integer()]), min_length: 2) do
+      check all val <- list_of(one_of([string(:ascii), integer()]), min_length: 2) do
         vow =
           Vow.alt(
             i: &is_integer/1,
             ss: Vow.oom(&is_bitstring/1)
           )
 
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], val))
       end
     end
   end
 
   describe "Vow.amp/1" do
     property "should succeed on matching all of the given vows" do
-      check all value <- list_of(integer(1..1000), min_length: 1) do
+      check all val <- list_of(integer(1..1000), min_length: 1) do
         vow =
           Vow.amp(
             i: &Enum.all?(&1, fn i -> is_integer(i) end),
             gtz: &Enum.all?(&1, fn i -> i > 0 end)
           )
 
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
 
     property "should fail given at least one vow that fails to match" do
-      check all value <- list_of(integer(1..1000), min_length: 1) do
+      check all val <- list_of(integer(1..1000), min_length: 1) do
         vow =
           Vow.amp(
             i: &Enum.all?(&1, fn i -> is_integer(i) end),
             ltz: &Enum.all?(&1, fn i -> i < 0 end)
           )
 
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
 
     property "should succeed given any proper list with zero vows" do
-      check all value <- list_of(constant(nil)) do
+      check all val <- list_of(constant(nil)) do
         vow = Vow.amp([])
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
 
     property "should succeed with nested regex operators" do
       check all booleans <- list_of(boolean(), min_length: 1),
                 strings <- list_of(string(:ascii, min_length: 1), min_length: 1),
-                value = strings ++ booleans do
+                val = strings ++ booleans do
         vow =
           Vow.amp(
             oombs: Vow.oom(&is_bitstring/1),
             algtz: &Enum.all?(&1, fn s -> String.length(s) > 0 end)
           )
 
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [0], val))
       end
     end
   end
@@ -263,7 +263,7 @@ defmodule VowRegexTest do
     end
 
     property "should succeed with nested regex" do
-      check all value <- list_of(integer(), min_length: 2) do
+      check all val <- list_of(integer(), min_length: 2) do
         vow =
           Vow.cat(
             i: &is_integer/1,
@@ -273,7 +273,7 @@ defmodule VowRegexTest do
 
         assert match?(
                  {:ok, %{i: _, n: _, ns: _}},
-                 Vow.conform(vow, value)
+                 Vow.conform(vow, val)
                )
       end
     end
@@ -287,23 +287,23 @@ defmodule VowRegexTest do
     end
 
     property "should succeed if given proper list" do
-      check all value <- integer() do
+      check all val <- integer() do
         vow = Vow.maybe(&is_integer/1)
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], [value]))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], [val]))
       end
     end
 
-    property "should return [head] if inner vow matches head of given value" do
-      check all [h | t] = value <- list_of(integer(), min_length: 1) do
+    property "should return [head] if inner vow matches head of given val" do
+      check all [h | t] = val <- list_of(integer(), min_length: 1) do
         vow = Vow.maybe(&is_integer/1)
-        assert match?({:ok, [^h], ^t}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, [^h], ^t}, Vow.RegexOperator.conform(vow, [], [], [], val))
       end
     end
 
-    property "should return [] if inner vow fails to match head of given value" do
-      check all value <- list_of(integer(), min_length: 1) do
+    property "should return [] if inner vow fails to match head of given val" do
+      check all val <- list_of(integer(), min_length: 1) do
         vow = Vow.maybe(&is_boolean/1)
-        assert match?({:ok, [], ^value}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, [], ^val}, Vow.RegexOperator.conform(vow, [], [], [], val))
       end
     end
   end
@@ -312,27 +312,27 @@ defmodule VowRegexTest do
     property "should succeed if only 1st element/group matches" do
       check all head <- integer(),
                 tail <- list_of(string(:ascii)),
-                value = [head | tail] do
+                val = [head | tail] do
         vow = Vow.oom(&is_integer/1)
-        assert match?({:ok, [^head], ^tail}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, [^head], ^tail}, Vow.RegexOperator.conform(vow, [], [], [], val))
       end
     end
 
     property "should fail if 1st element/group fails to match" do
       check all head <- integer(),
                 tail <- list_of(float()),
-                value = [head | tail] do
+                val = [head | tail] do
         vow = Vow.oom(&is_float/1)
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
   end
 
   describe "Vow.zom/1" do
     property "should succeed given proper list" do
-      check all value <- list_of(string(:ascii)) do
+      check all val <- list_of(string(:ascii)) do
         vow = Vow.zom(&is_bitstring/1)
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
 
@@ -343,29 +343,29 @@ defmodule VowRegexTest do
     end
 
     property "should succeed given sub-vow that matches nothing" do
-      check all value <- list_of(string(:ascii)) do
+      check all val <- list_of(string(:ascii)) do
         vow = Vow.zom(&is_integer/1)
-        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], value))
+        assert match?({:ok, _, _}, Vow.RegexOperator.conform(vow, [], [], [], val))
       end
     end
 
     property "should stop matching after 1st element that does not match (for non-regex sub-vow)" do
       check all matching <- list_of(string(:ascii)),
                 non_matching <- list_of(float(), min_length: 1),
-                value = matching ++ non_matching do
+                val = matching ++ non_matching do
         vow = Vow.zom(&is_bitstring/1)
 
         assert match?(
                  {:ok, ^matching, ^non_matching},
-                 Vow.RegexOperator.conform(vow, [], [], [], value)
+                 Vow.RegexOperator.conform(vow, [], [], [], val)
                )
       end
     end
 
     property "should succeed with nested regex operator" do
-      check all value <- list_of(one_of([integer(), float(), boolean()])) do
+      check all val <- list_of(one_of([integer(), float(), boolean()])) do
         vow = Vow.zom(Vow.alt(n: &is_number/1, b: &is_boolean/1))
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
   end

@@ -23,21 +23,21 @@ defmodule Vow.OneOf do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{vows: [{k, vow}]}, path, via, route, value) do
-      case @protocol.conform(vow, [k | path], via, route, value) do
+    def conform(%@for{vows: [{k, vow}]}, path, via, route, val) do
+      case @protocol.conform(vow, [k | path], via, route, val) do
         {:ok, conformed} -> {:ok, %{k => conformed}}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(%@for{vows: vows}, path, via, route, value)
+    def conform(%@for{vows: vows}, path, via, route, val)
         when is_list(vows) and length(vows) > 0 do
       Enum.reduce(vows, {:error, []}, fn
         _, {:ok, c} ->
           {:ok, c}
 
         {k, s}, {:error, pblms} ->
-          case @protocol.conform(s, [k | path], via, route, value) do
+          case @protocol.conform(s, [k | path], via, route, val) do
             {:ok, conformed} -> {:ok, %{k => conformed}}
             {:error, problems} -> {:error, pblms ++ problems}
           end
@@ -45,12 +45,12 @@ defmodule Vow.OneOf do
     end
 
     @impl Vow.Conformable
-    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
-      with [key] <- Map.keys(value),
+    def unform(%@for{vows: vows} = vow, val) when is_map(val) do
+      with [key] <- Map.keys(val),
            true <- Keyword.has_key?(vows, key) do
-        @protocol.unform(Keyword.get(vows, key), Map.get(value, key))
+        @protocol.unform(Keyword.get(vows, key), Map.get(val, key))
       else
-        _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
+        _ -> {:error, %Vow.UnformError{vow: vow, val: val}}
       end
     end
 

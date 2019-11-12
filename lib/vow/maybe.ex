@@ -24,9 +24,9 @@ defmodule Vow.Maybe do
       {:ok, [], []}
     end
 
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      case @protocol.conform(vow, path, via, route, value) do
-        {:error, _problems} -> {:ok, [], value}
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      case @protocol.conform(vow, path, via, route, val) do
+        {:error, _problems} -> {:ok, [], val}
         {:ok, conformed, rest} -> {:ok, [conformed], rest}
       end
     end
@@ -36,12 +36,12 @@ defmodule Vow.Maybe do
       {:ok, []}
     end
 
-    def unform(%@for{vow: vow}, [value]) do
-      Conformable.unform(vow, value)
+    def unform(%@for{vow: vow}, [val]) do
+      Conformable.unform(vow, val)
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
   end
 

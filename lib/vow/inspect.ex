@@ -50,7 +50,7 @@ defimpl Inspect,
     options = [break: :flex, separator: ","]
 
     coll =
-      [vow.key_vow, vow.value_vow]
+      [vow.key_vow, vow.val_vow]
       |> append_if(not is_nil(non_default_range(vow)), non_default_range(vow))
       |> append_if(vow.distinct?, "distinct")
       |> append_if(vow.conform_keys?, "conform_keys")

@@ -176,11 +176,11 @@ defmodule Vow.Keys do
     alias Vow.ConformError
 
     @impl Vow.Conformable
-    def conform(vow, path, via, route, value)
-        when is_map(value) do
+    def conform(vow, path, via, route, val)
+        when is_map(val) do
       context = {path, via, route}
 
-      case conform_impl(false, vow.optional, value, context) do
+      case conform_impl(false, vow.optional, val, context) do
         {:error, problems} ->
           {:error, problems}
 
@@ -189,20 +189,20 @@ defmodule Vow.Keys do
       end
     end
 
-    def conform(_vow, path, via, route, value) do
-      {:error, [ConformError.new_problem(&is_map/1, path, via, route, value)]}
+    def conform(_vow, path, via, route, val) do
+      {:error, [ConformError.new_problem(&is_map/1, path, via, route, val)]}
     end
 
     @impl Vow.Conformable
-    def unform(vow, value) when is_map(value) do
-      case unform_impl(false, vow.optional, value) do
+    def unform(vow, val) when is_map(val) do
+      case unform_impl(false, vow.optional, val) do
         {:ok, unformed} -> unform_impl(true, vow.required, unformed)
         {:error, reason} -> {:error, reason}
       end
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @impl Vow.Conformable
@@ -221,14 +221,14 @@ defmodule Vow.Keys do
     end
 
     defp unform_impl(required?, {:or, keys} = vow, val) do
-      Enum.reduce(keys, {:error, %Vow.UnformError{vow: vow, value: val}}, fn
+      Enum.reduce(keys, {:error, %Vow.UnformError{vow: vow, val: val}}, fn
         _, {:ok, unformed} ->
           {:ok, unformed}
 
         k, {:error, _} ->
           case unform_impl(required?, k, val) do
             {:ok, unformed} -> {:ok, unformed}
-            {:error, _reason} -> {:error, %Vow.UnformError{vow: vow, value: val}}
+            {:error, _reason} -> {:error, %Vow.UnformError{vow: vow, val: val}}
           end
       end)
     end
@@ -240,7 +240,7 @@ defmodule Vow.Keys do
     defp unform_impl(required?, %Vow.Ref{fun: f} = ref, val) do
       case {required?, Map.has_key?(val, f)} do
         {_, true} -> @protocol.unform(ref, val)
-        {true, false} -> {:error, %Vow.UnformError{vow: ref, value: val}}
+        {true, false} -> {:error, %Vow.UnformError{vow: ref, val: val}}
         {false, false} -> {:ok, val}
       end
     end
@@ -260,9 +260,9 @@ defmodule Vow.Keys do
             {[term], [Vow.Ref.t()], [term]}
           ) ::
             {:ok, Vow.Conformable.conformed()} | {:error, [ConformError.Problem.t()]}
-    defp conform_impl(required?, keys, value, context)
+    defp conform_impl(required?, keys, val, context)
          when is_list(keys) do
-      Enum.reduce(keys, {:ok, value}, fn
+      Enum.reduce(keys, {:ok, val}, fn
         _, {:error, ps} ->
           {:error, ps}
 
@@ -271,33 +271,33 @@ defmodule Vow.Keys do
       end)
     end
 
-    defp conform_impl(required?, {:or, keys}, value, context)
+    defp conform_impl(required?, {:or, keys}, val, context)
          when is_list(keys) do
       Enum.reduce(keys, {:error, []}, fn
         _, {:ok, c} ->
           {:ok, c}
 
         k, {:error, ps} ->
-          case conform_impl(required?, k, value, context) do
+          case conform_impl(required?, k, val, context) do
             {:ok, c} -> {:ok, c}
             {:error, pblms} -> {:error, ps ++ pblms}
           end
       end)
     end
 
-    defp conform_impl(required?, {:and, keys}, value, context) do
-      conform_impl(required?, keys, value, context)
+    defp conform_impl(required?, {:and, keys}, val, context) do
+      conform_impl(required?, keys, val, context)
     end
 
-    defp conform_impl(required?, {m, f}, value, context) do
-      conform_impl(required?, sref(m, f), value, context)
+    defp conform_impl(required?, {m, f}, val, context) do
+      conform_impl(required?, sref(m, f), val, context)
     end
 
-    defp conform_impl(required?, %Vow.Ref{fun: f} = ref, value, {path, via, route}) do
-      case {required?, Map.has_key?(value, f)} do
+    defp conform_impl(required?, %Vow.Ref{fun: f} = ref, val, {path, via, route}) do
+      case {required?, Map.has_key?(val, f)} do
         {_, true} ->
-          case @protocol.conform(ref, path, via, [f | route], Map.get(value, f)) do
-            {:ok, conformed} -> {:ok, Map.put(value, f, conformed)}
+          case @protocol.conform(ref, path, via, [f | route], Map.get(val, f)) do
+            {:ok, conformed} -> {:ok, Map.put(val, f, conformed)}
             {:error, problems} -> {:error, problems}
           end
 
@@ -309,12 +309,12 @@ defmodule Vow.Keys do
                path,
                via,
                route,
-               value
+               val
              )
            ]}
 
         {false, false} ->
-          {:ok, value}
+          {:ok, val}
       end
     end
   end

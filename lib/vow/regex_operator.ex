@@ -14,11 +14,11 @@ defprotocol Vow.RegexOperator do
   """
   @spec conform(t, [term], [Vow.Ref.t()], [term], term) ::
           {:ok, conformed, rest} | {:error, [ConformError.Problem.t()]}
-  def conform(vow, path, via, route, value)
+  def conform(vow, path, via, route, val)
 
   @doc """
   """
-  @spec unform(t, conformed) :: {:ok, value :: term} | {:error, Vow.UnformError.t()}
+  @spec unform(t, conformed) :: {:ok, val :: term} | {:error, Vow.UnformError.t()}
   def unform(vow, conformed_value)
 end
 
@@ -39,8 +39,8 @@ defimpl Vow.RegexOperator, for: Any do
   end
 
   @impl Vow.RegexOperator
-  def unform(vow, value) do
-    Conformable.unform(vow, value)
+  def unform(vow, val) do
+    Conformable.unform(vow, val)
   end
 end
 
@@ -53,9 +53,9 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
   alias Vow.{ConformError, Utils, RegexOperator}
 
   @impl Vow.Conformable
-  def conform(vow, path, via, route, value)
-      when is_list(value) and length(value) >= 0 do
-    case RegexOperator.conform(vow, path, via, Utils.init_path(route), value) do
+  def conform(vow, path, via, route, val)
+      when is_list(val) and length(val) >= 0 do
+    case RegexOperator.conform(vow, path, via, Utils.init_path(route), val) do
       {:ok, conformed, []} ->
         {:ok, conformed}
 
@@ -63,21 +63,21 @@ defimpl Vow.Conformable, for: [Alt, Amp, Cat, Maybe, OneOrMore, ZeroOrMore] do
         {:error, problems}
 
       {:ok, _conformed, [_ | _]} ->
-        {:error, [ConformError.new_problem(vow, path, via, route, value, "Insufficient Data")]}
+        {:error, [ConformError.new_problem(vow, path, via, route, val, "Insufficient Data")]}
     end
   end
 
-  def conform(_vow, path, via, route, value) when is_list(value) do
-    {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, value)]}
+  def conform(_vow, path, via, route, val) when is_list(val) do
+    {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, val)]}
   end
 
-  def conform(_vow, path, via, route, value) do
-    {:error, [ConformError.new_problem(&is_list/1, path, via, route, value)]}
+  def conform(_vow, path, via, route, val) do
+    {:error, [ConformError.new_problem(&is_list/1, path, via, route, val)]}
   end
 
   @impl Vow.Conformable
-  def unform(vow, value) do
-    RegexOperator.unform(vow, value)
+  def unform(vow, val) do
+    RegexOperator.unform(vow, val)
   end
 
   @impl Vow.Conformable

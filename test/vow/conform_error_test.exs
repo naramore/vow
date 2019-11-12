@@ -7,7 +7,7 @@ defmodule Vow.ConformErrorTest do
     property "should navigate vow successfully" do
     end
 
-    property "should naviate value successfully to problem.value" do
+    property "should naviate val successfully to problem.val" do
     end
   end
 end

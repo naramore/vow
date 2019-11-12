@@ -49,16 +49,16 @@ defmodule Vow.RefTest do
 
   describe "Vow.Conformable.Vow.Ref.conform/5" do
     property "successfully conform against referenced vow" do
-      check all value <- term() do
+      check all val <- term() do
         vow = sref(VowRef, :any)
-        assert match?({:ok, _}, Vow.conform(vow, value))
+        assert match?({:ok, _}, Vow.conform(vow, val))
       end
     end
 
     property "fail to conform against referenced vow" do
-      check all value <- term() do
+      check all val <- term() do
         vow = sref(VowRef, :none)
-        assert match?({:error, _}, Vow.conform(vow, value))
+        assert match?({:error, _}, Vow.conform(vow, val))
       end
     end
 

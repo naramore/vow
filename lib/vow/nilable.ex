@@ -22,13 +22,13 @@ defmodule Vow.Nilable do
       {:ok, nil}
     end
 
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      @protocol.conform(vow, path, via, route, value)
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      @protocol.conform(vow, path, via, route, val)
     end
 
     @impl Vow.Conformable
     def unform(_vow, nil), do: {:ok, nil}
-    def unform(%@for{vow: vow}, value), do: @protocol.unform(vow, value)
+    def unform(%@for{vow: vow}, val), do: @protocol.unform(vow, val)
 
     @impl Vow.Conformable
     def regex?(_vow), do: false

@@ -34,30 +34,30 @@ defmodule Vow.List do
     alias Vow.{ConformError, ConformError.Problem}
 
     @impl Vow.Conformable
-    def conform(vow, path, via, route, value)
-        when is_list(value) and length(value) >= 0 do
-      value
+    def conform(vow, path, via, route, val)
+        when is_list(val) and length(val) >= 0 do
+      val
       |> map(vow, path, via, route)
       |> Enum.reduce({:ok, []}, &conform_reducer/2)
-      |> add_problems(vow, path, via, route, value)
+      |> add_problems(vow, path, via, route, val)
       |> case do
         {:ok, conformed} -> {:ok, Enum.reverse(conformed)}
         {:error, problems} -> {:error, problems}
       end
     end
 
-    def conform(_vow, path, via, route, value)
-        when is_list(value) do
-      {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, value)]}
+    def conform(_vow, path, via, route, val)
+        when is_list(val) do
+      {:error, [ConformError.new_problem(&proper_list?/1, path, via, route, val)]}
     end
 
-    def conform(_vow, path, via, route, value) do
-      {:error, [ConformError.new_problem(&is_list/1, path, via, route, value)]}
+    def conform(_vow, path, via, route, val) do
+      {:error, [ConformError.new_problem(&is_list/1, path, via, route, val)]}
     end
 
     @impl Vow.Conformable
-    def unform(%@for{vow: vow}, value) when is_list(value) do
-      value
+    def unform(%@for{vow: vow}, val) when is_list(val) do
+      val
       |> Enum.reduce({:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
@@ -74,15 +74,15 @@ defmodule Vow.List do
       end
     end
 
-    def unform(vow, value),
-      do: {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val),
+      do: {:error, %Vow.UnformError{vow: vow, val: val}}
 
     @impl Vow.Conformable
     def regex?(_vow), do: false
 
     @spec map([term], Vow.t(), [term], [Vow.Ref.t()], [term]) :: [@protocol.result]
-    defp map(value, vow, path, via, route) do
-      value
+    defp map(val, vow, path, via, route) do
+      val
       |> Enum.with_index()
       |> Enum.map(fn {e, i} ->
         @protocol.conform(vow.vow, path, via, [i | route], e)
@@ -97,9 +97,9 @@ defmodule Vow.List do
 
     @spec add_problems(@protocol.result, Vow.t(), [term], [Vow.Ref.t()], [term], [term]) ::
             @protocol.result
-    defp add_problems(result, vow, path, via, route, value) do
-      lps = length_problems(vow, path, via, route, value)
-      dps = distinct_problems(vow, path, via, route, value)
+    defp add_problems(result, vow, path, via, route, val) do
+      lps = length_problems(vow, path, via, route, val)
+      dps = distinct_problems(vow, path, via, route, val)
 
       result
       |> ConformError.add_problems(lps, true)
@@ -109,9 +109,9 @@ defmodule Vow.List do
     @spec distinct_problems(Vow.t(), [term], [Vow.Ref.t()], [term], term) :: [
             ConformError.Problem.t()
           ]
-    defp distinct_problems(vow, path, via, route, value) do
-      if vow.distinct? and not distinct?(value) do
-        [ConformError.new_problem(&distinct?/1, path, via, route, value)]
+    defp distinct_problems(vow, path, via, route, val) do
+      if vow.distinct? and not distinct?(val) do
+        [ConformError.new_problem(&distinct?/1, path, via, route, val)]
       else
         []
       end

@@ -20,13 +20,13 @@ defmodule Vow.WithGen do
     @moduledoc false
 
     @impl Vow.Conformable
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      @protocol.conform(vow, path, via, route, value)
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      @protocol.conform(vow, path, via, route, val)
     end
 
     @impl Vow.Conformable
-    def unform(%@for{vow: vow}, value) do
-      @protocol.unform(vow, value)
+    def unform(%@for{vow: vow}, val) do
+      @protocol.unform(vow, val)
     end
 
     @impl Vow.Conformable
@@ -39,13 +39,13 @@ defmodule Vow.WithGen do
     @moduledoc false
 
     @impl Vow.RegexOperator
-    def conform(%@for{vow: vow}, path, via, route, value) do
-      @protocol.conform(vow, path, via, route, value)
+    def conform(%@for{vow: vow}, path, via, route, val) do
+      @protocol.conform(vow, path, via, route, val)
     end
 
     @impl Vow.RegexOperator
-    def unform(%@for{vow: vow}, value) do
-      @protocol.unform(vow, value)
+    def unform(%@for{vow: vow}, val) do
+      @protocol.unform(vow, val)
     end
   end
 

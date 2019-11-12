@@ -25,26 +25,26 @@ defmodule Vow.Alt do
     alias Vow.Conformable
 
     @impl Vow.RegexOperator
-    def conform(%@for{vows: vows}, path, via, route, value) do
+    def conform(%@for{vows: vows}, path, via, route, val) do
       Enum.reduce(
         vows,
         {:error, []},
-        &reducer(&1, &2, path, via, route, value)
+        &reducer(&1, &2, path, via, route, val)
       )
     end
 
     @impl Vow.RegexOperator
-    def unform(%@for{vows: vows} = vow, value) when is_map(value) do
-      with [key] <- Map.keys(value),
+    def unform(%@for{vows: vows} = vow, val) when is_map(val) do
+      with [key] <- Map.keys(val),
            true <- Keyword.has_key?(vows, key) do
-        Conformable.unform(Keyword.get(vows, key), Map.get(value, key))
+        Conformable.unform(Keyword.get(vows, key), Map.get(val, key))
       else
-        _ -> {:error, %Vow.UnformError{vow: vow, value: value}}
+        _ -> {:error, %Vow.UnformError{vow: vow, val: val}}
       end
     end
 
-    def unform(vow, value) do
-      {:error, %Vow.UnformError{vow: vow, value: value}}
+    def unform(vow, val) do
+      {:error, %Vow.UnformError{vow: vow, val: val}}
     end
 
     @spec reducer({atom, Vow.t()}, result, [term], [Vow.Ref.t()], [term], term) :: result
@@ -53,8 +53,8 @@ defmodule Vow.Alt do
       {:ok, conformed, rest}
     end
 
-    defp reducer({k, v}, {:error, pblms}, path, via, route, value) do
-      case @protocol.conform(v, [k | path], via, route, value) do
+    defp reducer({k, v}, {:error, pblms}, path, via, route, val) do
+      case @protocol.conform(v, [k | path], via, route, val) do
         {:error, problems} -> {:error, pblms ++ problems}
         {:ok, conformed, rest} -> {:ok, [%{k => conformed}], rest}
       end
