@@ -20,14 +20,20 @@ defimpl Inspect,
   import Inspect.Algebra
   import Vow.Utils, only: [append_if: 3, non_default_range: 1]
 
+  @impl Inspect
   def inspect(vow, opts) do
     name = suffix(vow.__struct__)
     inspect_impl(name, vow, opts)
   end
 
   @spec inspect_impl(String.t(), Inspect.t(), Inspect.Opts.t()) :: Inspect.Algebra.t()
-  defp inspect_impl("OneOrMore", vow, opts), do: inspect_impl("OOM", vow, opts)
-  defp inspect_impl("ZeroOrMore", vow, opts), do: inspect_impl("ZOM", vow, opts)
+  defp inspect_impl("OneOrMore", vow, opts) do
+    inspect_impl("OOM", vow, opts)
+  end
+
+  defp inspect_impl("ZeroOrMore", vow, opts) do
+    inspect_impl("ZOM", vow, opts)
+  end
 
   defp inspect_impl("List", %Vow.List{} = vow, opts) do
     options = [break: :flex, separator: ","]

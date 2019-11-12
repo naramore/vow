@@ -107,16 +107,14 @@ defmodule Vow.ConformableTest do
   describe "Conformable.Range.conform/5" do
     property "range value bounded by vow range -> value" do
       check all {range, f, l} <-
-                  StreamDataUtils.range()
-                  |> bind(&{constant(&1), member_of(&1), member_of(&1)}) do
+                  bind(StreamDataUtils.range(), &{constant(&1), member_of(&1), member_of(&1)}) do
         assert match?({:ok, ^f..^l}, Vow.conform(range, f..l))
       end
     end
 
     property "range value outside of vow range -> error(s)" do
       check all {range, vrange} <-
-                  StreamDataUtils.range()
-                  |> bind(fn x..y ->
+                  bind(StreamDataUtils.range(), fn x..y ->
                     z = if x <= y, do: y + 1, else: y - 1
                     {constant(x..y), constant(x..z)}
                   end) do
@@ -125,17 +123,14 @@ defmodule Vow.ConformableTest do
     end
 
     property "range min..max succeeds with integer value b/t min and max" do
-      check all {range, x} <-
-                  StreamDataUtils.range()
-                  |> bind(&{constant(&1), member_of(&1)}) do
+      check all {range, x} <- bind(StreamDataUtils.range(), &{constant(&1), member_of(&1)}) do
         assert match?({:ok, ^x}, Vow.conform(range, x))
       end
     end
 
     property "integer value outside of range errors" do
       check all {range, x} <-
-                  StreamDataUtils.range()
-                  |> bind(fn x..y ->
+                  bind(StreamDataUtils.range(), fn x..y ->
                     z =
                       if x <= y do
                         integer((y + 1)..(y + 101))
@@ -160,17 +155,17 @@ defmodule Vow.ConformableTest do
   describe "Conformable.Date.Range.conform/5" do
     property "date_range value bounded by vow date_range -> value" do
       check all {range, f, l} <-
-                  StreamDataUtils.date_range()
-                  |> bind(&{constant(&1), member_of(&1), member_of(&1)}) do
+                  bind(
+                    StreamDataUtils.date_range(),
+                    &{constant(&1), member_of(&1), member_of(&1)}
+                  ) do
         value = Date.range(f, l)
         assert match?({:ok, ^value}, Vow.conform(range, value))
       end
     end
 
     property "date_range succeeds with date value b/t first and last" do
-      check all {range, x} <-
-                  StreamDataUtils.date_range()
-                  |> bind(&{constant(&1), member_of(&1)}) do
+      check all {range, x} <- bind(StreamDataUtils.date_range(), &{constant(&1), member_of(&1)}) do
         assert match?({:ok, ^x}, Vow.conform(range, x))
       end
     end

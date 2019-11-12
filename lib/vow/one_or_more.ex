@@ -41,7 +41,7 @@ defmodule Vow.OneOrMore do
     end
 
     @spec conform_rest(Vow.t(), [term], [Vow.Ref.t()], [term], [term], term) ::
-            {:ok, @protocol.conformed, @protocol.rest} | {:error, reason :: term}
+            {:ok, @protocol.conformed, @protocol.rest}
     defp conform_rest(vow, path, via, route, rest, conformed_head) do
       zom = Vow.zom(vow)
       route = Utils.inc_path(route)
@@ -63,6 +63,11 @@ defmodule Vow.OneOrMore do
 
       @impl Vow.Generatable
       def gen(vow, opts) do
+        gen_impl(vow, opts, min_length: 1)
+      end
+
+      @spec gen_impl(Vow.t(), keyword, keyword) :: @protocol.result
+      def gen_impl(vow, opts, list_opts) do
         case @protocol.gen(vow.vow, opts) do
           {:error, reason} ->
             {:error, reason}
@@ -71,11 +76,11 @@ defmodule Vow.OneOrMore do
             if Vow.regex?(vow.vow) do
               {:ok,
                StreamData.map(
-                 StreamData.list_of(data, min_length: 1),
+                 StreamData.list_of(data, list_opts),
                  fn l -> Enum.reduce(l, [], &append/2) end
                )}
             else
-              {:ok, StreamData.list_of(data, min_length: 1)}
+              {:ok, StreamData.list_of(data, list_opts)}
             end
         end
       end

@@ -110,7 +110,8 @@ defmodule Vow.ConformError do
 
   @impl Exception
   def message(%__MODULE__{} = error) do
-    Enum.map(error.problems, fn p ->
+    error.problems
+    |> Enum.map(fn p ->
       __MODULE__.Problem.message(p)
     end)
     |> Enum.join("\n")
@@ -229,6 +230,7 @@ defmodule Vow.ConformError do
 
       import Inspect.Algebra
 
+      @impl Inspect
       def inspect(problem, opts) do
         coll = [
           {:pred, problem.predicate},

@@ -57,7 +57,8 @@ defmodule Vow.List do
 
     @impl Vow.Conformable
     def unform(%@for{vow: vow}, value) when is_list(value) do
-      Enum.reduce(value, {:ok, []}, fn
+      value
+      |> Enum.reduce({:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
 
@@ -143,7 +144,7 @@ defmodule Vow.List do
       @impl Vow.Generatable
       def gen(vow, opts) do
         with {:ok, item_gen} <- @protocol.gen(vow.vow, opts),
-             {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]),
+             {opts, _} <- Map.split(Map.from_struct(vow), [:min_length, :max_length]),
              {false, _, _} <- {vow.distinct?, item_gen, opts} do
           {:ok, StreamData.list_of(item_gen, Enum.into(opts, []))}
         else

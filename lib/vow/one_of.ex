@@ -64,7 +64,8 @@ defmodule Vow.OneOf do
 
       @impl Vow.Generatable
       def gen(%@for{vows: vows}, opts) do
-        Enum.reduce(vows, {:ok, []}, fn
+        vows
+        |> Enum.reduce({:ok, []}, fn
           _, {:error, reason} ->
             {:error, reason}
 

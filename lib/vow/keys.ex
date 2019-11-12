@@ -54,16 +54,19 @@ defmodule Vow.Keys do
   @spec check_keys([Vow.vow_ref_expr()] | Vow.vow_ref_expr(), {[atom], [atom]}) ::
           {[atom], [atom]}
   defp check_keys(keys, acc \\ {[], []})
-  defp check_keys([], acc), do: acc
+
+  defp check_keys([], acc) do
+    acc
+  end
 
   defp check_keys([h | t], acc) do
-    check_keys(h, acc)
-    |> (&check_keys(t, &1)).()
+    check_keys(t, check_keys(h, acc))
   end
 
   defp check_keys({:or, keys}, acc) do
     {uniq_set, dup_set} =
-      Enum.map(keys, &check_keys(&1, acc))
+      keys
+      |> Enum.map(&check_keys(&1, acc))
       |> Enum.reduce({MapSet.new([]), MapSet.new([])}, fn {us, ds}, {ums, dms} ->
         {
           MapSet.union(ums, MapSet.new(us)),
@@ -74,9 +77,17 @@ defmodule Vow.Keys do
     {Enum.into(uniq_set, []), Enum.into(dup_set, [])}
   end
 
-  defp check_keys({:and, keys}, acc), do: check_keys(keys, acc)
-  defp check_keys(%Vow.Ref{fun: f}, acc), do: check_keys(f, acc)
-  defp check_keys({_, f}, acc), do: check_keys(f, acc)
+  defp check_keys({:and, keys}, acc) do
+    check_keys(keys, acc)
+  end
+
+  defp check_keys(%Vow.Ref{fun: f}, acc) do
+    check_keys(f, acc)
+  end
+
+  defp check_keys({_, f}, acc) do
+    check_keys(f, acc)
+  end
 
   defp check_keys(f, {acc, dups}) do
     if f in acc do
@@ -87,7 +98,9 @@ defmodule Vow.Keys do
   end
 
   @spec update_keys([Vow.vow_ref_expr()], module | nil) :: [Vow.vow_ref_expr()]
-  defp update_keys([], _mod), do: []
+  defp update_keys([], _mod) do
+    []
+  end
 
   defp update_keys([h | t], mod) do
     [update_key(h, mod) | update_keys(t, mod)]
@@ -102,9 +115,17 @@ defmodule Vow.Keys do
     {:and, update_keys(keys, mod)}
   end
 
-  defp update_key(%Vow.Ref{} = ref, _mod), do: ref
-  defp update_key({_, _} = mf, _mod), do: mf
-  defp update_key(f, m), do: {m, f}
+  defp update_key(%Vow.Ref{} = ref, _mod) do
+    ref
+  end
+
+  defp update_key({_, _} = mf, _mod) do
+    mf
+  end
+
+  defp update_key(f, m) do
+    {m, f}
+  end
 
   @spec find_key(t | [Vow.vow_ref_expr()], atom, path) ::
           {Vow.Ref.t(), :required | :optional | nil, path} | nil
@@ -124,8 +145,13 @@ defmodule Vow.Keys do
     end
   end
 
-  defp find_key([%Vow.Ref{fun: key} = ref | _], key, path), do: {ref, nil, :lists.reverse(path)}
-  defp find_key([{m, key} | t], key, path), do: find_key([Vow.Ref.new(m, key) | t], key, path)
+  defp find_key([%Vow.Ref{fun: key} = ref | _], key, path) do
+    {ref, nil, :lists.reverse(path)}
+  end
+
+  defp find_key([{m, key} | t], key, path) do
+    find_key([Vow.Ref.new(m, key) | t], key, path)
+  end
 
   defp find_key([{op, keys} | t], key, [ph | pt] = path) when op in [:and, :or] do
     case find_key(keys, key, [0, 1 | path]) do
@@ -134,8 +160,13 @@ defmodule Vow.Keys do
     end
   end
 
-  defp find_key([_ | t], key, [ph | pt]), do: find_key(t, key, [ph + 1 | pt])
-  defp find_key(_, _, _), do: nil
+  defp find_key([_ | t], key, [ph | pt]) do
+    find_key(t, key, [ph + 1 | pt])
+  end
+
+  defp find_key(_, _, _) do
+    nil
+  end
 
   defimpl Vow.Conformable do
     @moduledoc false
@@ -218,7 +249,9 @@ defmodule Vow.Keys do
       unform_impl(required?, Vow.Ref.new(m, f), val)
     end
 
-    defp unform_impl(required?, f, val), do: unform_impl(required?, {nil, f}, val)
+    defp unform_impl(required?, f, val) do
+      unform_impl(required?, {nil, f}, val)
+    end
 
     @spec conform_impl(
             boolean(),
@@ -294,6 +327,7 @@ defmodule Vow.Keys do
 
     @opts [break: :flex, separator: ","]
 
+    @impl Inspect
     def inspect(keys, opts) do
       coll = [req: keys.required, opt: keys.optional]
       fun = fn {k, v}, os -> concat([to_string(k), "=", inspect_expr(v, os)]) end
@@ -314,9 +348,17 @@ defmodule Vow.Keys do
       container_doc("#and<", keys, ">", opts, &inspect_expr/2, @opts)
     end
 
-    defp inspect_expr(%Vow.Ref{} = ref, opts), do: @protocol.inspect(ref, opts)
-    defp inspect_expr({m, f}, opts), do: inspect_expr(sref(m, f), opts)
-    defp inspect_expr(f, opts), do: inspect_expr(sref(f), opts)
+    defp inspect_expr(%Vow.Ref{} = ref, opts) do
+      @protocol.inspect(ref, opts)
+    end
+
+    defp inspect_expr({m, f}, opts) do
+      inspect_expr(sref(m, f), opts)
+    end
+
+    defp inspect_expr(f, opts) do
+      inspect_expr(sref(f), opts)
+    end
   end
 
   # coveralls-ignore-stop

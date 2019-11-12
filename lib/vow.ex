@@ -66,10 +66,12 @@ defmodule Vow do
   """
   @spec gen(t, [override]) :: {:ok, Vow.Generatable.generator()} | {:error, reason :: term}
   def gen(vow, overrides \\ []) do
-    Enum.reduce(overrides, vow, fn {path, gen_fun}, acc ->
-      put_in(acc, path, gen_fun.())
-    end)
-    |> Vow.Generatable.gen()
+    overridden_vow =
+      Enum.reduce(overrides, vow, fn {path, gen_fun}, acc ->
+        put_in(acc, path, gen_fun.())
+      end)
+
+    Vow.Generatable.gen(overridden_vow)
   end
 
   defdelegate with_gen(vow, gen_fun), to: Vow.WithGen, as: :new

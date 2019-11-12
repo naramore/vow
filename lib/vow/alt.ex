@@ -47,7 +47,7 @@ defmodule Vow.Alt do
       {:error, %Vow.UnformError{vow: vow, value: value}}
     end
 
-    @spec reducer({atom, Vow.t()}, result, [term], [Vow.Spec.t()], [term], term) :: result
+    @spec reducer({atom, Vow.t()}, result, [term], [Vow.Ref.t()], [term], term) :: result
           when result: {:ok, @protocol.conformed, @protocol.rest} | {:error, reason :: term}
     defp reducer(_, {:ok, conformed, rest}, _, _, _, _) do
       {:ok, conformed, rest}

@@ -69,7 +69,9 @@ defimpl Vow.Conformable, for: Function do
   end
 
   @impl Vow.Conformable
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false
@@ -90,61 +92,24 @@ defimpl Vow.Conformable, for: List do
 
   import Vow.FunctionWrapper, only: [wrap: 1]
   import Vow.Utils, only: [compatible_form?: 2, improper_info: 1]
-  alias Vow.ConformError
+  alias Vow.{ConformError, ConformError.Problem}
 
   @impl Vow.Conformable
   def conform(vow, path, via, route, value)
       when is_list(value) and length(vow) == length(value) do
     vow
     |> Enum.zip(value)
-    |> Enum.reduce({:ok, [], [], 0}, fn
-      {s, v}, {:ok, t, _, i} ->
-        case @protocol.conform(s, [i | path], via, [i | route], v) do
-          {:ok, h} -> {:ok, [h | t], [], i + 1}
-          {:error, ps} -> {:error, nil, ps, i + 1}
-        end
-
-      {s, v}, {:error, _, pblms, i} ->
-        case @protocol.conform(s, [i | path], via, [i | route], v) do
-          {:ok, _} -> {:error, nil, pblms, i + 1}
-          {:error, ps} -> {:error, nil, pblms ++ ps, i + 1}
-        end
-    end)
+    |> Enum.with_index()
+    |> Enum.reduce({:ok, []}, &conform_reducer(&1, &2, path, via, route))
     |> case do
-      {:ok, conformed, _, _} -> {:ok, Enum.reverse(conformed)}
-      {:error, _, problems, _} -> {:error, problems}
+      {:error, problems} -> {:error, problems}
+      {:ok, conformed} -> {:ok, Enum.reverse(conformed)}
     end
   end
 
   def conform(vow, path, via, route, value) when is_list(value) do
-    case {improper_info(vow), improper_info(value)} do
-      {{true, n}, {true, n}} ->
-        conform_improper(vow, path, via, route, value, 0)
-
-      {{false, _}, {false, _}} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&(length(&1) == length(vow))),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-
-      _ ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&compatible_form?(vow, &1)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-    end
+    list_info = {improper_info(vow), improper_info(value)}
+    conform_non_similar(list_info, vow, path, via, route, value)
   end
 
   def conform(_vow, path, via, route, value) do
@@ -183,6 +148,44 @@ defimpl Vow.Conformable, for: List do
   @impl Vow.Conformable
   def regex?(_vow), do: false
 
+  @spec conform_reducer(
+          {{Vow.t(), term}, non_neg_integer},
+          @protocol.result,
+          [term],
+          [Vow.Ref.t()],
+          [term]
+        ) :: @protocol.result
+  defp conform_reducer({{vow, val}, i}, {:ok, acc}, path, via, route) do
+    case @protocol.conform(vow, [i | path], via, [i | route], val) do
+      {:error, ps} -> {:error, ps}
+      {:ok, ch} -> {:ok, [ch | acc]}
+    end
+  end
+
+  defp conform_reducer({{vow, val}, i}, {:error, pblms}, path, via, route) do
+    case @protocol.conform(vow, [i | path], via, [i | route], val) do
+      {:error, ps} -> {:error, pblms ++ ps}
+      {:ok, _} -> {:error, pblms}
+    end
+  end
+
+  @spec conform_non_similar({info, info}, Vow.t(), [term], [Vow.Ref.t()], [term], term) ::
+          @protocol.result
+        when info: {boolean, non_neg_integer}
+  defp conform_non_similar({{true, n}, {true, n}}, vow, path, via, route, value) do
+    conform_improper(vow, path, via, route, value, 0)
+  end
+
+  defp conform_non_similar({{false, _}, {false, _}}, vow, path, via, route, value) do
+    pred = wrap(&(length(&1) == length(vow)))
+    {:error, [Problem.new(pred, path, via, route, value)]}
+  end
+
+  defp conform_non_similar(_, vow, path, via, route, value) do
+    pred = wrap(&compatible_form?(vow, &1))
+    {:error, [Problem.new(pred, path, via, route, value)]}
+  end
+
   @spec unform_improper_impl(
           nonempty_improper_list(Vow.t(), Vow.t()),
           nonempty_improper_list(term, term)
@@ -214,24 +217,19 @@ defimpl Vow.Conformable, for: List do
           {:ok, term} | {:error, [ConformError.Problem.t()]}
   defp conform_improper([sh | st], path, via, route, [vh | vt], pos) do
     head = @protocol.conform(sh, [pos | path], via, [pos | route], vh)
-
-    case {head, conform_improper(st, path, via, route, vt, pos + 1)} do
-      {{:ok, ch}, {:ok, ct}} -> {:ok, [ch | ct]}
-      {{:error, hps}, {:error, tps}} -> {:error, hps ++ tps}
-      {_, {:error, ps}} -> {:error, ps}
-      {{:error, ps}, _} -> {:error, ps}
-    end
+    tail = conform_improper(st, path, via, route, vt, pos + 1)
+    conform_improper_tail({head, tail})
   end
 
   defp conform_improper(vow, path, via, route, value, pos) do
-    @protocol.conform(
-      vow,
-      [pos | path],
-      via,
-      [pos | route],
-      value
-    )
+    @protocol.conform(vow, [pos | path], via, [pos | route], value)
   end
+
+  @spec conform_improper_tail({@protocol.result, @protocol.result}) :: @protocol.result
+  defp conform_improper_tail({{:ok, ch}, {:ok, ct}}), do: {:ok, [ch | ct]}
+  defp conform_improper_tail({{:error, hps}, {:error, tps}}), do: {:error, hps ++ tps}
+  defp conform_improper_tail({_, {:error, ps}}), do: {:error, ps}
+  defp conform_improper_tail({{:error, ps}, _}), do: {:error, ps}
 end
 
 defimpl Vow.Conformable, for: Tuple do
@@ -356,7 +354,9 @@ defimpl Vow.Conformable, for: Map do
   end
 
   @spec unform_reducer(map, {term, Vow.t()}, result) :: result
-  defp unform_reducer(_value, _item, {:error, reason}), do: {:error, reason}
+  defp unform_reducer(_value, _item, {:error, reason}) do
+    {:error, reason}
+  end
 
   defp unform_reducer(value, {k, v}, {:ok, acc}) do
     if Map.has_key?(value, k) do
@@ -410,7 +410,9 @@ defimpl Vow.Conformable, for: MapSet do
   end
 
   @impl Vow.Conformable
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false
@@ -445,7 +447,9 @@ defimpl Vow.Conformable, for: Regex do
   end
 
   @impl Vow.Conformable
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false
@@ -455,73 +459,20 @@ defimpl Vow.Conformable, for: Range do
   @moduledoc false
 
   import Vow.FunctionWrapper, only: [wrap: 1]
-  alias Vow.ConformError
+  alias Vow.{ConformError, ConformError.Problem}
 
   @impl Vow.Conformable
   def conform(vow, path, via, route, _.._ = value) do
-    case {Enum.member?(vow, value.first), Enum.member?(vow, value.last)} do
-      {true, true} ->
-        {:ok, value}
-
-      {true, false} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.last)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-
-      {false, true} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.first)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-
-      {false, false} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.first)),
-             path,
-             via,
-             route,
-             value
-           ),
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.last)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-    end
+    member = {Enum.member?(vow, value.first), Enum.member?(vow, value.last)}
+    conform_range(member, vow, path, via, route, value)
   end
 
   def conform(vow, path, via, route, value) when is_integer(value) do
     if Enum.member?(vow, value) do
       {:ok, value}
     else
-      {:error,
-       [
-         ConformError.new_problem(
-           wrap(&Enum.member?(vow, &1)),
-           path,
-           via,
-           route,
-           value
-         )
-       ]}
+      pred = wrap(&Enum.member?(vow, &1))
+      {:error, [Problem.new(pred, path, via, route, value)]}
     end
   end
 
@@ -530,92 +481,72 @@ defimpl Vow.Conformable, for: Range do
   end
 
   @impl Vow.Conformable
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false
+
+  @spec conform_range({boolean, boolean}, Vow.t(), [term], [Vow.Ref.t()], [term], term) ::
+          Vow.Conformable.result()
+  def conform_range({true, true}, _vow, _path, _via, _route, value) do
+    {:ok, value}
+  end
+
+  def conform_range({true, false}, vow, path, via, route, value) do
+    pred = wrap(&Enum.member?(vow, &1.last))
+    {:error, [Problem.new(pred, path, via, route, value)]}
+  end
+
+  def conform_range({false, true}, vow, path, via, route, value) do
+    pred = wrap(&Enum.member?(vow, &1.last))
+    {:error, [Problem.new(pred, path, via, route, value)]}
+  end
+
+  def conform_range({false, false}, vow, path, via, route, value) do
+    pred1 = wrap(&Enum.member?(vow, &1.first))
+    pred2 = wrap(&Enum.member?(vow, &1.last))
+
+    {:error,
+     [
+       Problem.new(pred1, path, via, route, value),
+       Problem.new(pred2, path, via, route, value)
+     ]}
+  end
 end
 
 defimpl Vow.Conformable, for: Date.Range do
   @moduledoc false
 
   import Vow.FunctionWrapper, only: [wrap: 1]
-  alias Vow.ConformError
+  import Vow.Conformable.Range, only: [conform_range: 6]
+  alias Vow.ConformError.Problem
 
   @impl Vow.Conformable
   def conform(vow, path, via, route, %Date.Range{} = value) do
-    case {Enum.member?(vow, value.first), Enum.member?(vow, value.last)} do
-      {true, true} ->
-        {:ok, value}
-
-      {true, false} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.last)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-
-      {false, true} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.first)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-
-      {false, false} ->
-        {:error,
-         [
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.first)),
-             path,
-             via,
-             route,
-             value
-           ),
-           ConformError.new_problem(
-             wrap(&Enum.member?(vow, &1.last)),
-             path,
-             via,
-             route,
-             value
-           )
-         ]}
-    end
+    member = {Enum.member?(vow, value.first), Enum.member?(vow, value.last)}
+    conform_range(member, vow, path, via, route, value)
   end
 
   def conform(vow, path, via, route, %Date{} = value) do
     if Enum.member?(vow, value) do
       {:ok, value}
     else
-      {:error,
-       [
-         ConformError.new_problem(
-           wrap(&Enum.member?(vow, &1)),
-           path,
-           via,
-           route,
-           value
-         )
-       ]}
+      pred = wrap(&Enum.member?(vow, &1))
+      {:error, [Problem.new(pred, path, via, route, value)]}
     end
   end
 
   def conform(_vow, path, via, route, value) do
-    {:error, [ConformError.new_problem(wrap(&match?(%Date{}, &1)), path, via, route, value)]}
+    pred = wrap(&match?(%Date{}, &1))
+    {:error, [Problem.new(pred, path, via, route, value)]}
   end
 
   @impl Vow.Conformable
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false
@@ -696,7 +627,9 @@ defimpl Vow.Conformable, for: Any do
     {:error, %Vow.UnformError{vow: vow, value: value}}
   end
 
-  def unform(_vow, value), do: {:ok, value}
+  def unform(_vow, value) do
+    {:ok, value}
+  end
 
   @impl Vow.Conformable
   def regex?(_vow), do: false

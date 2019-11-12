@@ -31,8 +31,9 @@ defmodule Vow.RefTest do
       end
     end)
 
-    [:raise!, :throw!, :exit_normal!, :exit_abnormal!]
-    |> Enum.map(fn fun ->
+    @reasons [:raise!, :throw!, :exit_normal!, :exit_abnormal!]
+
+    Enum.map(@reasons, fn fun ->
       @fun fun
       test "fun raises/exits/throws [#{fun}] -> error" do
         ref = sref(VowRef, @fun)

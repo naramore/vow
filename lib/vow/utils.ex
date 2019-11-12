@@ -50,8 +50,8 @@ defmodule Vow.Utils do
 
   @spec distinct?(Enum.t()) :: boolean
   def distinct?(enum) do
-    count = enum |> Enum.count()
-    unique_count = enum |> Enum.uniq() |> Enum.count()
+    count = Enum.count(enum)
+    unique_count = Enum.count(Enum.uniq(enum))
     count == unique_count
   end
 
@@ -83,7 +83,9 @@ defmodule Vow.Utils do
     "#{min}.."
   end
 
-  def non_default_range(_), do: nil
+  def non_default_range(_) do
+    nil
+  end
 
   defmodule AccessShortcut do
     @moduledoc false

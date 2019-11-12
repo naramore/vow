@@ -151,6 +151,7 @@ defmodule Vow.Ref do
   defimpl Inspect do
     @moduledoc false
 
+    @impl Inspect
     def inspect(%@for{mod: nil, fun: fun}, _opts) do
       "#SRef<#{fun}>"
     end

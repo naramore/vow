@@ -160,14 +160,14 @@ if Code.ensure_loaded?(StreamData) do
       {date_opts, time_opts} = split_date_and_time_opts(options)
 
       bind(date(date_opts), fn d ->
-        case date_edgecase(d, date_opts) do
-          :max -> time(Keyword.delete(time_opts, :min_time))
-          :min -> time(Keyword.delete(time_opts, :max_time))
-          nil -> time()
-        end
-        |> map(fn t ->
-          datetime_combine_utc(d, t)
-        end)
+        time_gen =
+          case date_edgecase(d, date_opts) do
+            :max -> time(Keyword.delete(time_opts, :min_time))
+            :min -> time(Keyword.delete(time_opts, :max_time))
+            nil -> time()
+          end
+
+        map(time_gen, fn t -> datetime_combine_utc(d, t) end)
       end)
     end
 
@@ -175,8 +175,9 @@ if Code.ensure_loaded?(StreamData) do
     """
     @spec date_range([date_opt]) :: t(Date.Range.t())
     def date_range(opts \\ []) do
-      tuple({date(opts), date(opts)})
-      |> map(fn {d1, d2} -> Date.range(d1, d2) end)
+      map(tuple({date(opts), date(opts)}), fn {d1, d2} ->
+        Date.range(d1, d2)
+      end)
     end
 
     @typedoc """
@@ -190,20 +191,16 @@ if Code.ensure_loaded?(StreamData) do
     """
     @spec date([date_opt]) :: t(Date.t())
     def date(options \\ []) do
-      case get_date_range(options) do
-        %Date.Range{} = date_range ->
-          member_of(date_range)
-
-        {nil, nil} ->
-          map(integer(), &Date.add(Date.utc_today(), &1))
-
-        {nil, max} ->
-          map(non_neg_integer(), &Date.add(max, -&1))
-
-        {min, nil} ->
-          map(non_neg_integer(), &Date.add(min, &1))
-      end
+      options
+      |> get_date_range()
+      |> date_mapper()
     end
+
+    @spec date_mapper(Date.Range.t() | {integer | nil, integer | nil}) :: t(Date.t())
+    defp date_mapper(%Date.Range{} = date_range), do: member_of(date_range)
+    defp date_mapper({nil, nil}), do: map(integer(), &Date.add(Date.utc_today(), &1))
+    defp date_mapper({nil, max}), do: map(non_neg_integer(), &Date.add(max, -&1))
+    defp date_mapper({min, nil}), do: map(non_neg_integer(), &Date.add(min, &1))
 
     @sdiv 60
     @mdiv 60
@@ -225,31 +222,36 @@ if Code.ensure_loaded?(StreamData) do
     @spec time([time_opt]) :: t(Time.t())
     def time(options \\ []) do
       {min, max} = get_time_range(options)
+      map(integer(min..max), &time_mapper/1)
+    end
 
-      integer(min..max)
-      |> map(fn i ->
-        {i, s} = {div(i, @sdiv), rem(i, @sdiv)}
-        {i, m} = {div(i, @mdiv), rem(i, @mdiv)}
-        {h, us} = {div(i, @usdiv), rem(i, @usdiv)}
-        {:ok, time} = Time.new(h, m, s, {us, precision(us)})
-        time
-      end)
+    @spec time_mapper(integer) :: Time.t()
+    defp time_mapper(i) do
+      {min_left, s} = {div(i, @sdiv), rem(i, @sdiv)}
+      {hr_left, m} = {div(min_left, @mdiv), rem(min_left, @mdiv)}
+      {h, us} = {div(hr_left, @usdiv), rem(hr_left, @usdiv)}
+      {:ok, time} = Time.new(h, m, s, {us, precision(us)})
+      time
     end
 
     @doc """
     """
     @spec range() :: t(Range.t())
     def range do
-      tuple({integer(), integer()})
-      |> map(fn {i1, i2} -> i1..i2 end)
+      map(
+        tuple({integer(), integer()}),
+        fn {i1, i2} -> i1..i2 end
+      )
     end
 
     @doc """
     """
     @spec range(Range.t()) :: t(Range.t())
     def range(min..max) do
-      tuple({integer(min..max), integer(min..max)})
-      |> map(fn {i1, i2} -> i1..i2 end)
+      map(
+        tuple({integer(min..max), integer(min..max)}),
+        fn {i1, i2} -> i1..i2 end
+      )
     end
 
     @doc false

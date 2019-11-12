@@ -32,7 +32,8 @@ defmodule Vow.ZeroOrMore do
     @impl Vow.RegexOperator
     def unform(%@for{vow: vow}, value)
         when is_list(value) and length(value) >= 0 do
-      Enum.reduce(value, {:ok, []}, fn
+      value
+      |> Enum.reduce({:ok, []}, fn
         _, {:error, reason} ->
           {:error, reason}
 
@@ -71,25 +72,11 @@ defmodule Vow.ZeroOrMore do
   if Code.ensure_loaded?(StreamData) do
     defimpl Vow.Generatable do
       @moduledoc false
-      import Vow.Utils, only: [append: 2]
+      import Vow.Generatable.Vow.OneOrMore, only: [gen_impl: 3]
 
       @impl Vow.Generatable
       def gen(vow, opts) do
-        case @protocol.gen(vow.vow, opts) do
-          {:error, reason} ->
-            {:error, reason}
-
-          {:ok, data} ->
-            if Vow.regex?(vow.vow) do
-              {:ok,
-               StreamData.map(
-                 StreamData.list_of(data),
-                 fn x -> Enum.reduce(x, [], &append/2) end
-               )}
-            else
-              {:ok, StreamData.list_of(data)}
-            end
-        end
+        gen_impl(vow, opts, [])
       end
     end
   end

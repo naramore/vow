@@ -461,12 +461,13 @@ defmodule VowTest do
       end
     end
 
-    [
+    @duplicate_keys [
       simple: [:i, :n, :n],
       with_or: [:i, {VowRef, :n}, {:or, [:s, :i]}],
       nested: [Vow.Ref.new(VowRef, :i), {:or, [:n, {:and, [:i, :f]}]}]
     ]
-    |> Enum.map(fn {name, keys} ->
+
+    Enum.map(@duplicate_keys, fn {name, keys} ->
       @name name
       @keys keys
       test "throws if given duplicate keys [#{@name}]" do

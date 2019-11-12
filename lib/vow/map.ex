@@ -179,7 +179,7 @@ defmodule Vow.Map do
       def gen(vow, opts) do
         with {:ok, key_gen} <- @protocol.gen(vow.key_vow, opts),
              {:ok, value_gen} <- @protocol.gen(vow.value_vow, opts),
-             {opts, _} <- Map.from_struct(vow) |> Map.split([:min_length, :max_length]) do
+             {opts, _} <- Map.split(Map.from_struct(vow), [:min_length, :max_length]) do
           {:ok,
            StreamData.map_of(
              key_gen,

@@ -34,7 +34,9 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(stream_data, _opts), do: {:ok, stream_data}
+    def gen(stream_data, _opts) do
+      {:ok, stream_data}
+    end
   end
 
   defimpl Vow.Generatable, for: Function do
@@ -166,8 +168,9 @@ if Code.ensure_loaded?(StreamData) do
     @moduledoc false
 
     @impl Vow.Generatable
-    def gen(%MapSet{map: %{}}, _opts),
-      do: {:ok, StreamData.constant(MapSet.new([]))}
+    def gen(%MapSet{map: %{}}, _opts) do
+      {:ok, StreamData.constant(MapSet.new([]))}
+    end
 
     def gen(vow, _opts) do
       {:ok,

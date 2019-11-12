@@ -40,12 +40,15 @@ defmodule Vow.FunctionWrapper do
   defimpl Inspect do
     @moduledoc false
 
+    @impl Inspect
     def inspect(%@for{form: form, bindings: bindings}, opts) do
       Macro.to_string(form, fn
         {var, _, mod}, string when is_atom(var) and is_atom(mod) ->
           if Keyword.has_key?(bindings, var) do
-            Keyword.get(bindings, var)
-            |> Kernel.inspect(opts_to_keyword(opts))
+            Kernel.inspect(
+              Keyword.get(bindings, var),
+              opts_to_keyword(opts)
+            )
           else
             string
           end
@@ -83,7 +86,9 @@ defmodule Vow.FunctionWrapper do
     end
 
     @impl Vow.Conformable
-    def unform(_vow, value), do: {:ok, value}
+    def unform(_vow, value) do
+      {:ok, value}
+    end
 
     @impl Vow.Conformable
     def regex?(_vow), do: false

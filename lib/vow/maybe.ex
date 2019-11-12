@@ -32,7 +32,9 @@ defmodule Vow.Maybe do
     end
 
     @impl Vow.RegexOperator
-    def unform(_vow, []), do: {:ok, []}
+    def unform(_vow, []) do
+      {:ok, []}
+    end
 
     def unform(%@for{vow: vow}, [value]) do
       Conformable.unform(vow, value)

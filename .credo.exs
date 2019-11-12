@@ -22,7 +22,7 @@
         # In the latter case `**/*.{ex,exs}` will be used.
         #
         included: ["lib/", "src/", "test/", "web/", "apps/"],
-        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
+        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/", ~r"/test/support/"]
       },
       #
       # Load and configure plugins here:
@@ -142,7 +142,7 @@
         {Credo.Check.Consistency.MultiAliasImportRequireUse, false},
         {Credo.Check.Consistency.UnusedVariableNames, false},
         {Credo.Check.Design.DuplicatedCode, []},
-        {Credo.Check.Readability.AliasAs, []},
+        {Credo.Check.Readability.AliasAs, false},
         {Credo.Check.Readability.MultiAlias, false},
         {Credo.Check.Readability.Specs, []},
         {Credo.Check.Readability.SinglePipe, []},

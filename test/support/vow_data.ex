@@ -36,9 +36,13 @@ defmodule VowData do
   end
 
   @spec recur_vow(stream_data | nil, keyword) :: stream_data(Vow.t())
-  def recur_vow(child_data \\ nil, opts \\ []) do
-    child_data = process(child_data, opts)
+  def recur_vow(child_data \\ nil, opts \\ [])
 
+  def recur_vow(nil, opts) do
+    recur_vow(vow(opts), opts)
+  end
+
+  def recur_vow(child_data, opts) do
     StreamData.one_of([
       list_of(child_data, opts),
       maybe(child_data, opts),
@@ -54,8 +58,6 @@ defmodule VowData do
       cat(child_data, opts),
       alt(child_data, opts),
       one_of(child_data, opts)
-      # keys(child_data, opts),
-      # ref(child_data, opts)
     ])
   end
 

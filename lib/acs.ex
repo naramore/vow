@@ -1,5 +1,6 @@
 defmodule Acs.Improper do
   @moduledoc """
+  TODO
   """
 
   @doc """
@@ -136,22 +137,12 @@ defmodule Acs do
 
   @doc false
   @spec lazy_keys(term) :: Access.access_fun(Access.t(), term)
-  def lazy_keys(fun) when is_function(fun, 3), do: fun
+  def lazy_keys(fun) when is_function(fun, 3) do
+    fun
+  end
 
   def lazy_keys(i) when is_integer(i) do
-    fn
-      op, data, next when is_list(data) and length(data) >= 0 ->
-        Access.at(i).(op, data, next)
-
-      op, data, next when is_list(data) ->
-        Access.at(i).(op, Improper.to_proper(data), next)
-
-      op, data, next when is_tuple(data) ->
-        Access.elem(i).(op, data, next)
-
-      op, data, next ->
-        Access.key(i).(op, data, next)
-    end
+    &lazy_accessor(i, &1, &2, &3)
   end
 
   def lazy_keys(key) when is_atom(key) do
@@ -160,5 +151,19 @@ defmodule Acs do
     end
   end
 
-  def lazy_keys(key), do: key
+  def lazy_keys(key) do
+    key
+  end
+
+  @spec lazy_accessor(integer, op, data, (term -> term)) ::
+          {get_value, Access.container()} | :pop
+        when data: term, get_value: term, op: :get | :get_and_update
+  defp lazy_accessor(i, op, data, next) when is_list(data) and length(data) >= 0,
+    do: Access.at(i).(op, data, next)
+
+  defp lazy_accessor(i, op, data, next) when is_list(data),
+    do: Access.at(i).(op, Improper.to_proper(data), next)
+
+  defp lazy_accessor(i, op, data, next) when is_tuple(data), do: Access.elem(i).(op, data, next)
+  defp lazy_accessor(i, op, data, next), do: Access.key(i).(op, data, next)
 end
