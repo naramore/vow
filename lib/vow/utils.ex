@@ -92,36 +92,39 @@ defmodule Vow.Utils do
 
     defmacro __using__(opts) do
       type = Keyword.get(opts, :type, :key_based)
+      passthrough_key = Keyword.get(opts, :passthrough_key, :vow)
 
       [
         quote do
           @behaviour Access
         end,
-        build(type)
+        build(type, passthrough_key)
       ]
     end
 
-    @spec build(atom) :: Macro.t()
-    defp build(:passthrough) do
+    @spec build(atom, atom) :: Macro.t()
+    defp build(type, key)
+
+    defp build(:passthrough, passthrough_key) do
       quote do
         @impl Access
-        def fetch(%{vow: vow}, key) do
+        def fetch(%{unquote(passthrough_key) => vow}, key) do
           Access.fetch(vow, key)
         end
 
         @impl Access
-        def pop(%{vow: vow}, key) do
+        def pop(%{unquote(passthrough_key) => vow}, key) do
           Access.pop(vow, key)
         end
 
         @impl Access
-        def get_and_update(%{vow: vow}, key, fun) do
+        def get_and_update(%{unquote(passthrough_key) => vow}, key, fun) do
           Access.get_and_update(vow, key, fun)
         end
       end
     end
 
-    defp build(:key_based) do
+    defp build(:key_based, _key) do
       quote do
         @impl Access
         def fetch(%{vows: vows}, key) do

@@ -3,15 +3,17 @@ defmodule Vow.Keys do
   @behaviour Access
 
   defstruct required: [],
-            optional: []
+            optional: [],
+            regex?: false
 
   @type t :: %__MODULE__{
           required: [Vow.vow_ref_expr()],
-          optional: [Vow.vow_ref_expr()]
+          optional: [Vow.vow_ref_expr()],
+          regex?: boolean
         }
 
-  @spec new([Vow.vow_ref_expr()], [Vow.vow_ref_expr()], module | nil) :: t | no_return
-  def new(required, optional, default_module \\ nil) do
+  @spec new([Vow.vow_ref_expr()], [Vow.vow_ref_expr()], module | nil, boolean) :: t | no_return
+  def new(required, optional, default_module \\ nil, regex? \\ false) do
     required = update_keys(required, default_module)
     optional = update_keys(optional, default_module)
 
@@ -22,7 +24,8 @@ defmodule Vow.Keys do
       _ ->
         %__MODULE__{
           required: required,
-          optional: optional
+          optional: optional,
+          regex?: regex?
         }
     end
   end
@@ -168,6 +171,20 @@ defmodule Vow.Keys do
     nil
   end
 
+  defimpl Vow.RegexOperator do
+    @moduledoc false
+
+    @impl Vow.RegexOperator
+    def conform(_vow, _path, _via, _route, _val) do
+      {:error, []}
+    end
+
+    @impl Vow.RegexOperator
+    def unform(_vow, _val) do
+      {:error, %Vow.UnformError{}}
+    end
+  end
+
   defimpl Vow.Conformable do
     @moduledoc false
 
@@ -206,7 +223,7 @@ defmodule Vow.Keys do
     end
 
     @impl Vow.Conformable
-    def regex?(_vow), do: false
+    def regex?(%@for{regex?: regex?}), do: regex?
 
     @spec unform_impl(boolean, [Vow.vow_ref_expr()] | Vow.vow_ref_expr(), map) ::
             {:ok, map} | {:error, Vow.UnformError.t()}
@@ -293,6 +310,7 @@ defmodule Vow.Keys do
       conform_impl(required?, sref(m, f), val, context)
     end
 
+    # credo:disable-for-next-line Credo.Check.Refactor.ABCSize
     defp conform_impl(required?, %Vow.Ref{fun: f} = ref, val, {path, via, route}) do
       case {required?, Map.has_key?(val, f)} do
         {_, true} ->
@@ -331,7 +349,8 @@ defmodule Vow.Keys do
     def inspect(keys, opts) do
       coll = [req: keys.required, opt: keys.optional]
       fun = fn {k, v}, os -> concat([to_string(k), "=", inspect_expr(v, os)]) end
-      container_doc("#Keys<", coll, ">", opts, fun, @opts)
+      prefix = if keys.regex?, do: "#Keys*<", else: "#Keys<"
+      container_doc(prefix, coll, ">", opts, fun, @opts)
     end
 
     @spec inspect_expr([Vow.vow_ref_expr()] | Vow.vow_ref_expr(), Inspect.Opts.t()) ::

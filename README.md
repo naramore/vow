@@ -9,7 +9,7 @@
 
 Vow is a data specification library inspired by [clojure.spec](https://clojure.org/guides/spec).
 
-Documentation, examples, and how tos can be found at https://hexdocs.pm/vow.
+Documentation, examples, and tutorials can be found at https://hexdocs.pm/vow.
 
 ## Installation
 
@@ -22,22 +22,25 @@ def deps do
 end
 ```
 
+## Rationale and Overview
+
+## Features
+
+## Glossery
+
 ## Roadmap
 
+- [ ] investigate 'better' default generators for `Vow.{Also, Amp, Merge, Function, Regex, Pat}`
 - [ ] re-enable caching in CI once [this issue](https://github.com/actions/cache/issues/12) is fixed
+- [ ] add elixir `1.10` to CI (once out of rc)
+- [ ] add elixir & erlang version matrix for all supported versions (e.g. elixir: 1.7-1.10, erlang: 19-22)
+- [ ] investigate what the lowest 'required' elixir & otp versions this library supports are
+- [ ] investigate `Vow.RegexOperator` refactor to support `Enumerable` instead of `List`
+- [ ] examples folder + hook into tests?
 - [ ] v0.1.0
-  - [ ] documentation
-    - [ ] README.md
-    - [ ] `Vow`
-    - [ ] `Vow.Conformable`
-    - [ ] `Vow.FunctionWrapper`
-    - [ ] `Vow.Function`
-    - [ ] `Vow.Generatable`
-    - [ ] `Vow.RegexOperator`
-    - [ ] `StreamDataUtils`
-    - [ ] `Acs`
-- [ ] v0.0.4 (pre-release)
   - [ ] more tests!
+    - [ ] re-evaluate the test coverage threshold in `coveralls.json`
+    - [ ] `test/support/mock.ex` -> `Vow.Mock` & `Vow.Mock.Regex`
     - [ ] `Vow.Conformable.**.unform/2`
     - [ ] `Vow.Generatable.**.gen/1`
     - [ ] `Vow.*.{fetch/2, get_and_update_in/2, pop/2}`
@@ -61,6 +64,27 @@ end
       - [ ] `range/0` & `range/1`
   - [ ] test for nested lists conforming with expected behavior... (especially the regex operators)
   - [ ] add many *specific* compound vow examples (look at `clojure.spec` docs / guides for inspiration)
+  - [ ] remove the warning from the readme
+  - [ ] documentation refactoring pass
+  - [ ] test refactoring pass
+  - [ ] examples refactoring pass
+  - [ ] implementation refactoring pass
 - [ ] v0.0.3 (pre-release)
+  - [ ] re-evaluate all instances of `# credo:disable-for-` in the code-base
   - [ ] implement `Vow.Generatable.gen/2` for `Vow.Keys`
+  - [ ] investigate `Vow.Conformable.Vow.Keys.conform_impl/4` (specifically how `required?` is used...)
+  - [ ] investigate `Vow.Keys` expression traversal (i.e. generalize `Vow.Keys.{check_keys, update_keys, find_key}` & `Vow.Conformable.Vow.Keys.{conform_impl, unform_impl}`)
   - [ ] more credo rules + refactoring
+  - [x] `ExPat` integration?
+  - [ ] documentation examples pass (+ doctest verification)
+  - [ ] documentation
+    - [ ] README.md
+    - [x] `Vow`
+    - [ ] `Vow.Conformable`
+    - [ ] `Vow.ConformError`
+    - [x] `Vow.FunctionWrapper`
+    - [x] `Vow.Function`
+    - [x] `Vow.Generatable`
+    - [ ] `Vow.RegexOperator`
+    - [ ] `StreamDataUtils`
+    - [x] `Acs`

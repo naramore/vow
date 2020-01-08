@@ -1,6 +1,48 @@
 defmodule Vow.FunctionWrapper do
   @moduledoc """
-  TODO
+  This vow wraps an annoymous function for the purpose of improved error
+  messages and readability of vows.
+
+  The `Function` type impelements the `Inspect` protocol in Elixir, but
+  annoymous functions are printed as something similar to the following:
+
+    ```
+    # regex to match something like: #Function<7.91303403/1 in :erl_eval.expr/5>
+    iex> regex = ~r|^#Function<\\d+\\.\\d+?/1 in|
+    ...> f = fn x -> x end
+    ...> Regex.match?(regex, inspect(f))
+    true
+    ```
+
+  Whereas a named function looks more reasonable:
+
+    ```
+    iex> inspect(&Kernel.apply/2)
+    "&:erlang.apply/2"
+    ```
+
+  The `Vow.FunctionWrapper.wrap/2` macro can be used to alleviate this.
+
+    ```
+    iex> import Vow.FunctionWrapper, only: :macros
+    ...> inspect(wrap(fn x -> x end))
+    "fn x -> x end"
+    ```
+
+  It can also be used to optionally control the bindings within the annoymous
+  function for printing purposes.
+
+    ```
+    iex> import Vow.FunctionWrapper, only: :macros
+    ...> y = 42
+    ...> inspect(wrap(fn x -> x + y end))
+    "fn x -> x + y end"
+
+    iex> import Vow.FunctionWrapper, only: :macros
+    ...> y = 42
+    ...> inspect(wrap(fn x -> x + y end, y: y))
+    "fn x -> x + 42 end"
+    ```
   """
 
   defstruct function: nil,
@@ -24,6 +66,11 @@ defmodule Vow.FunctionWrapper do
   end
 
   @doc """
+  Creates a new `Vow.FunctionWrapper.t` using the AST of `quoted` and
+  its resolved function.
+
+  Optionally, specify the bindings within the quoted form to be used by
+  the `Inspect` protocol.
   """
   @spec wrap(Macro.t(), keyword()) :: Macro.t()
   defmacro wrap(quoted, bindings \\ []) do
@@ -77,8 +124,8 @@ defmodule Vow.FunctionWrapper do
         {:ok, conformed} ->
           {:ok, conformed}
 
-        {:error, [%{predicate: ^fun} = problem]} ->
-          {:error, [%{problem | predicate: func.form}]}
+        {:error, [%{pred: ^fun} = problem]} ->
+          {:error, [%{problem | pred: func.form}]}
 
         {:error, problems} ->
           {:error, problems}

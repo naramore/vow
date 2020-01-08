@@ -1,3 +1,4 @@
+# credo:disable-for-this-file CredoContrib.Check.EmptyDocString
 if Code.ensure_loaded?(StreamData) do
   defmodule StreamDataUtils.Function do
     @moduledoc false

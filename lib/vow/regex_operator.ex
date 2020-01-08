@@ -1,3 +1,4 @@
+# credo:disable-for-this-file CredoContrib.Check.EmptyDocString
 defprotocol Vow.RegexOperator do
   @moduledoc """
   TODO

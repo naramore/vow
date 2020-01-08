@@ -62,33 +62,33 @@ end
 defmodule Vow.ResolveError do
   @moduledoc false
 
-  defexception [:predicate, :reason, :ref]
+  defexception [:pred, :reason, :ref]
 
   @type t :: %__MODULE__{
-          predicate: Vow.t() | nil,
+          pred: Vow.t() | nil,
           reason: String.t() | nil,
           ref: Vow.Ref.t()
         }
 
   @impl Exception
-  def message(%__MODULE__{ref: ref, reason: nil, predicate: pred})
+  def message(%__MODULE__{ref: ref, reason: nil, pred: pred})
       when not is_nil(pred) do
     "#{ref} failed predicate #{pred}"
   end
 
-  def message(%__MODULE__{ref: ref, reason: reason, predicate: nil})
+  def message(%__MODULE__{ref: ref, reason: reason, pred: nil})
       when not is_nil(reason) do
     "#{ref} failed with reason #{reason}"
   end
 
-  def message(%__MODULE__{ref: ref, reason: reason, predicate: pred}) do
+  def message(%__MODULE__{ref: ref, reason: reason, pred: pred}) do
     "#{ref} failed predicate #{pred} with reason #{reason}"
   end
 
   @spec new(Vow.Ref.t(), Vow.t() | nil, String.t() | nil) :: t
-  def new(ref, predicate, reason \\ nil) do
+  def new(ref, pred, reason \\ nil) do
     %__MODULE__{
-      predicate: predicate,
+      pred: pred,
       reason: reason,
       ref: ref
     }
@@ -126,7 +126,7 @@ defmodule Vow.ConformError do
     }
   end
 
-  defdelegate new_problem(predicate, path, via, route, val, reason \\ nil),
+  defdelegate new_problem(pred, path, via, route, val, reason \\ nil),
     to: __MODULE__.Problem,
     as: :new
 
@@ -173,7 +173,7 @@ defmodule Vow.ConformError do
   defmodule Problem do
     @moduledoc false
 
-    defstruct predicate: nil,
+    defstruct pred: nil,
               path: [],
               via: [],
               route: [],
@@ -181,7 +181,7 @@ defmodule Vow.ConformError do
               reason: nil
 
     @type t :: %__MODULE__{
-            predicate: Vow.t() | nil,
+            pred: Vow.t() | nil,
             path: [term],
             via: [Vow.Ref.t()],
             route: [term],
@@ -190,9 +190,9 @@ defmodule Vow.ConformError do
           }
 
     @spec new(Vow.t(), [term], [Vow.Ref.t()], [term], term, String.t() | nil) :: t
-    def new(predicate, path, via, route, val, reason \\ nil) do
+    def new(pred, path, via, route, val, reason \\ nil) do
       %__MODULE__{
-        predicate: predicate,
+        pred: pred,
         path: :lists.reverse(path),
         via: :lists.reverse(via),
         route: :lists.reverse(route),
@@ -208,14 +208,14 @@ defmodule Vow.ConformError do
       |> (&"#{&1} val: #{inspect(p.val)} fails").()
       |> (&if(p.via == [], do: &1, else: "#{&1} vow: #{List.last(p.via)}")).()
       |> (&if(p.path == [], do: &1, else: "#{&1} at: #{inspect(p.path)}")).()
-      |> (&"#{&1} predicate: #{inspect(p.predicate)}").()
+      |> (&"#{&1} pred: #{inspect(p.pred)}").()
       |> (&if(is_nil(p.reason), do: &1, else: "#{&1} reason: #{p.reason}")).()
     end
 
     @spec from_resolve_error(Vow.ResolveError.t(), [term], [Vow.Ref.t()], [term], term) :: t
     def from_resolve_error(resolve_error, path, via, route, val) do
       new(
-        resolve_error.predicate,
+        resolve_error.pred,
         path,
         [resolve_error.ref | via],
         route,
@@ -233,7 +233,7 @@ defmodule Vow.ConformError do
       @impl Inspect
       def inspect(problem, opts) do
         coll = [
-          {:pred, problem.predicate},
+          {:pred, problem.pred},
           {:path, problem.path},
           {:via, problem.via},
           {:route, problem.route},

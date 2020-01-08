@@ -1,6 +1,9 @@
 defmodule Vow.Ref do
   @moduledoc """
-  TODO
+  This vow is a reference to a 0-arity function that returns a vow.
+
+  This allows for the named definition of commonly used vows, and for
+  the definition of recursive vows.
   """
 
   @behaviour Access
@@ -72,6 +75,12 @@ defmodule Vow.Ref do
   end
 
   @doc """
+  Creates a new `Vow.Ref.t` using the `module` and function name (i.e. `atom`).
+
+  This should reference a 0-arity function that returns a vow in order to
+  resolved properly during a call to `Vow.conform/2`.
+
+  If `module` is not specified, then it defaults to the caller's module.
   """
   @spec sref(module | nil, atom) :: Macro.t()
   defmacro sref(module \\ nil, function) do

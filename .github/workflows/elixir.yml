@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        elixir: [1.9.4]
+        elixir: [1.7, 1.8, 1.9]
     container:
       image: elixir:${{ matrix.elixir }}-slim
     steps:
@@ -39,17 +39,9 @@ jobs:
     - name: Compile
       run: mix compile --warnings-as-errors
 
-    - name: Check Code Consistency
-      if: always()
-      run: mix credo
-
     - name: Run Tests
       if: always()
       run: mix test
-
-    # - name: Check for Code Discrepancies
-    #   if: always()
-    #   run: mix dialyzer
 
   check:
     env:
@@ -89,14 +81,6 @@ jobs:
       if: always()
       run: mix format --check-formatted
 
-    - name: Check for Unreachability
-      if: always()
-      run: mix xref unreachable --abort-if-any
-
-    - name: Check for Deprecated
-      if: always()
-      run: mix xref deprecated --abort-if-any
-
     - name: Check Documentation Coverage
       if: always()
       run: mix doctor
@@ -110,3 +94,11 @@ jobs:
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ./cover/excoveralls.json
+
+    - name: Check Code Consistency
+      if: always()
+      run: mix credo
+
+    - name: Check for Code Discrepancies
+      if: always()
+      run: mix dialyzer

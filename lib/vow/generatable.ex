@@ -1,6 +1,30 @@
 defprotocol Vow.Generatable do
   @moduledoc """
-  TODO
+  Generatable protocol used by `Vow.gen/2` for generating data from
+  vows.
+
+  ## Default Generators
+
+  There are a handful of default generators that are less than
+  optimal to use. The following all use relatively open-ended
+  generators with (potentially) restrictive filters, which have
+  a high chance to raise (see `StreamData.filter/3` for more details).
+
+    * `Vow.Also`
+    * `Vow.Amp`
+    * `Vow.Merge`
+    * `Function`
+    * `Regex`
+    * `Vow.Pat` (if `Expat` is installed)
+
+  `Vow.Ref` can create potentially recursive definitions (which is fine
+  for validating data), but can be potentially problematic for data
+  generation (as this does not use `StreamData.tree/2`).
+
+  If any of these vows are not overriden with explicit overrides in
+  `Vow.gen/2`, or using `Vow.with_gen/2`, then a warning for each of these
+  will be logged on that `Vow.gen/2` call (unless the `:ignore_warn?` option
+  is set to `true`).
   """
 
   @fallback_to_any true
@@ -11,19 +35,26 @@ defprotocol Vow.Generatable do
     @type generator :: term
   end
 
-  @typedoc """
-  """
   @type gen_fun :: (() -> generator)
 
   @typedoc """
+  The options that can (optionally) be passed to a
+  `gen/2` call:
+
+    * ignore_warn? - whether or not generator warnings related to
+    'problematic' default generators should be logged (defaults to `false`)
   """
   @type gen_opt :: {:ignore_warn?, boolean}
 
-  @typedoc """
-  """
   @type result :: {:ok, generator} | {:error, reason :: term}
 
   @doc """
+  Given a `Vow.t`, returns either a generator or an error tuple
+  describing the problem that occurred while attempting to create
+  the generator.
+
+  The 'generator' in question will generate data that conforms to
+  the given vow.
   """
   @spec gen(t, [gen_opt]) :: result
   def gen(generatable, opts \\ [])

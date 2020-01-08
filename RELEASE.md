@@ -4,10 +4,12 @@
 
 2. Ensure /CHANGELOG.md is updated, versioned and add the current date
 
-3. Commit changes above with title "Release v`{{ version }}`"
+3. Run `mix test.check` and make sure it completes successfully
 
-4. Generate new tag v`{{ version }}`
+4. Commit changes above with title "Release v`{{ version }}`"
 
-5. Verify that all automated CI completes successfully
+5. Generate new tag v`{{ version }}`
 
-6. Run `mix hex.publish`
+6. Verify that all automated CI completes successfully
+
+7. Run `mix hex.publish`

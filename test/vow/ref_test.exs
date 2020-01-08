@@ -37,7 +37,7 @@ defmodule Vow.RefTest do
       @fun fun
       test "fun raises/exits/throws [#{fun}] -> error" do
         ref = sref(VowRef, @fun)
-        assert match?({:error, %Vow.ResolveError{predicate: nil}}, Vow.Ref.resolve(ref))
+        assert match?({:error, %Vow.ResolveError{pred: nil}}, Vow.Ref.resolve(ref))
       end
     end)
 

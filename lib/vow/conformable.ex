@@ -7,25 +7,33 @@ defprotocol Vow.Conformable do
 
   @fallback_to_any true
 
-  @typedoc """
-  """
   @type conformed :: term
 
-  @typedoc """
-  """
   @type result :: {:ok, conformed} | {:error, [ConformError.Problem.t()]}
 
   @doc """
+  Given a vow and a value, return an error if the value does not match
+  the vow, otherwise returns the (potentially) destructured value.
+
+  The other parameters are for tracking composed conform calls:
+    * path - the set of keys used to `Access` the current vow
+    from the parent vow
+    * via - the set of `Vow.Ref` navigated to get to the current vow
+    * route - the set of keys used to `Access` the current value from
+    the parent value
   """
   @spec conform(t, [term], [Vow.Ref.t()], [term], term) :: result
   def conform(vow, path, via, route, val)
 
   @doc """
+  Given a vow and a conformed value, returns the original unconformed value,
+  otherwise return an `Vow.UnformError`.
   """
   @spec unform(t, conformed) :: {:ok, val :: term} | {:error, Vow.UnformError.t()}
   def unform(vow, conformed_value)
 
   @doc """
+  Returns `true` if the vow is a `Vow.RegexOperator`, otherwise returns `false`.
   """
   @spec regex?(t) :: boolean
   def regex?(vow)
