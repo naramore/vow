@@ -48,5 +48,5 @@ jobs:
         file: ./cover/excoveralls.json
     - run: mix credo
       if: always()
-    - name: mix dialyzer
+    - run: mix dialyzer
       if: always()
