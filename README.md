@@ -31,10 +31,7 @@ end
 ## Roadmap
 
 - [ ] investigate 'better' default generators for `Vow.{Also, Amp, Merge, Function, Regex, Pat}`
-- [ ] re-enable caching in CI once [this issue](https://github.com/actions/cache/issues/12) is fixed
 - [ ] add elixir `1.10` to CI (once out of rc)
-- [ ] add elixir & erlang version matrix for all supported versions (e.g. elixir: 1.7-1.10, erlang: 19-22)
-- [ ] investigate what the lowest 'required' elixir & otp versions this library supports are
 - [ ] investigate `Vow.RegexOperator` refactor to support `Enumerable` instead of `List`
 - [ ] examples folder + hook into tests?
 - [ ] v0.1.0
