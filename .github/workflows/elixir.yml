@@ -33,6 +33,18 @@ jobs:
       image: elixir:slim
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/cache@v1
+      with:
+        path: deps
+        key: ubuntu-elixir-latest-deps-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ubuntu-elixir-latest-deps-
+    - uses: actions/cache@v1
+      with:
+        path: _build
+        key: ubuntu-elixir-latest-build-${{ hashFiles('**/*.ex') }}
+        restore-keys: |
+          ubuntu-elixir-latest-build-
     - run: |
         mix local.rebar --force
         mix local.hex --force
