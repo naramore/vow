@@ -4,101 +4,49 @@ jobs:
   test:
     env:
       MIX_ENV: test
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    name: OTP ${{ matrix.otp }} / Elixir ${{ matrix.elixir }}
     strategy:
       matrix:
-        os: [ubuntu-18.04]
-        elixir: [1.7, 1.8, 1.9]
-    container:
-      image: elixir:${{ matrix.elixir }}-slim
+        otp: [19.3, 20.3, 21.3, 22.2]
+        elixir: [1.7.4, 1.8.2, 1.9.4]
+        exclude:
+          - otp: 19.3
+            elixir: 1.8.2
+          - otp: 19.3
+            elixir: 1.9.4
     steps:
-    - uses: actions/checkout@v1
-
-    # - name: Cache Elixir Deps
-    #   uses: actions/cache@v1
-    #   with:
-    #     path: deps
-    #     key: ${{ matrix.os }}-${{ matrix.elixir }}-deps-${{ hashFiles('**/mix.lock') }}
-    #     restore-keys: |
-    #       ${{ matrix.os }}-${{ matrix.elixir }}-deps-
-
-    # - name: Cache Elixir Build
-    #   uses: actions/cache@v1
-    #   with:
-    #     path: _build
-    #     key: ${{ matrix.os }}-${{ matrix.elixir }}-build-${{ hashFiles('**/*.ex') }}
-    #     restore-keys: |
-    #       ${{ matrix.os }}-${{ matrix.elixir }}-build-
-
-    - name: Install Dependencies
-      run: |
-        mix local.rebar --force
-        mix local.hex --force
-        mix deps.get
-
-    - name: Compile
-      run: mix compile --warnings-as-errors
-
-    - name: Run Tests
-      if: always()
-      run: mix test
+      - uses: actions/checkout@v2
+      - uses: actions/setup-elixir@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+      - run: mix test
 
   check:
     env:
       MIX_ENV: test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     container:
-      image: elixir:1.9.4-slim
+      image: elixir:slim
     steps:
     - uses: actions/checkout@v1
-
-    # - name: Cache Elixir Deps
-    #   uses: actions/cache@v1
-    #   with:
-    #     path: deps
-    #     key: ${{ runner.os }}-1.9.4-deps-${{ hashFiles('**/mix.lock') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-1.9.4-deps-
-
-    # - name: Cache Elixir Build
-    #   uses: actions/cache@v1
-    #   with:
-    #     path: _build
-    #     key: ${{ runner.os }}-1.9.4-build-${{ hashFiles('**/*.ex') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-1.9.4-build-
-
-    - name: Install Dependencies
-      run: |
+    - run: |
         mix local.rebar --force
         mix local.hex --force
         mix deps.get
-
-    - name: Compile
-      run: mix compile
-
-    - name: Check Formatting
+    - run: mix compile
+    - run: mix format --check-formatted
       if: always()
-      run: mix format --check-formatted
-
-    - name: Check Documentation Coverage
+    - run: mix coveralls.json
       if: always()
-      run: mix doctor
-
-    - name: Generate coverage report
-      if: always()
-      run: mix coveralls.json
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1.0.3
+    - uses: codecov/codecov-action@v1.0.3
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ./cover/excoveralls.json
-
-    - name: Check Code Consistency
+    - run: mix credo
       if: always()
-      run: mix credo
-
-    - name: Check for Code Discrepancies
+    - name: mix dialyzer
       if: always()
-      run: mix dialyzer

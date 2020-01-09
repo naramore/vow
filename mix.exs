@@ -13,7 +13,7 @@ defmodule Vow.MixProject do
     [
       app: @app,
       version: @version,
-      elixir: "~> 1.9",
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: @in_production,
       start_permanent: @in_production,
